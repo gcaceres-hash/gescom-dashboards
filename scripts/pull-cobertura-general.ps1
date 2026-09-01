@@ -12,12 +12,10 @@ Reglas (mismo criterio que los otros dashboards):
 #>
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
-    [string]$OutPath = (Join-Path $PSScriptRoot "cobertura-general-data.json"),
+    [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/cobertura"),
+    [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "cobertura-general-template.html"),
-    [string]$MesDesde = "",
-    [string]$NetlifyToken = $env:NETLIFY_TOKEN,
-    [string]$NetlifySiteId = "3e738d78-35b0-488b-b223-3ffc432f733c",
-    [string]$NetlifySiteUrl = "https://cobertura-general-fusionlpelebes.netlify.app"
+    [string]$MesDesde = ""
 )
 $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -136,23 +134,10 @@ $out = [pscustomobject]@{
     proveedores = $proveedoresOut
     clientes = $clientesOut
 }
+if (-not (Test-Path $DocsDir)) { New-Item -ItemType Directory -Path $DocsDir -Force | Out-Null }
 $jsonText = $out | ConvertTo-Json -Depth 8 -Compress
 [System.IO.File]::WriteAllText($OutPath, $jsonText, (New-Object System.Text.UTF8Encoding $false))
-Write-Log "Guardado local: $OutPath"
+Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
+Write-Log "Guardado: $OutPath"
 $sinCompra = @($clientesOut | Where-Object { -not $_.compro }).Count
 Write-Log "Clientes: $($clientesOut.Count) | sin compra (general): $sinCompra | vendedores: $($vendedoresOut.Count) | proveedores con venta: $($proveedoresOut.Count)"
-
-if ($NetlifySiteId -and $NetlifySiteUrl) {
-    Write-Log "Desplegando a Netlify..."
-    $deployDir = Join-Path $env:TEMP "cobertura-general-netlify-deploy"
-    if (Test-Path $deployDir) { Remove-Item $deployDir -Recurse -Force }
-    New-Item -ItemType Directory -Path $deployDir | Out-Null
-    Copy-Item $TemplatePath (Join-Path $deployDir "index.html")
-    Copy-Item $OutPath (Join-Path $deployDir "data.json")
-    $zipPath = Join-Path $deployDir "site.zip"
-    Compress-Archive -Path (Join-Path $deployDir "index.html"), (Join-Path $deployDir "data.json") -DestinationPath $zipPath -Force
-    $netlifyHeaders = @{ Authorization = "Bearer $NetlifyToken" }
-    $deployResp = Invoke-RestMethod -Uri "https://api.netlify.com/api/v1/sites/$NetlifySiteId/deploys" -Headers $netlifyHeaders -Method Post -InFile $zipPath -ContentType "application/zip"
-    Write-Log "Deploy Netlify: id=$($deployResp.id) state=$($deployResp.state)"
-    Write-Log "Publicado en: $NetlifySiteUrl"
-}

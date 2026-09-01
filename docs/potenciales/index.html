@@ -1,0 +1,350 @@
+<title>Clientes Potenciales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #120a10;
+    --surface:   #1e1219;
+    --surface-2: #26161f;
+    --ink:       #f5edf1;
+    --ink-2:     #c2a9b8;
+    --ink-3:     #80627a;
+    --hair:      #38222f;
+    --border:    rgba(245,237,241,0.10);
+    --magenta:    #ff5ca8;
+    --magenta-dim:#5e2140;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#e66767;
+    --good-ink: #4bd07a;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#120a10; --surface:#1e1219; --surface-2:#26161f; --ink:#f5edf1; --ink-2:#c2a9b8; --ink-3:#80627a;
+    --hair:#38222f; --border:rgba(245,237,241,0.10); --magenta:#ff5ca8; --magenta-dim:#5e2140;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767; --good-ink:#4bd07a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{border-bottom:1px solid var(--hair);padding-bottom:18px;margin-bottom:22px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--magenta);box-shadow:0 0 8px var(--magenta);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{font-size:11.5px;color:var(--ink-3);margin-top:8px;}
+  .meta b{color:var(--ink-2);}
+
+  .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:22px;}
+  .ctrl-group{display:flex;flex-direction:column;gap:6px;}
+  .ctrl-group label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);}
+  select.ctrl{font-family:"IBM Plex Mono",monospace;background:var(--surface);color:var(--ink);border:1px solid var(--hair);border-radius:4px;padding:9px 12px;font-size:13px;min-width:240px;}
+  select.ctrl:focus{outline:1px solid var(--magenta);outline-offset:-1px;}
+  .day-chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:8px 12px;font-size:12px;font-weight:500;cursor:pointer;}
+  .chip:hover{border-color:var(--magenta-dim);color:var(--ink);}
+  .chip.active{background:var(--magenta);border-color:var(--magenta);color:#20030f;font-weight:700;}
+
+  .mode-tabs{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid var(--hair);}
+  .mode-tab{font-family:"IBM Plex Mono",monospace;background:none;border:none;color:var(--ink-3);padding:10px 4px;margin-right:22px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;}
+  .mode-tab:hover{color:var(--ink-2);}
+  .mode-tab.active{color:var(--magenta);border-bottom-color:var(--magenta);}
+
+  .board{display:grid;grid-template-columns:260px 1fr;gap:26px;align-items:center;margin-bottom:30px;}
+  .cov-ring{position:relative;width:200px;height:200px;}
+  .cov-ring svg{transform:rotate(-90deg);}
+  .cov-ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .cov-ring .pct b{font-family:"IBM Plex Mono",monospace;font-size:34px;color:var(--magenta);}
+  .cov-ring .pct span{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);}
+  .kpi-row .cell{background:var(--bg);padding:16px;}
+  .kpi-row .cell .label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:9px;}
+  .kpi-row .cell .value{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600;}
+  .kpi-row .cell .value.magenta{color:var(--magenta);}
+  .kpi-row .cell .value.critical{color:var(--critical);}
+
+  section{margin-bottom:30px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:240px;}
+  .search::placeholder{color:var(--ink-3);}
+  .search:focus{outline:1px solid var(--magenta);outline-offset:-1px;}
+
+  table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.data-table th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--hair);cursor:default;}
+  table.data-table th.num, table.data-table td.num{text-align:right;}
+  table.data-table td{padding:8px 10px;border-bottom:1px solid var(--hair);color:var(--ink-2);}
+  table.data-table td.strong{color:var(--ink);font-weight:600;}
+  table.data-table tbody tr:hover{background:var(--surface);}
+
+  .prov-row{cursor:pointer;}
+  .prov-row .chev{display:inline-block;color:var(--ink-3);font-size:10px;margin-right:8px;transition:transform .15s;}
+  .prov-row.open .chev{transform:rotate(90deg);color:var(--magenta);}
+  .prov-expand{background:var(--surface-2);}
+  .prov-expand td{padding:0;border-bottom:1px solid var(--hair);}
+  .prov-expand-inner{padding:12px 14px 16px 30px;}
+  .mini-list{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;}
+  .mini-list .row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px dashed var(--hair);}
+  .mini-list .row .code{color:var(--ink-3);}
+
+  .cov-cell{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;width:100%;}
+  .cov-cell .sw{width:7px;height:7px;border-radius:50%;}
+  .cov-cell.good .sw{background:var(--good-ink);} .cov-cell.good{color:var(--good-ink);}
+  .cov-cell.warning .sw{background:var(--warning);} .cov-cell.warning{color:var(--warning);}
+  .cov-cell.serious .sw{background:var(--serious);} .cov-cell.serious{color:var(--serious);}
+  .cov-cell.critical .sw{background:var(--critical);} .cov-cell.critical{color:var(--critical);}
+
+  .empty-note{padding:16px;text-align:center;color:var(--ink-3);font-size:12.5px;border:1px dashed var(--hair);border-radius:4px;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:1fr;}
+    .kpi-row{grid-template-columns:1fr;}
+    table.data-table{display:block;overflow-x:auto;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="dot"></span><h1>Clientes Potenciales</h1></div>
+    <div class="sub">Sin compra vs. universo de clientes potenciales (80% de la venta), por vendedor — Fusión Lago Puelo / Elebes</div>
+    <div class="meta">
+      Potencial = concentra el 80% de la venta de su vendedor en <b id="rankingText">—</b> ·
+      Compras evaluadas: <b id="periodoText">—</b> · Datos al: <b id="fechaText">—</b>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Vendedor</label>
+      <select class="ctrl" id="vendedorSelect"></select>
+    </div>
+    <div class="ctrl-group" style="flex:1;min-width:280px">
+      <label>Día de visita</label>
+      <div class="day-chips" id="dayChips"></div>
+    </div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="general">General</button>
+    <button class="mode-tab" data-mode="proveedor">Por proveedor</button>
+  </div>
+
+  <div id="generalView">
+    <div class="board">
+      <div class="cov-ring">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="var(--hair)" stroke-width="16"/>
+          <circle id="covArc" cx="100" cy="100" r="86" fill="none" stroke="var(--magenta)" stroke-width="16" stroke-linecap="round"/>
+        </svg>
+        <div class="pct"><b id="covPct">—</b><span id="covFrac">— / —</span></div>
+      </div>
+      <div class="kpi-row">
+        <div class="cell"><div class="label">Potenciales (universo)</div><div class="value mono" id="kpiUniverso">—</div></div>
+        <div class="cell"><div class="label">Sin compra</div><div class="value mono critical" id="kpiSinCompra">—</div></div>
+        <div class="cell"><div class="label">Cobertura</div><div class="value mono magenta" id="kpiCobertura">—</div></div>
+      </div>
+    </div>
+    <section>
+      <div class="sec-head">
+        <h2>Potenciales sin compra</h2>
+        <input class="search" id="searchGeneral" type="text" placeholder="buscar_cliente...">
+      </div>
+      <div id="generalTableWrap"></div>
+    </section>
+  </div>
+
+  <div id="proveedorView" style="display:none">
+    <section>
+      <div class="sec-head">
+        <h2>Cobertura por proveedor (solo potenciales)</h2>
+        <div class="n" id="provCount"></div>
+      </div>
+      <table class="data-table">
+        <thead><tr>
+          <th>Proveedor</th><th class="num">Universo</th><th class="num">Compraron</th><th class="num">Sin compra</th><th class="num">Cobertura</th>
+        </tr></thead>
+        <tbody id="provTableBody"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <footer>
+    <div><b>Metodología:</b> "potencial" = cliente que, dentro de la cartera de su vendedor, entra en el grupo que concentra el 80% de la venta neta de los últimos 3 meses (curva de Pareto, calculada por vendedor). Se excluyen los códigos 1176, 43, 16 y 37 (no son vendedores reales). "Compró" = venta finalizada, no nota de crédito, en el mes en curso. El filtro de día usa los días configurados en la ruta de preventa de cada cliente. La vista "por proveedor" solo lista proveedores que tuvieron alguna venta de un cliente potencial en el período.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null;
+let selVendedor = "__TODOS__";
+let selDia = null;
+let selMode = "general";
+let searchTerm = "";
+let openProveedor = null;
+
+const DIA_LABEL = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado', domingo:'Domingo' };
+const DIAS_ORDEN = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+
+function fmtPct(n){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%'; }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function statusFromCobertura(p){
+  if (p >= 0.7) return 'good';
+  if (p >= 0.5) return 'warning';
+  if (p >= 0.3) return 'serious';
+  return 'critical';
+}
+
+function clientesFiltrados(){
+  return DATA.clientes.filter(c => {
+    if (selVendedor !== "__TODOS__" && c.codigoVendedor !== selVendedor) return false;
+    if (selDia && !c.dias.includes(selDia)) return false;
+    return true;
+  });
+}
+
+function renderSelectors(){
+  const vSel = document.getElementById('vendedorSelect');
+  vSel.innerHTML = `<option value="__TODOS__">Todos los vendedores</option>` +
+    DATA.vendedores.map(v => `<option value="${v.codigo}">${v.nombre}</option>`).join('');
+  vSel.value = selVendedor;
+  vSel.addEventListener('change', () => { selVendedor = vSel.value; renderAll(); });
+
+  document.getElementById('dayChips').innerHTML =
+    `<button class="chip ${selDia===null?'active':''}" data-dia="">Todos</button>` +
+    DIAS_ORDEN.map(d => `<button class="chip ${selDia===d?'active':''}" data-dia="${d}">${DIA_LABEL[d]}</button>`).join('');
+  document.querySelectorAll('.chip').forEach(btn => btn.addEventListener('click', () => {
+    const d = btn.getAttribute('data-dia');
+    selDia = d === "" ? null : d;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === btn));
+    renderAll();
+  }));
+}
+
+function renderGeneral(rows){
+  const universo = rows.length;
+  const sinCompra = rows.filter(c => !c.compro);
+  const cobertura = universo > 0 ? (universo - sinCompra.length) / universo : 0;
+
+  const R = 86, C = 2*Math.PI*R;
+  document.getElementById('covArc').setAttribute('stroke-dasharray', `${C*cobertura} ${C}`);
+  document.getElementById('covPct').textContent = fmtPct(cobertura);
+  document.getElementById('covFrac').textContent = `${universo - sinCompra.length} / ${universo}`;
+  document.getElementById('kpiUniverso').textContent = universo;
+  document.getElementById('kpiSinCompra').textContent = sinCompra.length;
+  document.getElementById('kpiCobertura').textContent = fmtPct(cobertura);
+
+  let lista = sinCompra;
+  if (searchTerm) lista = lista.filter(c => c.nombre.toLowerCase().includes(searchTerm) || c.codigo.includes(searchTerm));
+  lista = lista.slice().sort((a,b) => b.ventaNeta3m - a.ventaNeta3m);
+
+  const wrap = document.getElementById('generalTableWrap');
+  if (lista.length === 0) {
+    wrap.innerHTML = `<div class="empty-note">${sinCompra.length===0 ? 'Cobertura completa en esta selección.' : 'Sin resultados para la búsqueda.'}</div>`;
+    return;
+  }
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+      <th>Cliente</th><th>Localidad</th><th>Vendedor</th><th class="num">Venta neta (3 meses)</th><th>Días de visita</th>
+    </tr></thead><tbody>
+      ${lista.map(c => `
+        <tr>
+          <td class="strong">${c.nombre}<span style="color:var(--ink-3);font-size:10.5px;margin-left:6px">#${c.codigo}</span></td>
+          <td>${c.localidad || '—'}</td>
+          <td>${vendedorNombre(c.codigoVendedor)}</td>
+          <td class="num mono">${fmtMoneyCompact(c.ventaNeta3m)}</td>
+          <td>${c.dias.map(d => DIA_LABEL[d]).join(', ') || '—'}</td>
+        </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function vendedorNombre(cod){
+  const v = DATA.vendedores.find(v => v.codigo === cod);
+  return v ? v.nombre : cod;
+}
+
+function renderProveedor(rows){
+  const universo = rows.length;
+  document.getElementById('provCount').textContent = `(${DATA.proveedores.length} proveedores · universo ${universo} clientes potenciales)`;
+  const tbody = document.getElementById('provTableBody');
+  if (universo === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-note">Sin clientes potenciales en esta selección.</div></td></tr>`;
+    return;
+  }
+  const provRows = DATA.proveedores.map(p => {
+    const compradores = rows.filter(c => c.proveedoresComprados.includes(p.codigo));
+    const sinCompra = rows.filter(c => !c.proveedoresComprados.includes(p.codigo));
+    const cobertura = universo > 0 ? compradores.length / universo : 0;
+    return { ...p, universo, compradores: compradores.length, sinCompra, cobertura };
+  }).sort((a,b) => a.cobertura - b.cobertura);
+
+  tbody.innerHTML = provRows.map(p => {
+    const isOpen = openProveedor === p.codigo;
+    const row = `
+      <tr class="prov-row ${isOpen?'open':''}" data-prov="${p.codigo}">
+        <td class="strong"><span class="chev">▸</span>${p.nombre}</td>
+        <td class="num mono">${p.universo}</td>
+        <td class="num mono">${p.compradores}</td>
+        <td class="num mono">${p.sinCompra.length}</td>
+        <td class="num"><span class="cov-cell ${statusFromCobertura(p.cobertura)}"><span class="sw"></span>${fmtPct(p.cobertura)}</span></td>
+      </tr>`;
+    if (!isOpen) return row;
+    const listHtml = p.sinCompra.length === 0
+      ? `<div class="empty-note">Todos los potenciales compraron este proveedor en el período.</div>`
+      : `<div class="mini-list">${p.sinCompra.slice().sort((a,b)=>b.ventaNeta3m-a.ventaNeta3m).map(c => `
+          <div class="row"><span>${c.nombre}</span><span class="code mono">#${c.codigo}</span></div>`).join('')}</div>`;
+    return row + `<tr class="prov-expand"><td colspan="5"><div class="prov-expand-inner">
+        <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:8px">potenciales sin compra de ${p.nombre} (${p.sinCompra.length})</div>
+        ${listHtml}
+      </div></td></tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.prov-row').forEach(el => el.addEventListener('click', () => {
+    const cod = el.getAttribute('data-prov');
+    openProveedor = openProveedor === cod ? null : cod;
+    renderAll();
+  }));
+}
+
+function renderAll(){
+  const rows = clientesFiltrados();
+  if (selMode === 'general') { renderGeneral(rows); } else { renderProveedor(rows); }
+}
+
+document.querySelectorAll('.mode-tab').forEach(btn => btn.addEventListener('click', () => {
+  selMode = btn.getAttribute('data-mode');
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b===btn));
+  document.getElementById('generalView').style.display = selMode==='general' ? '' : 'none';
+  document.getElementById('proveedorView').style.display = selMode==='proveedor' ? '' : 'none';
+  renderAll();
+}));
+document.getElementById('searchGeneral').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderAll(); });
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    document.getElementById('rankingText').textContent = `${data.rankingDesde.split('-').reverse().join('/')} — ${data.rankingHasta.split('-').reverse().join('/')}`;
+    document.getElementById('periodoText').textContent = `${DATA.periodoDesde.split('-').reverse().join('/')} — ${DATA.periodoHasta.split('-').reverse().join('/')}`;
+    document.getElementById('fechaText').textContent = new Date(DATA.generatedAt).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    renderSelectors();
+    renderAll();
+  })
+  .catch(err => {
+    document.querySelector('.wrap').insertAdjacentHTML('beforeend',
+      `<div class="empty-note" style="color:var(--critical)">Error cargando datos (${err.message}). Si esto persiste, avisale a Claude.</div>`);
+  });
+</script>

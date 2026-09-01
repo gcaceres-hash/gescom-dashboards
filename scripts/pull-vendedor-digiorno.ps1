@@ -17,13 +17,11 @@ Uso:
 #>
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
-    [string]$OutPath = (Join-Path $PSScriptRoot "vendedor-digiorno-data.json"),
+    [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/digiorno"),
+    [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "vendedor-digiorno-template.html"),
     [string]$CodigoVendedor = "076",
-    [string]$MesDesde = "",
-    [string]$NetlifyToken = $env:NETLIFY_TOKEN,
-    [string]$NetlifySiteId = "5ce39cdf-4c63-4b97-b208-2cc27c467d15",
-    [string]$NetlifySiteUrl = "https://seguimiento-digiorno-fusionlpelebes.netlify.app"
+    [string]$MesDesde = ""
 )
 $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -249,21 +247,20 @@ $mesData = [pscustomobject]@{
     rechazos = $rechazos
 }
 
-# --- cargar historico existente (desde el sitio publicado) y fusionar el mes procesado ---
+# --- cargar historico existente (del data.json ya commiteado en el repo) y fusionar el mes procesado ---
 $meses = [ordered]@{}
-if ($NetlifySiteUrl) {
-    try {
-        $liveUrl = "$NetlifySiteUrl/data.json?t=$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
-        $tmpDownload = Join-Path $env:TEMP "digiorno-live-data.json"
-        Invoke-WebRequest -Uri $liveUrl -Method Get -UseBasicParsing -OutFile $tmpDownload
-        $rawText = [System.IO.File]::ReadAllText($tmpDownload, [System.Text.Encoding]::UTF8)
+try {
+    if (Test-Path $OutPath) {
+        $rawText = [System.IO.File]::ReadAllText($OutPath, [System.Text.Encoding]::UTF8)
         $prev = $rawText | ConvertFrom-Json
         if ($prev.meses) {
             foreach ($prop in $prev.meses.PSObject.Properties) { $meses[$prop.Name] = $prop.Value }
-            Write-Log "Historico cargado desde el sitio publicado: $($meses.Keys -join ', ')"
+            Write-Log "Historico cargado desde $OutPath : $($meses.Keys -join ', ')"
         }
-    } catch { Write-Log "Aviso: no se pudo leer el data.json publicado, se arranca sin historico previo" }
-}
+    } else {
+        Write-Log "No existe data.json previo en $OutPath, se arranca sin historico."
+    }
+} catch { Write-Log "Aviso: no se pudo leer el data.json existente, se arranca sin historico previo" }
 foreach ($k in @($meses.Keys)) {
     if ($k -ne $mesKey -and -not $meses[$k].cerrado) { $meses[$k] | Add-Member -NotePropertyName cerrado -NotePropertyValue $true -Force }
 }
@@ -276,22 +273,9 @@ $out = [pscustomobject]@{
     deuda = $deuda
     meses = $meses
 }
+if (-not (Test-Path $DocsDir)) { New-Item -ItemType Directory -Path $DocsDir -Force | Out-Null }
 $jsonText = $out | ConvertTo-Json -Depth 12 -Compress
 [System.IO.File]::WriteAllText($OutPath, $jsonText, (New-Object System.Text.UTF8Encoding $false))
-Write-Log "Guardado local: $OutPath"
+Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
+Write-Log "Guardado: $OutPath"
 Write-Log "Mes $mesKey -> Venta neta: $($ventaTotales.ventaNeta) | CMV: $($ventaTotales.cmv) | Cobertura: $($cobertura.clientesActivos)/$($cobertura.carteraTotal) | Rechazos: $($rechazos.cantidad) ($($rechazos.monto)) | Deuda: $($deuda.saldoTotal)"
-
-if ($NetlifySiteId -and $NetlifySiteUrl) {
-    Write-Log "Desplegando a Netlify..."
-    $deployDir = Join-Path $env:TEMP "digiorno-netlify-deploy"
-    if (Test-Path $deployDir) { Remove-Item $deployDir -Recurse -Force }
-    New-Item -ItemType Directory -Path $deployDir | Out-Null
-    Copy-Item $TemplatePath (Join-Path $deployDir "index.html")
-    Copy-Item $OutPath (Join-Path $deployDir "data.json")
-    $zipPath = Join-Path $deployDir "site.zip"
-    Compress-Archive -Path (Join-Path $deployDir "index.html"), (Join-Path $deployDir "data.json") -DestinationPath $zipPath -Force
-    $netlifyHeaders = @{ Authorization = "Bearer $NetlifyToken" }
-    $deployResp = Invoke-RestMethod -Uri "https://api.netlify.com/api/v1/sites/$NetlifySiteId/deploys" -Headers $netlifyHeaders -Method Post -InFile $zipPath -ContentType "application/zip"
-    Write-Log "Deploy Netlify: id=$($deployResp.id) state=$($deployResp.state)"
-    Write-Log "Publicado en: $NetlifySiteUrl"
-}

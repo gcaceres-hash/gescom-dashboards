@@ -19,12 +19,10 @@ Uso:
 #>
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
-    [string]$OutPath = (Join-Path $PSScriptRoot "venta-rentabilidad-data.json"),
+    [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/rentabilidad"),
+    [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "venta-rentabilidad-template.html"),
-    [string]$MesDesde = "",   # yyyy-MM-01; si se omite, usa el 1ro del mes actual
-    [string]$NetlifyToken = $env:NETLIFY_TOKEN,
-    [string]$NetlifySiteId = "6cd50663-50c1-4f8b-9950-71f215931e75",
-    [string]$NetlifySiteUrl = "https://rentabilidadfusionlpelebes.netlify.app"
+    [string]$MesDesde = ""   # yyyy-MM-01; si se omite, usa el 1ro del mes actual
 )
 $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -169,20 +167,21 @@ $mesData = [pscustomobject]@{
     proveedores = @($proveedoresOut | Sort-Object ventaNeta -Descending)
 }
 
-# --- cargar historico existente (desde el sitio publicado, no del archivo local) y fusionar el mes procesado ---
+# --- cargar historico existente (del data.json ya commiteado en el repo) y fusionar el mes procesado ---
 $meses = [ordered]@{}
 try {
-    $liveUrl = "$NetlifySiteUrl/data.json?t=$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
-    $tmpDownload = Join-Path $env:TEMP "pizarra-live-data.json"
-    Invoke-WebRequest -Uri $liveUrl -Method Get -UseBasicParsing -OutFile $tmpDownload
-    $rawText = [System.IO.File]::ReadAllText($tmpDownload, [System.Text.Encoding]::UTF8)  # detecta y quita BOM si esta
-    $prev = $rawText | ConvertFrom-Json
-    if ($prev.meses) {
-        foreach ($prop in $prev.meses.PSObject.Properties) { $meses[$prop.Name] = $prop.Value }
-        Write-Log "Historico cargado desde el sitio publicado: $($meses.Keys -join ', ')"
+    if (Test-Path $OutPath) {
+        $rawText = [System.IO.File]::ReadAllText($OutPath, [System.Text.Encoding]::UTF8)  # detecta y quita BOM si esta
+        $prev = $rawText | ConvertFrom-Json
+        if ($prev.meses) {
+            foreach ($prop in $prev.meses.PSObject.Properties) { $meses[$prop.Name] = $prop.Value }
+            Write-Log "Historico cargado desde $OutPath : $($meses.Keys -join ', ')"
+        }
+    } else {
+        Write-Log "No existe data.json previo en $OutPath, se arranca sin historico."
     }
 } catch {
-    Write-Log "Aviso: no se pudo leer el data.json publicado, se arranca sin historico previo ($($_.Exception.Message))"
+    Write-Log "Aviso: no se pudo leer el data.json existente, se arranca sin historico previo ($($_.Exception.Message))"
 }
 # cualquier mes anterior que no sea el que estamos procesando ahora queda cerrado
 foreach ($k in @($meses.Keys)) {
@@ -195,22 +194,9 @@ $out = [pscustomobject]@{
     mesActual = (Get-Date -Format "yyyy-MM")
     meses = $meses
 }
+if (-not (Test-Path $DocsDir)) { New-Item -ItemType Directory -Path $DocsDir -Force | Out-Null }
 $jsonText = $out | ConvertTo-Json -Depth 10 -Compress
 [System.IO.File]::WriteAllText($OutPath, $jsonText, (New-Object System.Text.UTF8Encoding $false))
-Write-Log "Guardado local: $OutPath (meses en historico: $($meses.Keys -join ', '))"
+Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
+Write-Log "Guardado: $OutPath (meses en historico: $($meses.Keys -join ', '))"
 Write-Log "Mes $mesKey -> Venta neta: $($totales.ventaNeta) | CMV: $($totales.cmv) | Descuentos: $($totales.descuentos) | Proveedores: $($proveedoresOut.Count)"
-
-# --- desplegar a Netlify (index.html sin cambios + data.json actualizado) ---
-Write-Log "Desplegando a Netlify..."
-$deployDir = Join-Path $env:TEMP "pizarra-netlify-deploy"
-if (Test-Path $deployDir) { Remove-Item $deployDir -Recurse -Force }
-New-Item -ItemType Directory -Path $deployDir | Out-Null
-Copy-Item $TemplatePath (Join-Path $deployDir "index.html")
-Copy-Item $OutPath (Join-Path $deployDir "data.json")
-$zipPath = Join-Path $deployDir "site.zip"
-Compress-Archive -Path (Join-Path $deployDir "index.html"), (Join-Path $deployDir "data.json") -DestinationPath $zipPath -Force
-
-$netlifyHeaders = @{ Authorization = "Bearer $NetlifyToken" }
-$deployResp = Invoke-RestMethod -Uri "https://api.netlify.com/api/v1/sites/$NetlifySiteId/deploys" -Headers $netlifyHeaders -Method Post -InFile $zipPath -ContentType "application/zip"
-Write-Log "Deploy Netlify: id=$($deployResp.id) state=$($deployResp.state)"
-Write-Log "Publicado en: $NetlifySiteUrl"

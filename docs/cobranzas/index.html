@@ -1,0 +1,354 @@
+<title>Torre de Cobranzas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0f0b0a;
+    --surface:   #1a1412;
+    --surface-2: #211a17;
+    --ink:       #f2ecea;
+    --ink-2:     #b9a9a3;
+    --ink-3:     #766661;
+    --hair:      #362b27;
+    --border:    rgba(242,236,234,0.10);
+    --coral:     #ff6a4d;
+    --coral-dim: #7a3222;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#e66767;
+    --good-ink: #4bd07a;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#0f0b0a; --surface:#1a1412; --surface-2:#211a17; --ink:#f2ecea; --ink-2:#b9a9a3; --ink-3:#766661;
+    --hair:#362b27; --border:rgba(242,236,234,0.10); --coral:#ff6a4d; --coral-dim:#7a3222;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767; --good-ink:#4bd07a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--coral);box-shadow:0 0 8px var(--coral);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+  .live-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:3px 10px 3px 8px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin-top:6px;}
+  .live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--coral);}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:22px 0 26px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.coral{color:var(--coral);}
+  .board .cell .value.critical{color:var(--critical);}
+  .board .cell .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+
+  section{margin-bottom:30px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+
+  .aging-bar{display:flex;width:100%;height:40px;border-radius:4px;overflow:hidden;border:1px solid var(--hair);}
+  .aging-seg{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:2px solid var(--bg);}
+  .aging-seg:last-child{border-right:none;}
+  .aging-seg .alabel{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;white-space:nowrap;color:#0b0b0b;text-shadow:0 1px 1px rgba(255,255,255,.15);}
+  .aging-legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:11.5px;color:var(--ink-2);}
+  .aging-legend .item{display:flex;align-items:center;gap:6px;}
+  .aging-legend .sw{width:9px;height:9px;border-radius:2px;flex:none;}
+  .aging-legend .amt{color:var(--ink-3);margin-left:2px;}
+
+  .resp-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .resp-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.02em;}
+  .resp-tab:hover{border-color:var(--coral-dim);color:var(--ink);}
+  .resp-tab.active{background:var(--coral);border-color:var(--coral);color:#170a06;font-weight:700;}
+  .resp-tab .n{opacity:.7;font-size:10.5px;margin-left:4px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:260px;}
+  .search::placeholder{color:var(--ink-3);}
+  .search:focus{outline:1px solid var(--coral);outline-offset:-1px;}
+  .hint{font-size:11.5px;color:var(--ink-3);}
+
+  .ticker-head{display:grid;grid-template-columns:26px 1fr 130px 150px 130px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head span{cursor:pointer;user-select:none;}
+  .ticker-head span.num{text-align:right;}
+  .ticker-head span.sorted{color:var(--coral);}
+  .ticker-list{border:1px solid var(--hair);border-top:none;}
+  .trow{display:grid;grid-template-columns:26px 1fr 130px 150px 130px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);cursor:pointer;}
+  .trow:hover{background:var(--surface);}
+  .trow.open{background:var(--surface-2);}
+  .trow .chev{color:var(--ink-3);font-size:10px;transition:transform .15s;}
+  .trow.open .chev{transform:rotate(90deg);color:var(--coral);}
+  .trow .name{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trow .name .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  .trow .name .split-badge{display:inline-block;margin-left:8px;font-size:9.5px;font-weight:700;color:var(--coral);border:1px solid var(--coral-dim);border-radius:3px;padding:1px 5px;text-transform:uppercase;vertical-align:middle;}
+  .trow .num{text-align:right;font-size:13px;}
+
+  .status-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;justify-content:flex-end;width:100%;}
+  .status-chip .sw{width:7px;height:7px;border-radius:50%;}
+  .sw.good, .status-chip.good .sw{background:var(--good-ink);} .status-chip.good{color:var(--good-ink);}
+  .sw.warning, .status-chip.warning .sw{background:var(--warning);} .status-chip.warning{color:var(--warning);}
+  .sw.serious, .status-chip.serious .sw{background:var(--serious);} .status-chip.serious{color:var(--serious);}
+  .sw.critical, .status-chip.critical .sw{background:var(--critical);} .status-chip.critical{color:var(--critical);}
+
+  .expand-inner{padding:16px 14px 20px 52px;background:var(--surface-2);border-bottom:1px solid var(--hair);}
+  .expand-inner h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:16px 0 10px;font-weight:600;}
+  .expand-inner h3:first-child{margin-top:0;}
+  .vend-row{display:grid;grid-template-columns:1fr 1fr 90px;gap:10px;align-items:center;padding:5px 0;font-size:12.5px;}
+  .vend-row .name{color:var(--ink-2);}
+  .vend-track{height:6px;background:var(--hair);border-radius:3px;overflow:hidden;}
+  .vend-fill{height:100%;background:var(--coral);border-radius:3px;}
+  .vend-val{text-align:right;color:var(--ink);}
+
+  table.comp-table{width:100%;border-collapse:collapse;font-size:12px;}
+  table.comp-table th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:6px 8px;border-bottom:1px solid var(--hair);}
+  table.comp-table th.num, table.comp-table td.num{text-align:right;}
+  table.comp-table td{padding:6px 8px;border-bottom:1px solid var(--hair);color:var(--ink-2);}
+  table.comp-table td.strong{color:var(--ink);font-weight:600;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:repeat(2,1fr);}
+    table.comp-table{display:block;overflow-x:auto;}
+  }
+  @media (max-width: 760px){
+    .ticker-head, .trow{grid-template-columns:20px 1fr 100px;}
+    .ticker-head span:nth-child(4), .ticker-head span:nth-child(5),
+    .trow > :nth-child(4), .trow > :nth-child(5){display:none;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Torre de Cobranzas</h1></div>
+      <div class="sub">Cuenta corriente de clientes por responsable de cobro — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Datos al: <b id="fechaText">—</b><br>
+      <span class="live-pill"><span class="dot"></span>Foto del momento</span>
+    </div>
+  </header>
+
+  <div class="board" id="kpiRow"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Antigüedad de saldos</h2>
+      <div class="n">deuda pendiente por franja de vencimiento</div>
+    </div>
+    <div class="aging-bar" id="agingBar"></div>
+    <div class="aging-legend" id="agingLegend"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Por responsable de cobro</h2>
+      <div class="n" id="respCount"></div>
+    </div>
+    <div class="resp-tabs" id="respTabs"></div>
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="buscar_cliente...">
+      <span class="hint">click en un cliente → detalle de facturas y si la deuda está repartida entre vendedores</span>
+    </div>
+    <div class="ticker-head">
+      <span></span>
+      <span data-key="nombre">Cliente</span>
+      <span data-key="saldoTotal" class="num sorted">Saldo</span>
+      <span data-key="peorDiasVencido" class="num">Peor vencimiento</span>
+      <span>Vendedor</span>
+    </div>
+    <div class="ticker-list" id="tickerList"></div>
+  </section>
+
+  <footer>
+    <div><b>Metodología:</b> saldo pendiente = comprobantes abiertos en la cuenta corriente de Gescom. Cada comprobante se atribuye a un vendedor a través de la venta que lo originó; el responsable de cobro surge de esa atribución: vendedores de código de 3 dígitos → Bruno, el resto → Johana, salvo mayoristas que se gestionan solos (Martín Di Giorno, Gisela Caceres, Guillermo Zeballos). Los códigos de vendedor 1176, 43 (no son vendedores reales), 16 (Depósito) y 37 (Logística) se excluyen de este reporte — ver el detalle excluido más abajo. "Sin vendedor asignado" = deuda sin venta asociada (ajustes u otro motivo). Antigüedad = días transcurridos desde la fecha de vencimiento de cada comprobante hasta hoy.</div>
+    <div id="excluidoNote" style="margin-top:8px"></div>
+    <div style="margin-top:8px">Fuente: API Gescom. Foto fija — se actualiza sola según la rutina configurada.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null;
+
+function fmtInt(n){ return Math.round(n).toLocaleString('es-AR'); }
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%'; }
+
+const BUCKET_LABEL = { vigente:'Vigente', d1_30:'1–30 días', d31_60:'31–60 días', d61_90:'61–90 días', d90mas:'+90 días' };
+const BUCKET_COLOR = { vigente:'var(--good-ink)', d1_30:'#c7d94a', d31_60:'var(--warning)', d61_90:'var(--serious)', d90mas:'var(--critical)' };
+const BUCKET_STATUS = { vigente:'good', d1_30:'good', d31_60:'warning', d61_90:'serious', d90mas:'critical' };
+function statusFromDias(d){
+  if (d <= 0) return 'good';
+  if (d <= 30) return 'good';
+  if (d <= 60) return 'warning';
+  if (d <= 90) return 'serious';
+  return 'critical';
+}
+
+let currentResp = 'TODOS';
+let sortKey = 'saldoTotal';
+let sortDir = -1;
+let openCliente = null;
+let searchTerm = '';
+
+function clientesFiltrados(){
+  if (currentResp === 'TODOS') return DATA.responsables.flatMap(r => r.clientes.map(c => ({...c, respNombre:r.nombre, respClave:r.clave})));
+  const r = DATA.responsables.find(r => r.clave === currentResp);
+  return r ? r.clientes.map(c => ({...c, respNombre:r.nombre, respClave:r.clave})) : [];
+}
+
+function sortRows(rows){
+  return rows.slice().sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+}
+
+function renderKPIs(){
+  const t = DATA.totales;
+  const vencido = t.d1_30 + t.d31_60 + t.d61_90 + t.d90mas;
+  const pctVencido = t.saldoTotal !== 0 ? vencido / t.saldoTotal : 0;
+  let peor = null;
+  DATA.responsables.forEach(r => r.clientes.forEach(c => { if (!peor || c.saldoTotal > peor.saldoTotal) peor = c; }));
+  const cells = [
+    { label:'Saldo total pendiente', value: fmtMoneyCompact(t.saldoTotal), foot: fmtMoney(t.saldoTotal), coral:true },
+    { label:'% vencido', value: fmtPct(pctVencido), foot: fmtMoneyCompact(vencido) + ' vencido' },
+    { label:'Vencido +90 días', value: fmtMoneyCompact(t.d90mas), foot: fmtPct(t.saldoTotal? t.d90mas/t.saldoTotal:0) + ' del total', critical:true },
+    { label:'Mayor deuda individual', value: peor ? fmtMoneyCompact(peor.saldoTotal) : '—', foot: peor ? peor.nombre : '' }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `
+    <div class="cell"><div class="label">${c.label}</div><div class="value mono ${c.coral?'coral':''} ${c.critical?'critical':''}">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
+}
+
+function renderAging(){
+  const t = DATA.totales;
+  const order = ['vigente','d1_30','d31_60','d61_90','d90mas'];
+  const total = order.reduce((s,k)=>s+t[k],0) || 1;
+  document.getElementById('agingBar').innerHTML = order.map(k => {
+    const pct = t[k]/total*100;
+    return `<div class="aging-seg" style="width:${pct.toFixed(2)}%;background:${BUCKET_COLOR[k]}" title="${BUCKET_LABEL[k]} — ${fmtMoney(t[k])}">
+      ${pct>6 ? `<span class="alabel">${fmtPct(t[k]/total)}</span>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('agingLegend').innerHTML = order.map(k => `
+    <span class="item"><span class="sw" style="background:${BUCKET_COLOR[k]}"></span>${BUCKET_LABEL[k]}<span class="amt">${fmtMoneyCompact(t[k])}</span></span>`).join('');
+}
+
+function renderRespTabs(){
+  const tabs = [{clave:'TODOS', nombre:'Todos', saldoTotal: DATA.totales.saldoTotal, n: DATA.responsables.reduce((s,r)=>s+r.clientes.length,0)}]
+    .concat(DATA.responsables.map(r => ({...r, n:r.clientes.length})));
+  document.getElementById('respTabs').innerHTML = tabs.map(t => `
+    <button class="resp-tab ${t.clave===currentResp?'active':''}" data-resp="${t.clave}">${t.nombre}<span class="n">${fmtMoneyCompact(t.saldoTotal)} · ${t.n}</span></button>`).join('');
+  document.querySelectorAll('.resp-tab').forEach(btn => btn.addEventListener('click', () => {
+    currentResp = btn.getAttribute('data-resp');
+    openCliente = null;
+    renderList();
+  }));
+}
+
+function renderExpand(c){
+  let html = '';
+  if (c.repartidoEntreVendedores) {
+    const max = Math.max(1, ...c.vendedores.map(v=>v.saldo));
+    html += `<h3>deuda repartida entre vendedores</h3>` + c.vendedores.map(v => `
+      <div class="vend-row">
+        <div class="name">${v.nombre || 'Sin asignar'}</div>
+        <div class="vend-track"><div class="vend-fill" style="width:${(v.saldo/max*100).toFixed(1)}%"></div></div>
+        <div class="vend-val mono">${fmtMoneyCompact(v.saldo)}</div>
+      </div>`).join('');
+  }
+  html += `<h3>comprobantes pendientes (${c.comprobantes.length})</h3>
+    <table class="comp-table"><thead><tr>
+      <th>Comprobante</th><th>Emisión</th><th>Vencimiento</th><th class="num">Días</th><th class="num">Saldo</th>
+    </tr></thead><tbody>
+      ${c.comprobantes.map(cp => `
+        <tr>
+          <td class="strong">${cp.comprobante || '—'}${cp.esCredito ? ' <span style="color:var(--good-ink);font-size:10px;font-weight:700">NC</span>' : ''}</td>
+          <td>${cp.fechaEmision ? cp.fechaEmision.split('-').reverse().join('/') : '—'}</td>
+          <td>${cp.fechaVencimiento ? cp.fechaVencimiento.split('-').reverse().join('/') : '—'}</td>
+          <td class="num">${cp.diasVencido > 0 ? cp.diasVencido : '—'}</td>
+          <td class="num strong mono" style="${cp.esCredito ? 'color:var(--good-ink)' : ''}">${fmtMoney(cp.saldo)}</td>
+        </tr>`).join('')}
+    </tbody></table>`;
+  return `<div class="expand-inner">${html}</div>`;
+}
+
+function renderList(){
+  let rows = clientesFiltrados();
+  if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm) || r.codigo.includes(searchTerm));
+  rows = sortRows(rows);
+  document.getElementById('respCount').textContent = '(' + rows.length + ' clientes)';
+  document.querySelectorAll('.ticker-head span[data-key]').forEach(s => s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey));
+
+  const list = document.getElementById('tickerList');
+  list.innerHTML = rows.map(r => {
+    const isOpen = openCliente === (r.respClave + '|' + r.codigo);
+    const status = statusFromDias(r.peorDiasVencido);
+    const row = `
+      <div class="trow ${isOpen?'open':''}" data-id="${r.respClave}|${r.codigo}">
+        <span class="chev">▸</span>
+        <span class="name">${r.nombre}<span class="code">#${r.codigo}</span>${r.repartidoEntreVendedores?'<span class="split-badge">repartido</span>':''}</span>
+        <span class="num mono">${fmtMoneyCompact(r.saldoTotal)}</span>
+        <span class="num"><span class="status-chip ${status}"><span class="sw"></span>${r.peorDiasVencido>0 ? r.peorDiasVencido+' días' : 'Al día'}</span></span>
+        <span class="num" style="text-align:left">${currentResp==='TODOS' ? r.respNombre : (r.vendedores[0]?.nombre||'—')}</span>
+      </div>`;
+    return isOpen ? row + renderExpand(r) : row;
+  }).join('');
+
+  list.querySelectorAll('.trow').forEach(el => el.addEventListener('click', () => {
+    const id = el.getAttribute('data-id');
+    openCliente = openCliente === id ? null : id;
+    renderList();
+  }));
+}
+
+document.querySelectorAll('.ticker-head span[data-key]').forEach(s => {
+  s.addEventListener('click', () => {
+    const key = s.getAttribute('data-key');
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+    renderList();
+  });
+});
+document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+
+function renderAll(){
+  document.getElementById('fechaText').textContent = new Date(DATA.generatedAt).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  renderKPIs();
+  renderAging();
+  renderRespTabs();
+  renderList();
+  const exc = DATA.excluido;
+  if (exc && exc.total) {
+    document.getElementById('excluidoNote').innerHTML = `<b>Excluido de este reporte:</b> ${fmtMoneyCompact(exc.total)} atribuidos a códigos de vendedor que no son responsables de cobro reales (1176, 43, Depósito, Logística) — ` +
+      exc.detalle.map(d => `${d.nombre||d.codigo}: ${fmtMoneyCompact(d.monto)}`).join(', ') + '.';
+  }
+}
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => { DATA = data; renderAll(); })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${err.message}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>

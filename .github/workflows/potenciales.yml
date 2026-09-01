@@ -5,6 +5,9 @@ on:
     - cron: "45 10 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   actualizar:
     runs-on: ubuntu-latest
@@ -17,6 +20,13 @@ jobs:
 
       - name: Correr pull-potenciales.ps1
         shell: pwsh
-        env:
-          NETLIFY_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
         run: ./scripts/pull-potenciales.ps1
+
+      - name: Publicar cambios (commit + push a docs/potenciales)
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/potenciales
+          git diff --cached --quiet || git commit -m "Actualiza Clientes Potenciales"
+          git push

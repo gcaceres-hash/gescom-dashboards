@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dashboards Gescom</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0b0c0e; --surface:#151719; --hair:#26292d; --ink:#eef0f2; --ink-2:#a3aab1; --ink-3:#666e75; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;padding:48px 24px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-family:"IBM Plex Mono",monospace;font-size:22px;text-transform:uppercase;letter-spacing:.02em;margin:0 0 6px;}
+  .sub{color:var(--ink-2);font-size:14px;margin-bottom:36px;}
+  .grid{display:grid;gap:12px;}
+  a.card{display:block;border:1px solid var(--hair);background:var(--surface);border-radius:8px;padding:18px 20px;text-decoration:none;color:var(--ink);transition:border-color .15s;}
+  a.card:hover{border-color:var(--ink-2);}
+  a.card b{display:block;font-family:"IBM Plex Mono",monospace;font-size:14px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
+  a.card span{color:var(--ink-3);font-size:13px;}
+  footer{margin-top:40px;color:var(--ink-3);font-size:11.5px;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Dashboards Gescom</h1>
+    <div class="sub">Fusión Lago Puelo / Elebes — actualizados automáticamente por GitHub Actions</div>
+    <div class="grid">
+      <a class="card" href="./rentabilidad/"><b>Pizarra de Rentabilidad</b><span>Venta y margen por proveedor</span></a>
+      <a class="card" href="./cobranzas/"><b>Torre de Cobranzas</b><span>Cuenta corriente de clientes por responsable de cobro</span></a>
+      <a class="card" href="./digiorno/"><b>Seguimiento Martín Di Giorno</b><span>Venta, rentabilidad, cobertura, rechazos y deuda</span></a>
+      <a class="card" href="./cobertura/"><b>Cobertura General</b><span>Clientes sin compra vs. universo, por vendedor</span></a>
+      <a class="card" href="./potenciales/"><b>Clientes Potenciales</b><span>Sin compra vs. universo de clientes que hacen el 80% de la venta</span></a>
+    </div>
+    <footer>github.com/gcaceres-hash/gescom-dashboards</footer>
+  </div>
+</body>
+</html>
