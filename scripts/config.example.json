@@ -1,0 +1,8 @@
+{
+  "authUrl": "https://auth.gescom.online",
+  "realm": "gcw-elebes",
+  "clientId": "gcw-web-api",
+  "baseUrl": "https://elebes.gescom.online",
+  "usuario": "TU_USUARIO",
+  "clave": "TU_CLAVE"
+}

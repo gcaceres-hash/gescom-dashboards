@@ -1,0 +1,364 @@
+<title>Seguimiento — Martín Di Giorno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0a0f10;
+    --surface:   #121a1c;
+    --surface-2: #172224;
+    --ink:       #eef4f4;
+    --ink-2:     #a6b8ba;
+    --ink-3:     #62787a;
+    --hair:      #24363a;
+    --border:    rgba(238,244,244,0.10);
+    --cyan:      #37e0d8;
+    --cyan-dim:  #164c48;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#e66767;
+    --good-ink: #4bd07a;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#0a0f10; --surface:#121a1c; --surface-2:#172224; --ink:#eef4f4; --ink-2:#a6b8ba; --ink-3:#62787a;
+    --hair:#24363a; --border:rgba(238,244,244,0.10); --cyan:#37e0d8; --cyan-dim:#164c48;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767; --good-ink:#4bd07a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .month-tabs{display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap;}
+  .month-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:5px 11px;font-size:11.5px;font-weight:500;cursor:pointer;}
+  .month-tab:hover{border-color:var(--cyan-dim);color:var(--ink);}
+  .month-tab.active{background:var(--cyan);border-color:var(--cyan);color:#04201e;font-weight:700;}
+
+  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:22px 0 30px;}
+  .board .cell{background:var(--bg);padding:16px 16px;}
+  .board .cell .label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:9px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.cyan{color:var(--cyan);}
+  .board .cell .value.critical{color:var(--critical);}
+  .board .cell .value.good{color:var(--good-ink);}
+  .board .cell .foot{font-size:11px;color:var(--ink-3);margin-top:6px;}
+
+  section{margin-bottom:34px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+
+  /* venta por proveedor */
+  .ticker-head{display:grid;grid-template-columns:1fr 130px 130px 100px 100px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head span.num{text-align:right;}
+  .ticker-list{border:1px solid var(--hair);border-top:none;}
+  .trow{display:grid;grid-template-columns:1fr 130px 130px 100px 100px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--hair);}
+  .trow:hover{background:var(--surface);}
+  .trow .name{font-weight:600;font-size:13px;}
+  .trow .num{text-align:right;font-size:13px;}
+  .bar-wrap{position:relative;height:100%;}
+  .share-bar{position:absolute;left:0;top:0;bottom:0;background:var(--cyan-dim);z-index:0;}
+  .trow-inner{position:relative;z-index:1;display:contents;}
+
+  .status-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;justify-content:flex-end;width:100%;}
+  .status-chip .sw{width:7px;height:7px;border-radius:50%;}
+  .status-chip.good .sw{background:var(--good-ink);} .status-chip.good{color:var(--good-ink);}
+  .status-chip.warning .sw{background:var(--warning);} .status-chip.warning{color:var(--warning);}
+  .status-chip.serious .sw{background:var(--serious);} .status-chip.serious{color:var(--serious);}
+  .status-chip.critical .sw{background:var(--critical);} .status-chip.critical{color:var(--critical);}
+
+  /* cobertura */
+  .cov-wrap{display:grid;grid-template-columns:260px 1fr;gap:26px;align-items:center;}
+  .cov-ring{position:relative;width:200px;height:200px;}
+  .cov-ring svg{transform:rotate(-90deg);}
+  .cov-ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .cov-ring .pct b{font-family:"IBM Plex Mono",monospace;font-size:32px;color:var(--cyan);}
+  .cov-ring .pct span{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+  .cov-list{border:1px solid var(--hair);border-radius:4px;max-height:260px;overflow-y:auto;}
+  .cov-list .cli-row{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--hair);font-size:12.5px;}
+  .cov-list .cli-row:last-child{border-bottom:none;}
+  .cov-list .cli-row .code{color:var(--ink-3);}
+  .cov-empty{padding:20px;text-align:center;color:var(--ink-3);font-size:12.5px;}
+
+  /* rechazos */
+  table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.data-table th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--hair);}
+  table.data-table th.num, table.data-table td.num{text-align:right;}
+  table.data-table td{padding:8px 10px;border-bottom:1px solid var(--hair);color:var(--ink-2);}
+  table.data-table td.strong{color:var(--ink);font-weight:600;}
+  .badge{display:inline-block;font-size:9.5px;font-weight:700;border-radius:3px;padding:2px 6px;text-transform:uppercase;letter-spacing:.03em;}
+  .badge.serious{background:rgba(236,131,90,0.15);color:var(--serious);}
+
+  /* deuda */
+  .aging-bar{display:flex;width:100%;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--hair);}
+  .aging-seg{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:2px solid var(--bg);}
+  .aging-seg:last-child{border-right:none;}
+  .aging-seg .alabel{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;white-space:nowrap;color:#0b0b0b;}
+  .aging-legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:11.5px;color:var(--ink-2);}
+  .aging-legend .item{display:flex;align-items:center;gap:6px;}
+  .aging-legend .sw{width:9px;height:9px;border-radius:2px;flex:none;}
+  .aging-legend .amt{color:var(--ink-3);margin-left:2px;}
+
+  .empty-note{padding:16px;text-align:center;color:var(--ink-3);font-size:12.5px;border:1px dashed var(--hair);border-radius:4px;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:repeat(2,1fr);}
+    .cov-wrap{grid-template-columns:1fr;}
+    table.data-table{display:block;overflow-x:auto;}
+  }
+  @media (max-width: 760px){
+    .ticker-head, .trow{grid-template-columns:1fr 100px 100px;}
+    .ticker-head span:nth-child(4), .ticker-head span:nth-child(5),
+    .trow > :nth-child(4), .trow > :nth-child(5){display:none;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1 id="titulo">Seguimiento de Vendedor</h1></div>
+      <div class="sub">Venta, rentabilidad, cobertura, rechazos y deuda — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Datos al: <b id="fechaText">—</b>
+      <div class="month-tabs" id="monthTabs"></div>
+    </div>
+  </header>
+
+  <div class="board" id="kpiRow"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Venta por proveedor</h2>
+      <div class="n" id="provCount"></div>
+    </div>
+    <div class="ticker-head">
+      <span>Proveedor</span>
+      <span class="num">Venta neta</span>
+      <span class="num">CMV</span>
+      <span class="num">Mark up</span>
+      <span class="num">Margen</span>
+    </div>
+    <div class="ticker-list" id="provList"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Cobertura de cartera</h2>
+      <div class="n">clientes asignados que compraron este mes</div>
+    </div>
+    <div class="cov-wrap">
+      <div class="cov-ring">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="var(--hair)" stroke-width="16"/>
+          <circle id="covArc" cx="100" cy="100" r="86" fill="none" stroke="var(--cyan)" stroke-width="16" stroke-linecap="round"/>
+        </svg>
+        <div class="pct"><b id="covPct">—</b><span id="covFrac">— / —</span></div>
+      </div>
+      <div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Sin compra este mes — a visitar</div>
+        <div class="cov-list" id="covList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Rechazos / devoluciones</h2>
+      <div class="n" id="rechCount"></div>
+    </div>
+    <div id="rechTableWrap"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Deuda de sus clientes</h2>
+      <div class="n">foto actual, no depende del mes seleccionado</div>
+    </div>
+    <div class="aging-bar" id="agingBar"></div>
+    <div class="aging-legend" id="agingLegend"></div>
+    <div id="deudaTableWrap" style="margin-top:16px"></div>
+  </section>
+
+  <footer>
+    <div><b>Metodología:</b> venta neta y CMV se calculan por ítem de venta (neto de notas de crédito). Cobertura = clientes con ruta de preventa asignada a este vendedor que registraron al menos una venta (no devolución) en el mes. Rechazos = comprobantes DEV-RE / DEV-CA (mercadería rechazada o devuelta en la entrega). Deuda = mismo criterio que la Torre de Cobranzas, notas de crédito restan del saldo.</div>
+    <div style="margin-top:8px">Fuente: API Gescom. Foto fija — se actualiza sola según la rutina configurada.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null;
+let currentMes = null;
+
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%'; }
+
+function statusFromMargen(m){
+  if (m >= 0.20) return 'good';
+  if (m >= 0.12) return 'warning';
+  if (m >= 0.05) return 'serious';
+  return 'critical';
+}
+
+const BUCKET_LABEL = { vigente:'Vigente', d1_30:'1–30 días', d31_60:'31–60 días', d61_90:'61–90 días', d90mas:'+90 días' };
+const BUCKET_COLOR = { vigente:'var(--good-ink)', d1_30:'#c7d94a', d31_60:'var(--warning)', d61_90:'var(--serious)', d90mas:'var(--critical)' };
+
+function renderMonthTabs(){
+  const keys = Object.keys(DATA.meses).sort();
+  document.getElementById('monthTabs').innerHTML = keys.map(k => `
+    <button class="month-tab ${k===currentMes?'active':''}" data-mes="${k}">${k}</button>`).join('');
+  document.querySelectorAll('.month-tab').forEach(btn => btn.addEventListener('click', () => {
+    currentMes = btn.getAttribute('data-mes');
+    renderAll();
+  }));
+}
+
+function renderKPIs(mes){
+  const v = mes.venta.totales;
+  const rentabilidad = v.ventaNeta - v.cmv;
+  const margen = v.ventaNeta !== 0 ? rentabilidad / v.ventaNeta : 0;
+  const cov = mes.cobertura;
+  const rech = mes.rechazos;
+  const d = DATA.deuda;
+  const cells = [
+    { label:'Venta neta', value: fmtMoneyCompact(v.ventaNeta), foot: fmtMoney(v.ventaNeta), cyan:true },
+    { label:'Rentabilidad', value: fmtMoneyCompact(rentabilidad), foot: fmtPct(margen) + ' margen' },
+    { label:'Cobertura', value: fmtPct(cov.pct), foot: cov.clientesActivos + ' / ' + cov.carteraTotal + ' clientes' },
+    { label:'Rechazos', value: fmtMoneyCompact(rech.monto), foot: rech.cantidad + ' evento' + (rech.cantidad===1?'':'s'), critical: rech.cantidad>0 },
+    { label:'Deuda de cartera', value: fmtMoneyCompact(d.saldoTotal), foot: fmtMoney(d.saldoTotal) }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `
+    <div class="cell"><div class="label">${c.label}</div><div class="value mono ${c.cyan?'cyan':''} ${c.critical?'critical':''}">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
+}
+
+function renderProveedores(mes){
+  const rows = mes.venta.proveedores.map(p => {
+    const rentabilidad = p.ventaNeta - p.cmv;
+    const markup = p.cmv !== 0 ? rentabilidad / p.cmv : 0;
+    const margen = p.ventaNeta !== 0 ? rentabilidad / p.ventaNeta : 0;
+    return { ...p, margen, markup };
+  }).sort((a,b) => b.ventaNeta - a.ventaNeta);
+  document.getElementById('provCount').textContent = '(' + rows.length + ' proveedores)';
+  const max = Math.max(1, ...rows.map(r => Math.abs(r.ventaNeta)));
+  document.getElementById('provList').innerHTML = rows.map(r => `
+    <div class="trow">
+      <span class="name">${r.nombre}</span>
+      <span class="num mono">${fmtMoneyCompact(r.ventaNeta)}</span>
+      <span class="num mono">${fmtMoneyCompact(r.cmv)}</span>
+      <span class="num mono">${fmtPct(r.markup)}</span>
+      <span class="status-chip ${statusFromMargen(r.margen)}"><span class="sw"></span>${fmtPct(r.margen)}</span>
+    </div>`).join('');
+}
+
+function renderCobertura(mes){
+  const cov = mes.cobertura;
+  const R = 86, C = 2*Math.PI*R;
+  const arc = document.getElementById('covArc');
+  arc.setAttribute('stroke-dasharray', `${C*cov.pct} ${C}`);
+  document.getElementById('covPct').textContent = fmtPct(cov.pct);
+  document.getElementById('covFrac').textContent = `${cov.clientesActivos} / ${cov.carteraTotal}`;
+  const list = document.getElementById('covList');
+  if (!cov.clientesSinCompra || cov.clientesSinCompra.length === 0) {
+    list.innerHTML = `<div class="cov-empty">Cobertura completa — todos compraron este mes.</div>`;
+  } else {
+    list.innerHTML = cov.clientesSinCompra.map(c => `
+      <div class="cli-row"><span>${c.nombre}</span><span class="code mono">#${c.codigo}</span></div>`).join('');
+  }
+}
+
+function renderRechazos(mes){
+  const rech = mes.rechazos;
+  document.getElementById('rechCount').textContent = `(${rech.cantidad} evento${rech.cantidad===1?'':'s'} · ${fmtMoneyCompact(rech.monto)})`;
+  const wrap = document.getElementById('rechTableWrap');
+  if (!rech.eventos || rech.eventos.length === 0) {
+    wrap.innerHTML = `<div class="empty-note">Sin rechazos ni devoluciones en este mes.</div>`;
+    return;
+  }
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+      <th>Cliente</th><th>Fecha</th><th>Comprobante</th><th>Motivo</th><th class="num">Monto</th>
+    </tr></thead><tbody>
+      ${rech.eventos.map(e => `
+        <tr>
+          <td class="strong">${e.nombreCliente}<span style="color:var(--ink-3);font-size:10.5px;margin-left:6px">#${e.codigoCliente}</span></td>
+          <td>${e.fecha.split('-').reverse().join('/')}</td>
+          <td>${e.comprobante} <span class="badge serious">${e.tipo}</span></td>
+          <td>${e.motivo || '—'}</td>
+          <td class="num strong mono">${fmtMoney(e.monto)}</td>
+        </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function renderDeuda(){
+  const d = DATA.deuda;
+  const order = ['vigente','d1_30','d31_60','d61_90','d90mas'];
+  const total = order.reduce((s,k)=>s+d[k],0) || 1;
+  document.getElementById('agingBar').innerHTML = order.map(k => {
+    const pct = d[k]/total*100;
+    return `<div class="aging-seg" style="width:${pct.toFixed(2)}%;background:${BUCKET_COLOR[k]}" title="${BUCKET_LABEL[k]} — ${fmtMoney(d[k])}">
+      ${pct>7 ? `<span class="alabel">${fmtPct(d[k]/total)}</span>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('agingLegend').innerHTML = order.map(k => `
+    <span class="item"><span class="sw" style="background:${BUCKET_COLOR[k]}"></span>${BUCKET_LABEL[k]}<span class="amt">${fmtMoneyCompact(d[k])}</span></span>`).join('');
+
+  const wrap = document.getElementById('deudaTableWrap');
+  if (!d.clientes || d.clientes.length === 0) {
+    wrap.innerHTML = `<div class="empty-note">Sin deuda pendiente en su cartera.</div>`;
+    return;
+  }
+  wrap.innerHTML = `<table class="data-table"><thead><tr>
+      <th>Cliente</th><th class="num">Saldo</th><th class="num">Peor vencimiento</th>
+    </tr></thead><tbody>
+      ${d.clientes.map(c => `
+        <tr>
+          <td class="strong">${c.nombre}<span style="color:var(--ink-3);font-size:10.5px;margin-left:6px">#${c.codigo}</span></td>
+          <td class="num strong mono">${fmtMoney(c.saldoTotal)}</td>
+          <td class="num">${c.peorDiasVencido>0 ? c.peorDiasVencido+' días' : 'Al día'}</td>
+        </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function renderAll(){
+  const mes = DATA.meses[currentMes];
+  document.getElementById('titulo').textContent = 'Seguimiento — ' + DATA.vendedor.nombre;
+  document.getElementById('fechaText').textContent = new Date(DATA.generatedAt).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  renderMonthTabs();
+  renderKPIs(mes);
+  renderProveedores(mes);
+  renderCobertura(mes);
+  renderRechazos(mes);
+  renderDeuda();
+}
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    currentMes = DATA.mesActual;
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${err.message}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>

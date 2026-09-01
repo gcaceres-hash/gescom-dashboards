@@ -1,0 +1,22 @@
+name: Clientes Potenciales
+
+on:
+  schedule:
+    - cron: "45 10 * * *"
+  workflow_dispatch:
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escribir config.json desde el secret
+        shell: bash
+        run: echo '${{ secrets.GESCOM_CONFIG }}' > scripts/config.json
+
+      - name: Correr pull-potenciales.ps1
+        shell: pwsh
+        env:
+          NETLIFY_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+        run: ./scripts/pull-potenciales.ps1

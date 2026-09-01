@@ -1,0 +1,6 @@
+scripts/config.json
+scripts/*-data.json
+scripts/*.log
+scripts/stock-dashboard.html
+scripts/stock-dashboard-share.html
+scripts/venta-rentabilidad.html

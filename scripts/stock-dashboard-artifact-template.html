@@ -1,0 +1,570 @@
+<title>Torre de Control de Stock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --page:        #f9f9f7;
+    --surface-1:   #fcfcfb;
+    --surface-2:   #ffffff;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:  #898781;
+    --grid:        #e1e0d9;
+    --baseline:    #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+
+    --s1: #2a78d6; /* empresa 1 */
+    --s2: #eb6834; /* empresa 2 */
+    --s3: #1baf7a; /* empresa 3 */
+
+    --seq-100:#cde2fb; --seq-250:#86b6ef; --seq-450:#2a78d6; --seq-650:#104281;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#d03b3b;
+    --success-text:#006300;
+    --warn-ink:    #8a5a00;
+    --serious-ink: #a1401f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:        #0d0d0d;
+      --surface-1:   #1a1a19;
+      --surface-2:   #201f1d;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:  #898781;
+      --grid:        #2c2c2a;
+      --baseline:    #383835;
+      --border:      rgba(255,255,255,0.10);
+
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+      --seq-100:#184f95; --seq-250:#1c5cab; --seq-450:#3987e5; --seq-650:#9ec5f4;
+
+      --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
+      --success-text:#0ca30c;
+      --warn-ink: var(--warning); --serious-ink: var(--serious);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:        #0d0d0d;
+    --surface-1:   #1a1a19;
+    --surface-2:   #201f1d;
+    --text-primary:#ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:  #898781;
+    --grid:        #2c2c2a;
+    --baseline:    #383835;
+    --border:      rgba(255,255,255,0.10);
+
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --seq-100:#184f95; --seq-250:#1c5cab; --seq-450:#3987e5; --seq-650:#9ec5f4;
+
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
+    --success-text:#0ca30c;
+    --warn-ink: var(--warning); --serious-ink: var(--serious);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--page);color:var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding:28px 32px 64px;}
+  .display{font-family:"Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  header.top h1{font-family:"Archivo", system-ui, sans-serif;font-size:27px;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;text-wrap:balance;}
+  header.top .sub{color:var(--text-secondary);font-size:13.5px;}
+  .meta{text-align:right;font-size:12.5px;color:var(--text-muted);line-height:1.6;}
+  .meta b{color:var(--text-secondary);font-weight:600;}
+  .snapshot-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface-2);
+    border-radius:999px;padding:4px 12px;font-size:11.5px;color:var(--text-secondary);margin-top:4px;}
+  .snapshot-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--s1);}
+
+  .kpis{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:12px;margin-bottom:26px;}
+  .kpi{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .kpi.hero{background:var(--surface-2);border-width:2px;border-color:var(--text-primary);}
+  .kpi .label{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600;color:var(--text-muted);margin-bottom:8px;}
+  .kpi .value{font-size:26px;font-weight:700;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;}
+  .kpi.hero .value{font-size:34px;}
+  .kpi .value.crit{color:var(--critical);}
+  .kpi .value.status-good{color:var(--success-text);}
+  .kpi .value.status-warning{color:var(--warn-ink);}
+  .kpi .value.status-serious{color:var(--serious-ink);}
+  .kpi .value.status-critical{color:var(--critical);}
+  .kpi .foot{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{border:1px solid var(--border);background:var(--surface-1);color:var(--text-secondary);
+    font-family:"Archivo", system-ui, sans-serif;
+    border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;}
+  .tab.active{background:var(--text-primary);color:var(--page);border-color:var(--text-primary);}
+  .tab .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .tab:focus-visible, .refresh-btn:focus-visible, .search:focus-visible{outline:2px solid var(--s1);outline-offset:2px;}
+
+  section{margin-bottom:30px;}
+  h2{font-family:"Archivo", system-ui, sans-serif;font-size:16px;margin:0 0 12px;font-weight:700;}
+  h2 .n{color:var(--text-muted);font-weight:500;font-size:13px;font-family:system-ui, sans-serif;}
+
+  .company-chart{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+  .cbar-row{display:grid;grid-template-columns:150px 1fr 230px;align-items:center;gap:12px;height:32px;}
+  .cbar-row + .cbar-row{margin-top:6px;}
+  .cbar-name{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;}
+  .cbar-name .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+  .cbar-track{position:relative;height:16px;background:var(--grid);border-radius:8px;overflow:hidden;}
+  .cbar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:8px;}
+  .cbar-val{font-size:13px;color:var(--text-primary);font-weight:600;text-align:right;font-variant-numeric:tabular-nums;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+  .search{
+    border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);
+    border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;width:260px;
+  }
+  .search::placeholder{color:var(--text-muted);}
+  .hint{font-size:12px;color:var(--text-muted);}
+
+  table.provtable{width:100%;border-collapse:collapse;background:var(--surface-1);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  table.provtable th{
+    text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);
+    padding:10px 14px;border-bottom:1px solid var(--grid);cursor:pointer;user-select:none;white-space:nowrap;
+  }
+  table.provtable th.num, table.provtable td.num{text-align:right;}
+  table.provtable th.sorted{color:var(--text-primary);}
+  table.provtable tbody tr.prow{border-bottom:1px solid var(--grid);cursor:pointer;}
+  table.provtable tbody tr.prow:hover{background:rgba(11,11,11,0.03);}
+  :root:not([data-theme="light"]) table.provtable tbody tr.prow:hover{background:rgba(255,255,255,0.04);}
+  table.provtable td{padding:10px 14px;font-size:13px;vertical-align:middle;}
+  td.num, .tabular{font-variant-numeric:tabular-nums;}
+  .prov-name{font-weight:600;}
+  .prov-name .sub{font-weight:400;color:var(--text-muted);font-size:11.5px;display:block;}
+  .valbar-cell{display:flex;align-items:center;gap:8px;}
+  .valbar-track{flex:1;height:8px;background:var(--grid);border-radius:4px;overflow:hidden;min-width:60px;}
+  .valbar-fill{height:100%;background:var(--seq-450);border-radius:4px;}
+  .chev{color:var(--text-muted);font-size:11px;width:14px;display:inline-block;transition:transform .15s;}
+  tr.prow.open .chev{transform:rotate(90deg);}
+
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .status svg{flex:none;}
+  .status.good{color:var(--success-text);}
+  .status.warning{color:var(--warn-ink);}
+  .status.serious{color:var(--serious-ink);}
+  .status.critical{color:var(--critical);}
+
+  tr.expand-row td{padding:0;border-bottom:1px solid var(--grid);}
+  .expand-inner{padding:16px 20px 20px;background:var(--surface-2);}
+  .expand-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .movers h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;margin:0 0 10px;display:flex;align-items:center;gap:6px;font-weight:700;}
+  .movers h3 .sw{width:9px;height:9px;border-radius:50%;}
+  .mover-row{display:grid;grid-template-columns:1fr 92px 56px;gap:8px;align-items:center;padding:5px 0;font-size:12.5px;}
+  .mover-row .name{overflow:hidden;color:var(--text-secondary);min-width:0;}
+  .mover-row .name .desc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
+  .mover-row .name .cov{font-size:11px;display:block;}
+  .mover-row .name b{color:var(--text-primary);}
+  .mover-track{height:7px;background:var(--grid);border-radius:4px;overflow:hidden;}
+  .mover-fill{height:100%;border-radius:4px;}
+  .mover-fill.up{background:var(--good);}
+  .mover-fill.dead{background:var(--critical);}
+  .mover-qty{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary);}
+  .empty-note{color:var(--text-muted);font-size:12.5px;font-style:italic;padding:6px 0;}
+
+  .ghost-scroll{max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface-1);}
+  table.ghosttable{width:100%;border-collapse:collapse;}
+  table.ghosttable th{
+    position:sticky;top:0;background:var(--surface-1);text-align:left;font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--text-muted);padding:9px 14px;border-bottom:1px solid var(--grid);white-space:nowrap;
+  }
+  table.ghosttable th.num{text-align:right;}
+  table.ghosttable td{padding:8px 14px;font-size:12.5px;border-bottom:1px solid var(--grid);vertical-align:middle;}
+  table.ghosttable td.num{text-align:right;}
+  table.ghosttable tbody tr:last-child td{border-bottom:none;}
+  table.ghosttable tbody tr:hover{background:rgba(11,11,11,0.03);}
+  :root:not([data-theme="light"]) table.ghosttable tbody tr:hover{background:rgba(255,255,255,0.04);}
+  .ghost-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;}
+
+  footer{margin-top:30px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--grid);padding-top:14px;line-height:1.6;}
+
+  .wrap{overflow-x:hidden;}
+  table.provtable, table.ghosttable{display:table;}
+  section > div.company-chart, .toolbar, table.provtable, .ghost-scroll{max-width:100%;}
+  @media (max-width: 900px){
+    table.provtable{display:block;overflow-x:auto;}
+    table.ghosttable{display:block;overflow-x:auto;}
+  }
+
+  @media (max-width: 760px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .expand-grid{grid-template-columns:1fr;}
+    .cbar-row{grid-template-columns:110px 1fr 150px;height:auto;padding:4px 0;}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Torre de Control de Stock</h1>
+      <div class="sub">Lago Puelo · todas las empresas · apertura por proveedor · SKUs más vendidos y sin movimiento (últimos <span id="periodDaysText">30</span> días)</div>
+    </div>
+    <div class="meta">
+      Datos al <b>__GENERATED_AT_TEXT__</b><br>
+      <span class="snapshot-pill"><span class="dot"></span>Foto del momento — pedile a Claude que la actualice</span>
+    </div>
+  </header>
+
+  <div class="kpis" id="kpiRow"></div>
+
+  <div class="tabs" id="companyTabs"></div>
+
+  <section>
+    <h2>Vista general por empresa <span class="n" id="companyChartNote"></span></h2>
+    <div class="company-chart" id="companyChart"></div>
+  </section>
+
+  <section>
+    <h2>Stock por proveedor <span class="n" id="provCount"></span></h2>
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="Buscar proveedor…">
+      <span class="hint">Click en un proveedor para ver sus SKUs más vendidos y sin movimiento</span>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="provtable">
+      <thead>
+        <tr>
+          <th style="width:22px"></th>
+          <th data-key="nombre">Proveedor</th>
+          <th data-key="diasStock" class="num sorted">Días de stock</th>
+          <th data-key="skuCount" class="num">SKUs</th>
+          <th data-key="stockUnits" class="num">Unidades</th>
+          <th data-key="stockValue" class="num">Valor en stock</th>
+        </tr>
+      </thead>
+      <tbody id="provBody"></tbody>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Posibles desfasajes de stock <span class="n" id="ghostCount"></span></h2>
+    <div class="hint" style="margin-bottom:10px">SKUs sin ninguna venta en el período y con menos unidades que un bulto/caja completa (o ≤15 unidades sueltas) — candidatos baratos de verificar físicamente, suelen ser saldos que quedaron mal ajustados en el sistema.</div>
+    <div id="ghostWrap"></div>
+  </section>
+
+  <footer>
+    <div><b>Metodología:</b> días de stock = valor en stock ÷ (valor vendido en el período ÷ días del período) — cuántos días dura el stock actual al ritmo de venta reciente. "Vendido" = ventas con estado <i>Finalizada</i>, netas de devoluciones (DEV-RE / DEV-CA). Estado: sano ≤30 días, atención 31–60, alerta 61–120, crítico &gt;120 o sin ventas en el período. "Posibles desfasajes" = SKUs sin ventas en el período con menos stock que un bulto/caja completa (o ≤15 unidades sueltas si el artículo no tiene bulto definido) — señal barata de auditar, no una confirmación de error.</div>
+    <div>Fuente: API Gescom. Esta es una foto fija — el archivo local en la PC de Lago Puelo se actualiza solo cada hora, pero este link se republica solo cuando se lo pidan a Claude.</div>
+  </footer>
+
+</div>
+
+<script>
+const DATA = __DASHBOARD_JSON__;
+
+const ICONS = {
+  good: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>',
+  warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a1.5 1.5 0 0 0 1.3 2.2h17.4A1.5 1.5 0 0 0 22 18L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z"/></svg>',
+  serious: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a1.5 1.5 0 0 0 1.3 2.2h17.4A1.5 1.5 0 0 0 22 18L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z"/></svg>',
+  critical: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9.5"/><path d="m8.5 8.5 7 7m0-7-7 7"/></svg>'
+};
+const STATUS_LABEL = { good:'Sano', warning:'Atención', serious:'Alerta', critical:'Crítico' };
+const COMPANY_COLORS = ['var(--s1)','var(--s2)','var(--s3)'];
+
+let currentEmpresa = 'ALL';
+let sortKey = 'diasStock';
+let sortDir = -1;
+let openProveedor = null;
+let searchTerm = '';
+
+function diasStock(stockUnidades, vendidoUnidades, periodDays){
+  return vendidoUnidades > 0 ? (stockUnidades * periodDays / vendidoUnidades) : Infinity;
+}
+function diasStockValor(stockValue, vendidoValue, periodDays){
+  return vendidoValue > 0 ? (stockValue * periodDays / vendidoValue) : Infinity;
+}
+function statusFromDias(d){
+  if (!isFinite(d)) return 'critical';
+  if (d > 120) return 'critical';
+  if (d > 60) return 'serious';
+  if (d > 30) return 'warning';
+  return 'good';
+}
+function fmtDias(d){
+  return isFinite(d) ? (fmtInt(d) + ' días') : 'Sin ventas';
+}
+function fmtInt(n){ return Math.round(n).toLocaleString('es-AR'); }
+function fmtMoney(n){ return '$ ' + Math.round(n).toLocaleString('es-AR'); }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$ ' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + ' M';
+  if (abs >= 1e3) return '$ ' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + ' mil';
+  return '$ ' + Math.round(n).toLocaleString('es-AR');
+}
+
+function empresaNombre(codigo){
+  const e = DATA.empresas.find(x => x.codigo === codigo);
+  return e ? e.nombre : ('Empresa ' + codigo);
+}
+function proveedorNombre(codigo){
+  const p = DATA.proveedores.find(x => x.codigo === codigo);
+  return p ? p.nombre : ('Proveedor ' + codigo);
+}
+
+function filteredArticulos(){
+  return currentEmpresa === 'ALL' ? DATA.articulos : DATA.articulos.filter(a => a.empresaCodigo === currentEmpresa);
+}
+
+function renderKPIs(){
+  const arts = filteredArticulos();
+  const stockValue = arts.reduce((s,a)=>s+a.valorStock,0);
+  const vendidoValue = arts.reduce((s,a)=>s+a.vendidoUnidades*a.precioCosto,0);
+  const stockUnits = arts.reduce((s,a)=>s+a.stockUnidades,0);
+  const skuCount = arts.length;
+  const deadValue = arts.filter(a=>a.vendidoUnidades===0).reduce((s,a)=>s+a.valorStock,0);
+  const dias = diasStockValor(stockValue, vendidoValue, DATA.periodDays);
+  const diasStatus = statusFromDias(dias);
+
+  const kpis = [
+    { label:'Días de stock (cobertura al ritmo actual)', value: fmtDias(dias), foot: STATUS_LABEL[diasStatus] + ' · ponderado por valor', hero:true, status:diasStatus },
+    { label:'Valor total en stock', value: fmtMoneyCompact(stockValue), foot: fmtMoney(stockValue) },
+    { label:'SKUs con stock', value: fmtInt(skuCount), foot: DATA.proveedores.length + ' proveedores' },
+    { label:'Valor sin ninguna venta en el período', value: fmtMoneyCompact(deadValue), foot: (stockValue? Math.round(deadValue/stockValue*100):0) + '% del stock', crit:true }
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+    <div class="kpi ${k.hero?'hero':''}">
+      <div class="label">${k.label}</div>
+      <div class="value ${k.crit?'crit':''} ${k.status?('status-'+k.status):''}">${k.value}</div>
+      <div class="foot">${k.foot}</div>
+    </div>`).join('');
+}
+
+function renderTabs(){
+  const tabs = [{codigo:'ALL', nombre:'Todas'}, ...DATA.empresas];
+  document.getElementById('companyTabs').innerHTML = tabs.map((e,i) => {
+    const active = currentEmpresa === e.codigo ? 'active' : '';
+    const dot = e.codigo === 'ALL' ? '' : `<span class="dot" style="background:${COMPANY_COLORS[(i-1)%3]}"></span>`;
+    return `<button class="tab ${active}" data-empresa="${e.codigo}">${dot}${e.nombre}</button>`;
+  }).join('');
+  document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
+    currentEmpresa = btn.getAttribute('data-empresa');
+    renderAll();
+  }));
+}
+
+function renderCompanyChart(){
+  const rows = DATA.empresas.map(e => {
+    const arts = DATA.articulos.filter(a => a.empresaCodigo === e.codigo);
+    const value = arts.reduce((s,a)=>s+a.valorStock,0);
+    const vendidoValue = arts.reduce((s,a)=>s+a.vendidoUnidades*a.precioCosto,0);
+    const dias = diasStockValor(value, vendidoValue, DATA.periodDays);
+    return { codigo:e.codigo, nombre:e.nombre, value, dias, status: statusFromDias(dias) };
+  }).sort((a,b)=>b.value-a.value);
+  const max = Math.max(1, ...rows.map(r=>r.value));
+  document.getElementById('companyChartNote').textContent = '(valor en stock y días de cobertura por empresa)';
+  document.getElementById('companyChart').innerHTML = rows.map((r) => {
+    const idx = DATA.empresas.findIndex(e=>e.codigo===r.codigo);
+    const color = COMPANY_COLORS[idx % 3];
+    const dim = currentEmpresa !== 'ALL' && currentEmpresa !== r.codigo;
+    return `
+    <div class="cbar-row" style="opacity:${dim?0.35:1}">
+      <div class="cbar-name"><span class="dot" style="background:${color}"></span>${r.nombre}</div>
+      <div class="cbar-track"><div class="cbar-fill" style="width:${(r.value/max*100).toFixed(1)}%;background:${color}"></div></div>
+      <div class="cbar-val">${fmtMoneyCompact(r.value)}<span class="status ${r.status}" style="margin-left:10px;font-weight:600">${fmtDias(r.dias)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function computeProviderRollups(){
+  const arts = filteredArticulos();
+  const byProv = new Map();
+  for (const a of arts){
+    if (!byProv.has(a.proveedorCodigo)) byProv.set(a.proveedorCodigo, []);
+    byProv.get(a.proveedorCodigo).push(a);
+  }
+  const rows = [];
+  for (const [codigo, list] of byProv){
+    const stockValue = list.reduce((s,a)=>s+a.valorStock,0);
+    const stockUnits = list.reduce((s,a)=>s+a.stockUnidades,0);
+    const vendidoValue = list.reduce((s,a)=>s+a.vendidoUnidades*a.precioCosto,0);
+    const deadValue = list.filter(a=>a.vendidoUnidades===0).reduce((s,a)=>s+a.valorStock,0);
+    const diasStockVal = diasStockValor(stockValue, vendidoValue, DATA.periodDays);
+    const status = statusFromDias(diasStockVal);
+    rows.push({
+      codigo, nombre: proveedorNombre(codigo),
+      skuCount: list.length, stockUnits, stockValue, deadValue, diasStock: diasStockVal, status,
+      articulos: list
+    });
+  }
+  return rows;
+}
+
+function sortRows(rows){
+  return rows.slice().sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    if (av === bv) return 0;
+    if (!isFinite(av)) return sortDir * 1;
+    if (!isFinite(bv)) return sortDir * -1;
+    return sortDir * (av - bv);
+  });
+}
+
+function renderProviderTable(){
+  let rows = computeProviderRollups();
+  if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm) || r.codigo.includes(searchTerm));
+  rows = sortRows(rows);
+  document.getElementById('provCount').textContent = '(' + rows.length + (currentEmpresa==='ALL' ? ' — todas las empresas' : ' — ' + empresaNombre(currentEmpresa)) + ')';
+
+  document.querySelectorAll('table.provtable th[data-key]').forEach(th => {
+    th.classList.toggle('sorted', th.getAttribute('data-key') === sortKey);
+  });
+
+  const maxVal = Math.max(1, ...rows.map(r=>r.stockValue));
+  const body = document.getElementById('provBody');
+  body.innerHTML = rows.map(r => {
+    const isOpen = openProveedor === r.codigo;
+    const rowHtml = `
+      <tr class="prow ${isOpen?'open':''}" data-codigo="${r.codigo}">
+        <td class="chev">▸</td>
+        <td class="prov-name">${r.nombre}<span class="sub">cód. ${r.codigo}</span></td>
+        <td class="num">
+          <span class="status ${r.status}" style="font-size:14px">${ICONS[r.status]}<b class="tabular">${fmtDias(r.diasStock)}</b></span>
+          <div class="sub" style="text-align:right">${STATUS_LABEL[r.status]}</div>
+        </td>
+        <td class="num tabular">${fmtInt(r.skuCount)}</td>
+        <td class="num tabular">${fmtInt(r.stockUnits)}</td>
+        <td class="num">
+          <div class="valbar-cell">
+            <div class="valbar-track"><div class="valbar-fill" style="width:${(r.stockValue/maxVal*100).toFixed(1)}%"></div></div>
+            <span class="tabular">${fmtMoneyCompact(r.stockValue)}</span>
+          </div>
+        </td>
+      </tr>`;
+    if (!isOpen) return rowHtml;
+    return rowHtml + `<tr class="expand-row"><td colspan="6">${renderExpand(r)}</td></tr>`;
+  }).join('');
+
+  body.querySelectorAll('tr.prow').forEach(tr => tr.addEventListener('click', () => {
+    const codigo = tr.getAttribute('data-codigo');
+    openProveedor = openProveedor === codigo ? null : codigo;
+    renderProviderTable();
+  }));
+}
+
+function renderExpand(row){
+  const sorted = row.articulos.slice();
+  const top10 = sorted.filter(a=>a.vendidoUnidades>0).sort((a,b)=>b.vendidoUnidades-a.vendidoUnidades).slice(0,10);
+  const bottom10 = sorted.filter(a=>a.vendidoUnidades===0).sort((a,b)=>b.valorStock-a.valorStock).slice(0,10);
+  const fillerNeeded = 10 - bottom10.length;
+  const extra = fillerNeeded > 0
+    ? sorted.filter(a=>a.vendidoUnidades>0).sort((a,b)=>a.vendidoUnidades-b.vendidoUnidades).slice(0,fillerNeeded)
+    : [];
+  const bottomFinal = bottom10.concat(extra);
+
+  const maxTop = Math.max(1, ...top10.map(a=>a.vendidoUnidades));
+  const maxBottomValue = Math.max(1, ...bottomFinal.map(a=>a.valorStock));
+
+  function moverRow(a, kind){
+    if (kind==='up'){
+      const pct = (a.vendidoUnidades/maxTop*100).toFixed(1);
+      const dias = diasStock(a.stockUnidades, a.vendidoUnidades, DATA.periodDays);
+      const bajaCobertura = Math.round(dias) <= 15;
+      const covClass = bajaCobertura ? 'status critical' : '';
+      const covStyle = bajaCobertura ? '' : 'color:var(--text-muted)';
+      return `<div class="mover-row">
+        <div class="name" title="${a.descripcion}">
+          <span class="desc"><b>${a.codigo}</b> ${a.descripcion}</span>
+          <span class="cov ${covClass}" style="${covStyle}">${fmtDias(dias)} de cobertura${bajaCobertura?' — reponer':''}</span>
+        </div>
+        <div class="mover-track"><div class="mover-fill up" style="width:${pct}%"></div></div>
+        <div class="mover-qty">${fmtInt(a.vendidoUnidades)}</div>
+      </div>`;
+    }
+    const pct = (a.valorStock/maxBottomValue*100).toFixed(1);
+    return `<div class="mover-row">
+        <div class="name" title="${a.descripcion}"><b>${a.codigo}</b> ${a.descripcion}</div>
+        <div class="mover-track"><div class="mover-fill dead" style="width:${pct}%"></div></div>
+        <div class="mover-qty">${fmtMoneyCompact(a.valorStock)}</div>
+      </div>`;
+  }
+
+  return `<div class="expand-inner"><div class="expand-grid">
+    <div class="movers">
+      <h3><span class="sw" style="background:var(--good)"></span>Top 10 más vendidos (unid., ${DATA.periodDays}d)</h3>
+      ${top10.length ? top10.map(a=>moverRow(a,'up')).join('') : '<div class="empty-note">Sin ventas registradas en el período.</div>'}
+    </div>
+    <div class="movers">
+      <h3><span class="sw" style="background:var(--critical)"></span>Sin movimiento (valor en stock)</h3>
+      ${bottomFinal.length ? bottomFinal.map(a=>moverRow(a,'dead')).join('') : '<div class="empty-note">Todos los SKUs tuvieron ventas en el período.</div>'}
+    </div>
+  </div></div>`;
+}
+
+function isGhostCandidate(a){
+  if (a.vendidoUnidades !== 0) return false;
+  const bulto = a.unidadesPorBulto > 1 ? a.unidadesPorBulto : null;
+  return bulto ? (a.stockUnidades < bulto) : (a.stockUnidades <= 15);
+}
+
+function renderGhostSection(){
+  const candidatos = filteredArticulos().filter(isGhostCandidate).sort((a,b)=>b.valorStock-a.valorStock);
+  const totalValor = candidatos.reduce((s,a)=>s+a.valorStock,0);
+  document.getElementById('ghostCount').textContent =
+    '(' + candidatos.length + ' SKUs · ' + fmtMoneyCompact(totalValor) + ' en juego' +
+    (currentEmpresa==='ALL' ? '' : ' — ' + empresaNombre(currentEmpresa)) + ')';
+
+  if (!candidatos.length){
+    document.getElementById('ghostWrap').innerHTML = '<div class="ghost-scroll"><div class="ghost-empty">No hay candidatos con los filtros actuales.</div></div>';
+    return;
+  }
+
+  const rows = candidatos.map(a => `
+    <tr>
+      <td class="tabular">${a.codigo}</td>
+      <td>${a.descripcion}</td>
+      <td>${proveedorNombre(a.proveedorCodigo)}</td>
+      <td>${empresaNombre(a.empresaCodigo)}</td>
+      <td class="num tabular">${fmtInt(a.stockUnidades)}</td>
+      <td class="num tabular">${a.unidadesPorBulto > 1 ? fmtInt(a.unidadesPorBulto) : '—'}</td>
+      <td class="num tabular">${fmtMoneyCompact(a.valorStock)}</td>
+    </tr>`).join('');
+
+  document.getElementById('ghostWrap').innerHTML = `
+    <div class="ghost-scroll">
+      <table class="ghosttable">
+        <thead><tr>
+          <th>Código</th><th>Descripción</th><th>Proveedor</th><th>Empresa</th>
+          <th class="num">Stock</th><th class="num">Unid./bulto</th><th class="num">Valor</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderAll(){
+  renderKPIs();
+  renderTabs();
+  renderCompanyChart();
+  renderProviderTable();
+  renderGhostSection();
+}
+
+document.querySelectorAll('table.provtable th[data-key]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.getAttribute('data-key');
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+    renderProviderTable();
+  });
+});
+document.getElementById('searchBox').addEventListener('input', (e) => {
+  searchTerm = e.target.value.trim().toLowerCase();
+  renderProviderTable();
+});
+document.getElementById('periodDaysText').textContent = DATA.periodDays;
+
+renderAll();
+</script>

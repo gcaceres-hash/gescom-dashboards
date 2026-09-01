@@ -1,0 +1,381 @@
+<title>Pizarra de Rentabilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0a0e0f;
+    --surface:   #12181a;
+    --surface-2: #171f21;
+    --ink:       #eef2f0;
+    --ink-2:     #9fb0ab;
+    --ink-3:     #64726e;
+    --hair:      #263030;
+    --border:    rgba(238,242,240,0.10);
+    --amber:     #ffb020;
+    --amber-dim: #7a5416;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#e66767;
+    --good-ink: #4bd07a;
+  }
+  /* La pizarra es un mundo propio -- se mantiene oscura en los tres estados del visor */
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#0a0e0f; --surface:#12181a; --surface-2:#171f21; --ink:#eef2f0; --ink-2:#9fb0ab; --ink-3:#64726e;
+    --hair:#263030; --border:rgba(238,242,240,0.10); --amber:#ffb020; --amber-dim:#7a5416;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767; --good-ink:#4bd07a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+  .live-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:3px 10px 3px 8px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin-top:6px;}
+  .live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+
+  .month-tabs{display:flex;gap:6px;margin:18px 0 4px;flex-wrap:wrap;}
+  .month-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.02em;text-transform:uppercase;}
+  .month-tab:hover{border-color:var(--amber-dim);color:var(--ink);}
+  .month-tab.active{background:var(--amber);border-color:var(--amber);color:var(--bg);font-weight:700;}
+  .month-tab .badge{font-size:9.5px;opacity:.75;margin-left:5px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 30px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.amber{color:var(--amber);}
+  .board .cell .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+
+  section{margin-bottom:32px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);}
+  .legend .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+
+  .weight-bar{display:flex;width:100%;height:40px;border-radius:4px;overflow:hidden;border:1px solid var(--hair);}
+  .weight-seg{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;cursor:default;border-right:1px solid var(--bg);}
+  .weight-seg:last-child{border-right:none;}
+  .weight-seg .wlabel{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;white-space:nowrap;color:var(--bg);letter-spacing:.01em;}
+  .weight-seg.dim .wlabel{color:var(--ink-2);}
+  .weight-legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:11.5px;color:var(--ink-2);}
+  .weight-legend .item{display:flex;align-items:center;gap:6px;}
+  .weight-legend .sw{width:9px;height:9px;border-radius:2px;flex:none;}
+  .weight-legend .pct{color:var(--ink-3);margin-left:2px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:260px;}
+  .search::placeholder{color:var(--ink-3);}
+  .search:focus{outline:1px solid var(--amber);outline-offset:-1px;}
+  .hint{font-size:11.5px;color:var(--ink-3);}
+
+  .ticker-head{display:grid;grid-template-columns:26px 1fr 110px 210px 90px 90px 110px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head span{cursor:pointer;user-select:none;}
+  .ticker-head span.num{text-align:right;}
+  .ticker-head span.sorted{color:var(--amber);}
+  .ticker-list{border:1px solid var(--hair);border-top:none;}
+  .trow{display:grid;grid-template-columns:26px 1fr 110px 210px 90px 90px 110px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);cursor:pointer;}
+  .trow:hover{background:var(--surface);}
+  .trow.open{background:var(--surface-2);}
+  .trow.total-row{cursor:default;border-top:1px solid var(--amber-dim);border-bottom:none;background:var(--surface);}
+  .trow.total-row:hover{background:var(--surface);}
+  .trow.total-row .name{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;font-size:11.5px;letter-spacing:.06em;color:var(--ink-2);}
+  .trow .chev{color:var(--ink-3);font-size:10px;transition:transform .15s;}
+  .trow.open .chev{transform:rotate(90deg);color:var(--amber);}
+  .trow .name{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trow .name .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  .trow .num{text-align:right;font-size:13px;}
+  .bar-cell{display:flex;align-items:center;}
+  .bar-track{flex:1;height:5px;background:var(--hair);border-radius:2px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--amber);border-radius:2px;}
+  .status-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;justify-content:flex-end;width:100%;}
+  .status-chip .sw{width:7px;height:7px;border-radius:50%;}
+  .sw.good, .status-chip.good .sw{background:var(--good-ink);} .status-chip.good{color:var(--good-ink);}
+  .sw.warning, .status-chip.warning .sw{background:var(--warning);} .status-chip.warning{color:var(--warning);}
+  .sw.serious, .status-chip.serious .sw{background:var(--serious);} .status-chip.serious{color:var(--serious);}
+  .sw.critical, .status-chip.critical .sw{background:var(--critical);} .status-chip.critical{color:var(--critical);}
+
+  .expand-inner{padding:16px 14px 20px 52px;background:var(--surface-2);border-bottom:1px solid var(--hair);}
+  .expand-inner h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:0 0 10px;font-weight:600;}
+  .fam-row{display:grid;grid-template-columns:1fr 1fr 90px;gap:10px;align-items:center;padding:5px 0;font-size:12.5px;}
+  .fam-row .name{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fam-track{height:6px;background:var(--hair);border-radius:3px;overflow:hidden;}
+  .fam-fill{height:100%;background:var(--ink-2);border-radius:3px;}
+  .fam-val{text-align:right;color:var(--ink);}
+  .empty-note{color:var(--ink-3);font-size:12.5px;font-style:italic;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:repeat(2,1fr);}
+    .ticker-head, .trow{grid-template-columns:20px 1fr 90px 90px;}
+    .ticker-head span:nth-child(4), .ticker-head span:nth-child(5), .ticker-head span:nth-child(7),
+    .trow > :nth-child(4), .trow > :nth-child(5), .trow > :nth-child(7){display:none;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Pizarra de Rentabilidad</h1></div>
+      <div class="sub">Venta y margen por proveedor — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Período: <b id="periodoText">—</b><br>
+      <span class="live-pill"><span class="dot"></span>Foto del momento</span>
+    </div>
+  </header>
+
+  <div class="month-tabs" id="monthTabs"></div>
+
+  <div class="board" id="kpiRow"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Quién pesa más</h2>
+      <div class="n">participación sobre la venta neta total del período</div>
+    </div>
+    <div class="weight-bar" id="weightBar"></div>
+    <div class="weight-legend" id="weightLegend"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Ranking por proveedor</h2>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--critical)"></span>Margen &lt;5%</span>
+        <span><span class="sw" style="background:var(--serious)"></span>5–12%</span>
+        <span><span class="sw" style="background:var(--warning)"></span>12–20%</span>
+        <span><span class="sw" style="background:var(--good-ink)"></span>&gt;20%</span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="buscar_proveedor...">
+      <span class="hint">click en una fila → venta por familia de producto</span>
+    </div>
+    <div class="ticker-head">
+      <span></span>
+      <span data-key="nombre">Proveedor</span>
+      <span data-key="ventaNeta" class="num sorted">Venta neta</span>
+      <span>Participación</span>
+      <span data-key="markup" class="num">Mark up</span>
+      <span data-key="margen" class="num">Margen</span>
+      <span data-key="descuentos" class="num">Descuentos</span>
+    </div>
+    <div class="ticker-list" id="tickerList"></div>
+  </section>
+
+  <footer>
+    <div><b>Metodología:</b> ventas con estado <i>Finalizada</i>, excluye vendedor 1176 (no es venta real) y renglones con precioCosto=$1 (servicios/transporte). CMV = cantidad × costo del renglón de venta (ya viene en la unidad correcta de Gescom — para productos pesables el costo del renglón ya está por gramo, no se usa el costo del catálogo que está por kilo). Notas de crédito (devoluciones DEV-RE/DEV-CA) restan de venta y CMV, y no suman a descuentos — son correcciones posteriores a la venta (falta de descuento o rechazo de mercadería), no descuentos otorgados en el momento. Descuentos = descuento neto otorgado en el renglón al momento de facturar. Mark up = Rentabilidad ÷ CMV. Margen = Rentabilidad ÷ Venta neta.</div>
+    <div style="margin-top:6px">Fuente: API Gescom. Foto fija — pedile a Claude que la actualice, o se actualiza sola si configuraste la rutina automática.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null;
+
+function fmtInt(n){ return Math.round(n).toLocaleString('es-AR'); }
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%'; }
+
+function statusFromMargen(m){
+  if (m < 0.05) return 'critical';
+  if (m < 0.12) return 'serious';
+  if (m < 0.20) return 'warning';
+  return 'good';
+}
+
+let MESES_ORDENADOS = [];
+let currentMonthKey = null;
+function mesData(){ return DATA.meses[currentMonthKey]; }
+
+const MESES_NOMBRE = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function nombreMes(key){
+  const [y,m] = key.split('-');
+  return MESES_NOMBRE[parseInt(m,10)-1] + ' ' + y;
+}
+
+function renderMonthTabs(){
+  document.getElementById('monthTabs').innerHTML = MESES_ORDENADOS.map(key => {
+    const m = DATA.meses[key];
+    const active = key === currentMonthKey ? 'active' : '';
+    const badge = m.cerrado ? '' : '<span class="badge">● en curso</span>';
+    return `<button class="month-tab ${active}" data-mes="${key}">${nombreMes(key)}${badge}</button>`;
+  }).join('');
+  document.querySelectorAll('.month-tab').forEach(btn => btn.addEventListener('click', () => {
+    currentMonthKey = btn.getAttribute('data-mes');
+    openProv = null;
+    renderAll();
+  }));
+}
+
+function computeRows(){
+  const total = mesData().proveedores.reduce((s,p)=>s+Math.max(0,p.ventaNeta),0);
+  return mesData().proveedores.map(p => {
+    const rentabilidad = p.ventaNeta - p.cmv;
+    const markup = p.cmv !== 0 ? rentabilidad / p.cmv : 0;
+    const margen = p.ventaNeta !== 0 ? rentabilidad / p.ventaNeta : 0;
+    const share = total !== 0 ? Math.max(0,p.ventaNeta) / total : 0;
+    return { ...p, rentabilidad, markup, margen, share, status: statusFromMargen(margen) };
+  });
+}
+
+let sortKey = 'ventaNeta';
+let sortDir = -1;
+let openProv = null;
+let searchTerm = '';
+
+function sortRows(rows){
+  return rows.slice().sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+}
+
+function renderKPIs(){
+  const t = mesData().totales;
+  const rentabilidad = t.ventaNeta - t.cmv;
+  const margen = t.ventaNeta !== 0 ? rentabilidad/t.ventaNeta : 0;
+  const cells = [
+    { label:'Venta neta', value: fmtMoneyCompact(t.ventaNeta), foot: fmtMoney(t.ventaNeta), amber:true },
+    { label:'CMV', value: fmtMoneyCompact(t.cmv), foot: fmtMoney(t.cmv) },
+    { label:'Rentabilidad', value: fmtMoneyCompact(rentabilidad), foot: fmtPct(margen) + ' margen prom.' },
+    { label:'Descuentos otorgados', value: fmtMoneyCompact(t.descuentos), foot: fmtPct(t.descuentos/(t.ventaNeta+t.descuentos)) + ' s/ venta bruta' }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `
+    <div class="cell"><div class="label">${c.label}</div><div class="value mono ${c.amber?'amber':''}">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
+}
+
+function renderExpand(row){
+  if (!row.familias || !row.familias.length) return `<div class="expand-inner"><div class="empty-note">sin desglose por familia para este proveedor</div></div>`;
+  const fams = row.familias.slice(0,12);
+  const max = Math.max(1, ...fams.map(f=>f.ventaNeta));
+  return `<div class="expand-inner">
+    <h3>venta por familia de producto</h3>
+    ${fams.map(f => `
+      <div class="fam-row">
+        <div class="name">${f.nombre}</div>
+        <div class="fam-track"><div class="fam-fill" style="width:${(f.ventaNeta/max*100).toFixed(1)}%"></div></div>
+        <div class="fam-val mono">${fmtMoneyCompact(f.ventaNeta)}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function renderList(){
+  let rows = computeRows();
+  if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm) || r.codigo.includes(searchTerm));
+  rows = sortRows(rows);
+  document.querySelectorAll('.ticker-head span[data-key]').forEach(s => s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey));
+
+  const maxVenta = Math.max(1, ...rows.map(r=>r.ventaNeta));
+  const list = document.getElementById('tickerList');
+  list.innerHTML = rows.map(r => {
+    const isOpen = openProv === r.codigo;
+    const row = `
+      <div class="trow ${isOpen?'open':''}" data-codigo="${r.codigo}">
+        <span class="chev">▸</span>
+        <span class="name">${r.nombre}<span class="code">#${r.codigo}</span></span>
+        <span class="num mono">${fmtMoneyCompact(r.ventaNeta)}</span>
+        <span class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${(r.ventaNeta/maxVenta*100).toFixed(1)}%"></div></div></span>
+        <span class="num mono">${fmtPct(r.markup)}</span>
+        <span class="status-chip ${r.status}"><span class="sw"></span>${fmtPct(r.margen)}</span>
+        <span class="num mono">${fmtMoneyCompact(r.descuentos)}</span>
+      </div>`;
+    return isOpen ? row + renderExpand(r) : row;
+  }).join('');
+
+  const t = mesData().totales;
+  const totRentab = t.ventaNeta - t.cmv;
+  const totMarkup = t.cmv !== 0 ? totRentab/t.cmv : 0;
+  const totMargen = t.ventaNeta !== 0 ? totRentab/t.ventaNeta : 0;
+  list.innerHTML += `
+    <div class="trow total-row">
+      <span></span>
+      <span class="name">TOTAL</span>
+      <span class="num mono">${fmtMoneyCompact(t.ventaNeta)}</span>
+      <span></span>
+      <span class="num mono">${fmtPct(totMarkup)}</span>
+      <span class="status-chip ${statusFromMargen(totMargen)}"><span class="sw"></span>${fmtPct(totMargen)}</span>
+      <span class="num mono">${fmtMoneyCompact(t.descuentos)}</span>
+    </div>`;
+
+  list.querySelectorAll('.trow:not(.total-row)').forEach(el => el.addEventListener('click', () => {
+    const codigo = el.getAttribute('data-codigo');
+    openProv = openProv === codigo ? null : codigo;
+    renderList();
+  }));
+}
+
+const AMBER_RAMP = ['#ffb020','#e89c1c','#d18818','#ba7414','#a36010','#8c4c0c','#754008'];
+const OTROS_COLOR = '#2a3335';
+
+function renderWeightBar(){
+  const rows = computeRows().filter(r => r.ventaNeta > 0).sort((a,b) => b.ventaNeta - a.ventaNeta);
+  const total = rows.reduce((s,r)=>s+r.ventaNeta,0) || 1;
+  const top = rows.slice(0,7);
+  const restSum = rows.slice(7).reduce((s,r)=>s+r.ventaNeta,0);
+
+  const segs = top.map((r,i) => ({ nombre:r.nombre, valor:r.ventaNeta, pct:r.ventaNeta/total, color:AMBER_RAMP[i], dim:i>=3 }));
+  if (restSum > 0) segs.push({ nombre:'Otros ('+(rows.length-7)+')', valor:restSum, pct:restSum/total, color:OTROS_COLOR, dim:true });
+
+  document.getElementById('weightBar').innerHTML = segs.map(s => `
+    <div class="weight-seg ${s.dim?'dim':''}" style="width:${(s.pct*100).toFixed(2)}%;background:${s.color}" title="${s.nombre} — ${fmtMoneyCompact(s.valor)} (${fmtPct(s.pct)})">
+      ${s.pct>0.05 ? `<span class="wlabel">${fmtPct(s.pct)}</span>` : ''}
+    </div>`).join('');
+
+  document.getElementById('weightLegend').innerHTML = segs.map(s => `
+    <span class="item"><span class="sw" style="background:${s.color}"></span>${s.nombre}<span class="pct">${fmtPct(s.pct)}</span></span>`).join('');
+}
+
+document.querySelectorAll('.ticker-head span[data-key]').forEach(s => {
+  s.addEventListener('click', () => {
+    const key = s.getAttribute('data-key');
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+    renderList();
+  });
+});
+document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+
+function renderAll(){
+  const m = mesData();
+  document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
+  renderMonthTabs();
+  renderKPIs();
+  renderWeightBar();
+  renderList();
+}
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    MESES_ORDENADOS = Object.keys(DATA.meses).sort().reverse();
+    currentMonthKey = MESES_ORDENADOS.includes(DATA.mesActual) ? DATA.mesActual : MESES_ORDENADOS[0];
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${err.message}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>
