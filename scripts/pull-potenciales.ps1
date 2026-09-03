@@ -8,7 +8,7 @@ Reglas:
   - Ranking (quien es "potencial"): venta neta por cliente en los ultimos 3
     meses (ventana movil hasta hoy), ordenado de mayor a menor, se toman los
     clientes hasta llegar al 80% acumulado de la venta de ese vendedor.
-  - "Compro" (para el indicador de cobertura) = venta finalizada, no nota de
+  - "Compro" (para el indicador de cobertura) = venta cerrada (facturada), no nota de
     credito, en el MES EN CURSO -- igual criterio que Cobertura General.
 #>
 param(
@@ -89,7 +89,7 @@ while ($true) {
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if ($venta.estado -ne "Finalizada") { continue }
+        if ($venta.cerrada -ne $true) { continue }
         if ($venta.esCredito -eq $true) { continue }
         $codCli = [string]$venta.codigoCliente
         if (-not $clienteInfo.ContainsKey($codCli)) { continue }

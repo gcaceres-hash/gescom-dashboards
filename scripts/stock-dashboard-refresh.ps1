@@ -81,7 +81,7 @@ try {
         if (-not $page -or $page.Count -eq 0) { break }
         $totalVentas += $page.Count
         foreach ($venta in $page) {
-            if ($venta.estado -ne "Finalizada") { continue }
+            if ($venta.cerrada -ne $true) { continue }
             $signo = if ($venta.codigoTipoVenta -like "DEV*") { -1.0 } else { 1.0 }
             foreach ($item in $venta.items) {
                 $codigo = [string]$item.codigoItem
@@ -92,7 +92,7 @@ try {
         if ($page.Count -lt $pagesize) { break }
         $pagestoskip++
     }
-    Write-Log "Ventas descargadas: $totalVentas (estado Finalizada, neto de devoluciones)"
+    Write-Log "Ventas descargadas: $totalVentas (cerrada=true, neto de devoluciones)"
 
     Write-Log "Calculando dataset de articulos con stock..."
     $articulosDataset = foreach ($codigo in $stockPorItem.Keys) {

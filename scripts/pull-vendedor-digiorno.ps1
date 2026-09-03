@@ -95,7 +95,7 @@ while ($true) {
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if ($venta.estado -ne "Finalizada") { continue }
+        if ($venta.cerrada -ne $true) { continue }
         if ([string]$venta.codigoVendedor -ne $CodigoVendedor) { continue }
         $totalVendedor++
         $esCredito = $venta.esCredito -eq $true

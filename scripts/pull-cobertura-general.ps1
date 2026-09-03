@@ -6,7 +6,7 @@ proveedor -- y tambien filtrable por dia de visita de la ruta de preventa
 
 Reglas (mismo criterio que los otros dashboards):
   - Se excluyen los vendedores 1176, 43, 16, 37 (no son vendedores reales).
-  - "Compro" = venta Finalizada, no nota de credito, en el mes en curso.
+  - "Compro" = venta cerrada (facturada fiscalmente), no nota de credito, en el mes en curso.
   - Cartera = clientes cuya ruta de preventa (primera entrada) tiene a ese
     vendedor asignado. Los dias de esa misma ruta definen "dia de visita".
 #>
@@ -90,7 +90,7 @@ while ($true) {
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if ($venta.estado -ne "Finalizada") { continue }
+        if ($venta.cerrada -ne $true) { continue }
         if ($venta.esCredito -eq $true) { continue }
         $codCli = [string]$venta.codigoCliente
         if (-not $clienteInfo.ContainsKey($codCli)) { continue }
