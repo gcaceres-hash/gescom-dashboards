@@ -95,8 +95,10 @@ while ($true) {
         if (-not $clienteInfo.ContainsKey($codCli)) { continue }
         $ci = $clienteInfo[$codCli]
         $ci.ventaNeta3m += [double]$venta.importeNeto
-        $fechaPedido = [datetime]$venta.fechaPedido
-        if ($fechaPedido -ge $inicioMesActual) {
+        # "compro este mes" se define por fecha de ENTREGA, no de creacion de
+        # la venta -- el ranking de 3 meses ya cubre de sobra el buffer hacia
+        # atras necesario para capturar ventas creadas antes pero entregadas ahora.
+        if ($venta.fechaEntrega -and ([datetime]$venta.fechaEntrega).Date -ge $inicioMesActual) {
             $ci.compro = $true
             foreach ($item in $venta.items) {
                 $prov = $artProv[[string]$item.codigoItem]

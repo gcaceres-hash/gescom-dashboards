@@ -68,10 +68,15 @@ $hoy = (Get-Date).Date
 $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Month)
 $fechaHastaReal = if ($esMesActual) { $hoy.AddDays(1) } else { $finMesCompleto }
 
-$fechaDesde = $inicioMes.ToString("yyyy-MM-dd")
-$fechaHasta = $fechaHastaReal.ToString("yyyy-MM-dd")
+# La API solo filtra por fecha de creacion de la venta, pero el criterio real
+# que queremos es fecha de ENTREGA -- una venta creada semanas antes puede
+# entregarse recien este mes. Se pide un rango mas amplio hacia atras (buffer)
+# y se filtra despues por fechaEntrega real de cada venta.
+$BUFFER_DIAS = 30
+$fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
+$fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
 $mesKey = $inicioMes.ToString("yyyy-MM")
-Write-Log "Procesando mes $mesKey ($fechaDesde a $fechaHasta)..."
+Write-Log "Procesando mes $mesKey (entregas entre $($inicioMes.ToString('yyyy-MM-dd')) y $($fechaHastaReal.ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery)..."
 
 $agg = @{}
 $pagestoskip = 0
@@ -79,12 +84,15 @@ $total = 0
 while ($true) {
     if ($pagestoskip -gt 0 -and $pagestoskip % 10 -eq 0) { $script:token = Get-GescomToken }
     $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
-        fechadesde = $fechaDesde; fechahasta = $fechaHasta; pagesize = 500; pagestoskip = $pagestoskip
+        fechadesde = $fechaDesdeQuery; fechahasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
     }
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
         if ($venta.cerrada -ne $true) { continue }
+        if (-not $venta.fechaEntrega) { continue }
+        $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
+        if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
         if ([string]$venta.codigoVendedor -eq "1176") { continue }
         $esCredito = $venta.esCredito -eq $true
         $signo = if ($esCredito) { -1.0 } else { 1.0 }
@@ -160,7 +168,7 @@ $totales = [pscustomobject]@{
 }
 
 $mesData = [pscustomobject]@{
-    periodoDesde = $fechaDesde
+    periodoDesde = $inicioMes.ToString("yyyy-MM-dd")
     periodoHasta = $(if ($esMesActual) { $hoy.ToString("yyyy-MM-dd") } else { $finMesCompleto.AddDays(-1).ToString("yyyy-MM-dd") })
     cerrado = -not $esMesActual
     totales = $totales
