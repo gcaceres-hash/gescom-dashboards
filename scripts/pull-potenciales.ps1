@@ -33,7 +33,14 @@ function Invoke-GescomApi {
     $qs = ($Query.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString([string]$_.Value))" }) -join "&"
     $url = "$($config.baseUrl)$Path"
     if ($qs) { $url += "?$qs" }
-    Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+    for ($intento = 1; $intento -le 4; $intento++) {
+        try {
+            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+        } catch {
+            if ($intento -eq 4) { throw }
+            Start-Sleep -Seconds ($intento * 5)
+        }
+    }
 }
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 
@@ -76,13 +83,17 @@ $hoy = (Get-Date).Date
 $rankingDesde = $hoy.AddMonths(-3)
 $inicioMesActual = Get-Date -Year $hoy.Year -Month $hoy.Month -Day 1
 $fechaDesde = $rankingDesde.ToString("yyyy-MM-dd")
-$fechaHasta = $hoy.AddDays(1).ToString("yyyy-MM-dd")
+# se consulta hasta fin del mes en curso (no se recorta en "hoy") para no
+# perder registros por cualquier desfasaje de reloj/zona horaria con el
+# servidor de Gescom -- filtrar por fecha real ya lo hace el resto del script
+$fechaHasta = (Get-Date -Year $hoy.Year -Month $hoy.Month -Day 1).AddMonths(1).ToString("yyyy-MM-dd")
 Write-Log "Revisando ventas ($fechaDesde a $fechaHasta) -- ranking 3 meses + mes en curso desde $($inicioMesActual.ToString('yyyy-MM-dd'))..."
 
+$script:token = Get-GescomToken
 $pagestoskip = 0
 $total = 0
 while ($true) {
-    if ($pagestoskip -gt 0 -and $pagestoskip % 10 -eq 0) { $script:token = Get-GescomToken }
+    if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
     $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
         fechadesde = $fechaDesde; fechahasta = $fechaHasta; pagesize = 500; pagestoskip = $pagestoskip
     }
@@ -95,10 +106,12 @@ while ($true) {
         if (-not $clienteInfo.ContainsKey($codCli)) { continue }
         $ci = $clienteInfo[$codCli]
         $ci.ventaNeta3m += [double]$venta.importeNeto
-        # "compro este mes" se define por fecha de ENTREGA, no de creacion de
-        # la venta -- el ranking de 3 meses ya cubre de sobra el buffer hacia
-        # atras necesario para capturar ventas creadas antes pero entregadas ahora.
-        if ($venta.fechaEntrega -and ([datetime]$venta.fechaEntrega).Date -ge $inicioMesActual) {
+        # "compro este mes" se define por fecha de ENTREGA, y solo cuenta si
+        # coincide con la fecha del comprobante (venta ya facturada el mismo
+        # dia de la entrega) -- el ranking de 3 meses ya cubre de sobra el
+        # buffer hacia atras necesario para capturar ventas creadas antes.
+        $entregaFacturada = $venta.fechaEntrega -and $venta.comprobantePrincipal -and $venta.comprobantePrincipal.fechaComprobante -and (([datetime]$venta.fechaEntrega).Date -eq ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date)
+        if ($entregaFacturada -and ([datetime]$venta.fechaEntrega).Date -ge $inicioMesActual) {
             $ci.compro = $true
             foreach ($item in $venta.items) {
                 $prov = $artProv[[string]$item.codigoItem]

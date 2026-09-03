@@ -32,7 +32,14 @@ function Invoke-GescomApi {
     $qs = ($Query.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString([string]$_.Value))" }) -join "&"
     $url = "$($config.baseUrl)$Path"
     if ($qs) { $url += "?$qs" }
-    Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+    for ($intento = 1; $intento -le 4; $intento++) {
+        try {
+            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+        } catch {
+            if ($intento -eq 4) { throw }
+            Start-Sleep -Seconds ($intento * 5)
+        }
+    }
 }
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 
@@ -75,7 +82,10 @@ if ($MesDesde -ne "") { $inicioMes = Get-Date $MesDesde } else { $inicioMes = Ge
 $inicioMes = Get-Date -Year $inicioMes.Year -Month $inicioMes.Month -Day 1 -Hour 0 -Minute 0 -Second 0
 $hoy = (Get-Date).Date
 $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Month)
-$fechaHastaReal = if ($esMesActual) { $hoy.AddDays(1) } else { $inicioMes.AddMonths(1) }
+# el filtro de fechaEntrega va hasta fin de mes SIEMPRE (incluye entregas ya
+# facturadas con fecha futura dentro del mes en curso); el limite de la
+# CONSULTA a la API (fecha de creacion) si se recorta a hoy en el mes actual.
+$fechaHastaReal = $inicioMes.AddMonths(1)
 # buffer hacia atras: la API filtra por fecha de creacion, pero el criterio real
 # es fecha de ENTREGA (una venta creada semanas antes puede entregarse este mes)
 $BUFFER_DIAS = 30
@@ -83,19 +93,22 @@ $fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
 $fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
 Write-Log "Revisando entregas del mes ($($inicioMes.ToString('yyyy-MM-dd')) a $($fechaHastaReal.ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery)..."
 
+$script:token = Get-GescomToken
 $pagestoskip = 0
 $total = 0
 while ($true) {
-    if ($pagestoskip -gt 0 -and $pagestoskip % 10 -eq 0) { $script:token = Get-GescomToken }
+    if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
     $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
         fechadesde = $fechaDesdeQuery; fechahasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
     }
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if ($venta.cerrada -ne $true) { continue }
         if (-not $venta.fechaEntrega) { continue }
+        if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
         $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
+        $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
+        if ($fechaEntrega -ne $fechaComprobante) { continue }
         if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
         if ($venta.esCredito -eq $true) { continue }
         $codCli = [string]$venta.codigoCliente

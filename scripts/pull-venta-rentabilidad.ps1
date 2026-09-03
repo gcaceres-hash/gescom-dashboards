@@ -5,7 +5,7 @@ para poder navegar meses hacia adelante sin perder los anteriores.
   - excluye vendedor 1176 (no es venta real)
   - excluye items con precioCosto=1 (servicios/transporte)
   - neto de notas de credito (esCredito=true resta)
-  - items sin proveedor asignado: se excluyen salvo que sean nota de credito
+  - items sin proveedor asignado: se agrupan en "_SIN_PROVEEDOR_" (no se excluyen)
   - CMV = cantidad x precioCosto DEL ITEM (Gescom ya lo entrega en la misma
     unidad que "cantidad" -- para articulos pesables cantidad viene en gramos
     y este precioCosto ya viene por gramo, NO hay que usar el precioCosto del
@@ -37,7 +37,14 @@ function Invoke-GescomApi {
     $qs = ($Query.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString([string]$_.Value))" }) -join "&"
     $url = "$($config.baseUrl)$Path"
     if ($qs) { $url += "?$qs" }
-    Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+    for ($intento = 1; $intento -le 4; $intento++) {
+        try {
+            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+        } catch {
+            if ($intento -eq 4) { throw }
+            Start-Sleep -Seconds ($intento * 5)
+        }
+    }
 }
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 
@@ -66,7 +73,11 @@ $inicioMes = Get-Date -Year $inicioMes.Year -Month $inicioMes.Month -Day 1 -Hour
 $finMesCompleto = $inicioMes.AddMonths(1)
 $hoy = (Get-Date).Date
 $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Month)
-$fechaHastaReal = if ($esMesActual) { $hoy.AddDays(1) } else { $finMesCompleto }
+# el filtro de fechaEntrega va hasta fin de mes SIEMPRE (incluye entregas ya
+# facturadas con fecha futura dentro del mes en curso); el limite de la
+# CONSULTA a la API (fecha de creacion) si se recorta a hoy, porque no puede
+# haber ventas creadas a futuro.
+$fechaHastaReal = $finMesCompleto
 
 # La API solo filtra por fecha de creacion de la venta, pero el criterio real
 # que queremos es fecha de ENTREGA -- una venta creada semanas antes puede
@@ -78,20 +89,23 @@ $fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
 $mesKey = $inicioMes.ToString("yyyy-MM")
 Write-Log "Procesando mes $mesKey (entregas entre $($inicioMes.ToString('yyyy-MM-dd')) y $($fechaHastaReal.ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery)..."
 
+$script:token = Get-GescomToken
 $agg = @{}
 $pagestoskip = 0
 $total = 0
 while ($true) {
-    if ($pagestoskip -gt 0 -and $pagestoskip % 10 -eq 0) { $script:token = Get-GescomToken }
+    if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
     $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
         fechadesde = $fechaDesdeQuery; fechahasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
     }
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if ($venta.cerrada -ne $true) { continue }
         if (-not $venta.fechaEntrega) { continue }
+        if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
         $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
+        $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
+        if ($fechaEntrega -ne $fechaComprobante) { continue }
         if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
         if ([string]$venta.codigoVendedor -eq "1176") { continue }
         $esCredito = $venta.esCredito -eq $true
@@ -101,7 +115,6 @@ while ($true) {
             $info = $artInfo[[string]$item.codigoItem]
             $prov = if ($info) { $info.prov } else { $null }
             if (-not $prov) {
-                if (-not $esCredito) { continue }
                 $prov = "_SIN_PROVEEDOR_"
                 $fam = "_SIN_FAMILIA_"
             } else {
@@ -147,7 +160,7 @@ foreach ($k in $agg.Keys) {
 
 $proveedoresOut = foreach ($cod in $porProveedor.Keys) {
     $p = $porProveedor[$cod]
-    $nombre = if ($cod -eq "_SIN_PROVEEDOR_") { "Sin proveedor asignado (solo NC)" } else { $provNombre[$cod] }
+    $nombre = if ($cod -eq "_SIN_PROVEEDOR_") { "Sin proveedor asignado" } else { $provNombre[$cod] }
     if (-not $nombre) { $nombre = "Proveedor $cod" }
     [pscustomobject]@{
         codigo = $cod
