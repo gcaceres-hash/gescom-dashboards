@@ -82,28 +82,35 @@ $fechaHastaReal = $finMesCompleto
 # La API solo filtra por fecha de creacion de la venta, pero el criterio real
 # que queremos es fecha de ENTREGA -- una venta creada semanas antes puede
 # entregarse recien este mes. Se pide un rango mas amplio hacia atras (buffer)
-# y se filtra despues por fechaEntrega real de cada venta. El buffer se acorto
-# de 30 a 12 dias: en la practica el circuito entrega/facturacion tarda mucho
-# menos que eso, y una consulta mas angosta reduce el riesgo de que el servidor
-# de Gescom devuelva paginas inconsistentes en consultas muy pesadas (ver nota
-# de confiabilidad mas abajo).
-$BUFFER_DIAS = 12
+# y se filtra despues por fechaEntrega real de cada venta.
+# OJO: se probo acortar este buffer a 12 dias para aliviar la consulta, pero
+# se comprobo que hay ventas cuyo circuito entrega/facturacion tarda mas que
+# eso -- con 12 dias varios proveedores directamente desaparecian del mes
+# (ventas reales quedaban afuera). Se mantiene en 30 dias; la confiabilidad se
+# resuelve con la verificacion de doble pasada de mas abajo, no acortando la
+# ventana.
+$BUFFER_DIAS = 30
 $fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
 $fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
 $mesKey = $inicioMes.ToString("yyyy-MM")
 Write-Log "Procesando mes $mesKey (entregas entre $($inicioMes.ToString('yyyy-MM-dd')) y $($fechaHastaReal.ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery)..."
 
-# --- fetch+agregacion como funcion, para poder correrla mas de una vez y
-# verificar que dos pasadas independientes coincidan antes de confiar en el
-# resultado (la API de Gescom mostro ser inestable en consultas anchas: la
-# misma consulta, corrida minutos aparte, puede devolver totales muy distintos) ---
-function Get-VentasAgregadas {
+# --- La API de Gescom mostro ser poco confiable en esta consulta ancha: se
+# comprobo (con venta 117647 / AJINOMOTO como caso concreto) que una misma
+# venta que cumple todos los criterios puede faltar en una pasada completa y
+# aparecer normalmente en otra corrida minutos despues -- y esto puede pasar
+# en MAS DE UNA pasada a la vez, asi que exigir que dos totales coincidan NO
+# alcanza (dos pasadas pueden coincidir en un numero que a ambas les falta lo
+# mismo). La estrategia que si funciona: correr varias pasadas independientes
+# y quedarse con la UNION de las ventas que califican en CUALQUIERA de ellas
+# (por id de venta) -- una venta real solo se pierde si falta en TODAS las
+# pasadas a la vez, algo mucho menos probable.
+function Get-VentasCalificadas {
     param([int]$Intento)
     $script:token = Get-GescomToken
-    $aggLocal = @{}
+    $vistas = @{}
     $pagestoskip = 0
     $totalLocal = 0
-    $runningTotal = 0.0
     while ($true) {
         if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
         $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
@@ -119,62 +126,56 @@ function Get-VentasAgregadas {
             if ($fechaEntrega -ne $fechaComprobante) { continue }
             if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
             if ([string]$venta.codigoVendedor -eq "1176") { continue }
-            $esCredito = $venta.esCredito -eq $true
-            $signo = if ($esCredito) { -1.0 } else { 1.0 }
-            foreach ($item in $venta.items) {
-                if ([double]$item.precioCosto -eq 1.0) { continue }
-                $info = $artInfo[[string]$item.codigoItem]
-                $prov = if ($info) { $info.prov } else { $null }
-                if (-not $prov) {
-                    $prov = "_SIN_PROVEEDOR_"
-                    $fam = "_SIN_FAMILIA_"
-                } else {
-                    $fam = if ($info.fam) { $info.fam } else { "_SIN_FAMILIA_" }
-                }
-                $neto = $signo * [double]$item.importeNeto
-                $conImp = $signo * [double]$item.importeTotal
-                $cmvItem = $signo * ([double]$item.cantidad * [double]$item.precioCosto)
-                $desc = if (-not $esCredito) { [double]$item.descuentoNeto } else { 0.0 }
-                $runningTotal += $neto
-
-                $key = "$prov|$fam"
-                if (-not $aggLocal.ContainsKey($key)) { $aggLocal[$key] = @{ prov=$prov; fam=$fam; ventaNeta=0.0; ventaConImp=0.0; cmv=0.0; descuentos=0.0 } }
-                $aggLocal[$key].ventaNeta += $neto
-                $aggLocal[$key].ventaConImp += $conImp
-                $aggLocal[$key].cmv += $cmvItem
-                $aggLocal[$key].descuentos += $desc
-            }
+            $vistas[[string]$venta.id] = $venta
         }
         if ($page.Count -lt 500) { break }
         $pagestoskip++
     }
-    Write-Log "  [intento $Intento] ventas procesadas: $totalLocal | venta neta: $([math]::Round($runningTotal,2))"
-    return @{ agg = $aggLocal; total = $totalLocal; ventaNeta = $runningTotal }
+    Write-Log "  [intento $Intento] ventas procesadas: $totalLocal | ventas que califican: $($vistas.Count)"
+    return $vistas
 }
 
-# --- correr hasta 4 veces y aceptar el resultado apenas dos pasadas coincidan
-# en venta neta (tolerancia minima, solo para redondeos de punto flotante) ---
-$MAX_INTENTOS = 4
-$TOLERANCIA = 1.0
-$pasadas = @()
-$agg = $null
-$total = $null
-for ($intento = 1; $intento -le $MAX_INTENTOS; $intento++) {
-    $r = Get-VentasAgregadas -Intento $intento
-    $pasadas += $r
-    $coincide = $pasadas | Where-Object { [math]::Abs($_.ventaNeta - $r.ventaNeta) -le $TOLERANCIA -and $_ -ne $r }
-    if ($coincide) {
-        Write-Log "Dos pasadas coincidieron en venta neta ($([math]::Round($r.ventaNeta,2))) -- se acepta el resultado."
-        $agg = $r.agg
-        $total = $r.total
-        break
+$PASADAS_UNION = 3
+$ventasUnion = @{}
+for ($intento = 1; $intento -le $PASADAS_UNION; $intento++) {
+    $vistas = Get-VentasCalificadas -Intento $intento
+    $nuevas = 0
+    foreach ($id in $vistas.Keys) {
+        if (-not $ventasUnion.ContainsKey($id)) { $nuevas++ }
+        $ventasUnion[$id] = $vistas[$id]
+    }
+    Write-Log "  [intento $intento] ventas nuevas agregadas a la union: $nuevas | total union hasta ahora: $($ventasUnion.Count)"
+}
+
+$agg = @{}
+foreach ($venta in $ventasUnion.Values) {
+    $esCredito = $venta.esCredito -eq $true
+    $signo = if ($esCredito) { -1.0 } else { 1.0 }
+    foreach ($item in $venta.items) {
+        if ([double]$item.precioCosto -eq 1.0) { continue }
+        $info = $artInfo[[string]$item.codigoItem]
+        $prov = if ($info) { $info.prov } else { $null }
+        if (-not $prov) {
+            $prov = "_SIN_PROVEEDOR_"
+            $fam = "_SIN_FAMILIA_"
+        } else {
+            $fam = if ($info.fam) { $info.fam } else { "_SIN_FAMILIA_" }
+        }
+        $neto = $signo * [double]$item.importeNeto
+        $conImp = $signo * [double]$item.importeTotal
+        $cmvItem = $signo * ([double]$item.cantidad * [double]$item.precioCosto)
+        $desc = if (-not $esCredito) { [double]$item.descuentoNeto } else { 0.0 }
+
+        $key = "$prov|$fam"
+        if (-not $agg.ContainsKey($key)) { $agg[$key] = @{ prov=$prov; fam=$fam; ventaNeta=0.0; ventaConImp=0.0; cmv=0.0; descuentos=0.0 } }
+        $agg[$key].ventaNeta += $neto
+        $agg[$key].ventaConImp += $conImp
+        $agg[$key].cmv += $cmvItem
+        $agg[$key].descuentos += $desc
     }
 }
-if (-not $agg) {
-    $ultimasVentaNeta = ($pasadas | ForEach-Object { [math]::Round($_.ventaNeta,0) }) -join ", "
-    throw "La API de Gescom devolvio resultados distintos en las $MAX_INTENTOS pasadas ($ultimasVentaNeta) -- no se pudo verificar un numero confiable para $mesKey. No se sobreescribe el data.json existente."
-}
-Write-Log "Ventas procesadas: $total"
+$total = $ventasUnion.Count
+Write-Log "Ventas procesadas (union de $PASADAS_UNION pasadas): $total"
 
 $porProveedor = @{}
 foreach ($k in $agg.Keys) {
