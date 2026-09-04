@@ -87,8 +87,11 @@ $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Mon
 # CONSULTA a la API (fecha de creacion) si se recorta a hoy en el mes actual.
 $fechaHastaReal = $finMesCompleto
 # buffer hacia atras: la API filtra por fecha de creacion, pero el criterio real
-# es fecha de ENTREGA (una venta creada semanas antes puede entregarse este mes)
-$BUFFER_DIAS = 30
+# es fecha de ENTREGA (una venta creada semanas antes puede entregarse este mes).
+# Se acorto de 30 a 12 dias: el circuito entrega/facturacion tarda mucho menos
+# que eso en la practica, y una consulta mas angosta es menos propensa a que el
+# servidor de Gescom devuelva paginas inconsistentes en consultas muy pesadas.
+$BUFFER_DIAS = 12
 $fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
 $fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
 $mesKey = $inicioMes.ToString("yyyy-MM")

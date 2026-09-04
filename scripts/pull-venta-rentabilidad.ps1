@@ -82,59 +82,97 @@ $fechaHastaReal = $finMesCompleto
 # La API solo filtra por fecha de creacion de la venta, pero el criterio real
 # que queremos es fecha de ENTREGA -- una venta creada semanas antes puede
 # entregarse recien este mes. Se pide un rango mas amplio hacia atras (buffer)
-# y se filtra despues por fechaEntrega real de cada venta.
-$BUFFER_DIAS = 30
+# y se filtra despues por fechaEntrega real de cada venta. El buffer se acorto
+# de 30 a 12 dias: en la practica el circuito entrega/facturacion tarda mucho
+# menos que eso, y una consulta mas angosta reduce el riesgo de que el servidor
+# de Gescom devuelva paginas inconsistentes en consultas muy pesadas (ver nota
+# de confiabilidad mas abajo).
+$BUFFER_DIAS = 12
 $fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
 $fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
 $mesKey = $inicioMes.ToString("yyyy-MM")
 Write-Log "Procesando mes $mesKey (entregas entre $($inicioMes.ToString('yyyy-MM-dd')) y $($fechaHastaReal.ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery)..."
 
-$script:token = Get-GescomToken
-$agg = @{}
-$pagestoskip = 0
-$total = 0
-while ($true) {
-    if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
-    $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
-        fechadesde = $fechaDesdeQuery; fechahasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
-    }
-    if (-not $page -or $page.Count -eq 0) { break }
-    $total += $page.Count
-    foreach ($venta in $page) {
-        if (-not $venta.fechaEntrega) { continue }
-        if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
-        $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
-        $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
-        if ($fechaEntrega -ne $fechaComprobante) { continue }
-        if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
-        if ([string]$venta.codigoVendedor -eq "1176") { continue }
-        $esCredito = $venta.esCredito -eq $true
-        $signo = if ($esCredito) { -1.0 } else { 1.0 }
-        foreach ($item in $venta.items) {
-            if ([double]$item.precioCosto -eq 1.0) { continue }
-            $info = $artInfo[[string]$item.codigoItem]
-            $prov = if ($info) { $info.prov } else { $null }
-            if (-not $prov) {
-                $prov = "_SIN_PROVEEDOR_"
-                $fam = "_SIN_FAMILIA_"
-            } else {
-                $fam = if ($info.fam) { $info.fam } else { "_SIN_FAMILIA_" }
-            }
-            $neto = $signo * [double]$item.importeNeto
-            $conImp = $signo * [double]$item.importeTotal
-            $cmvItem = $signo * ([double]$item.cantidad * [double]$item.precioCosto)
-            $desc = if (-not $esCredito) { [double]$item.descuentoNeto } else { 0.0 }
-
-            $key = "$prov|$fam"
-            if (-not $agg.ContainsKey($key)) { $agg[$key] = @{ prov=$prov; fam=$fam; ventaNeta=0.0; ventaConImp=0.0; cmv=0.0; descuentos=0.0 } }
-            $agg[$key].ventaNeta += $neto
-            $agg[$key].ventaConImp += $conImp
-            $agg[$key].cmv += $cmvItem
-            $agg[$key].descuentos += $desc
+# --- fetch+agregacion como funcion, para poder correrla mas de una vez y
+# verificar que dos pasadas independientes coincidan antes de confiar en el
+# resultado (la API de Gescom mostro ser inestable en consultas anchas: la
+# misma consulta, corrida minutos aparte, puede devolver totales muy distintos) ---
+function Get-VentasAgregadas {
+    param([int]$Intento)
+    $script:token = Get-GescomToken
+    $aggLocal = @{}
+    $pagestoskip = 0
+    $totalLocal = 0
+    $runningTotal = 0.0
+    while ($true) {
+        if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
+        $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
+            fechadesde = $fechaDesdeQuery; fechahasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
         }
+        if (-not $page -or $page.Count -eq 0) { break }
+        $totalLocal += $page.Count
+        foreach ($venta in $page) {
+            if (-not $venta.fechaEntrega) { continue }
+            if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
+            $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
+            $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
+            if ($fechaEntrega -ne $fechaComprobante) { continue }
+            if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
+            if ([string]$venta.codigoVendedor -eq "1176") { continue }
+            $esCredito = $venta.esCredito -eq $true
+            $signo = if ($esCredito) { -1.0 } else { 1.0 }
+            foreach ($item in $venta.items) {
+                if ([double]$item.precioCosto -eq 1.0) { continue }
+                $info = $artInfo[[string]$item.codigoItem]
+                $prov = if ($info) { $info.prov } else { $null }
+                if (-not $prov) {
+                    $prov = "_SIN_PROVEEDOR_"
+                    $fam = "_SIN_FAMILIA_"
+                } else {
+                    $fam = if ($info.fam) { $info.fam } else { "_SIN_FAMILIA_" }
+                }
+                $neto = $signo * [double]$item.importeNeto
+                $conImp = $signo * [double]$item.importeTotal
+                $cmvItem = $signo * ([double]$item.cantidad * [double]$item.precioCosto)
+                $desc = if (-not $esCredito) { [double]$item.descuentoNeto } else { 0.0 }
+                $runningTotal += $neto
+
+                $key = "$prov|$fam"
+                if (-not $aggLocal.ContainsKey($key)) { $aggLocal[$key] = @{ prov=$prov; fam=$fam; ventaNeta=0.0; ventaConImp=0.0; cmv=0.0; descuentos=0.0 } }
+                $aggLocal[$key].ventaNeta += $neto
+                $aggLocal[$key].ventaConImp += $conImp
+                $aggLocal[$key].cmv += $cmvItem
+                $aggLocal[$key].descuentos += $desc
+            }
+        }
+        if ($page.Count -lt 500) { break }
+        $pagestoskip++
     }
-    if ($page.Count -lt 500) { break }
-    $pagestoskip++
+    Write-Log "  [intento $Intento] ventas procesadas: $totalLocal | venta neta: $([math]::Round($runningTotal,2))"
+    return @{ agg = $aggLocal; total = $totalLocal; ventaNeta = $runningTotal }
+}
+
+# --- correr hasta 4 veces y aceptar el resultado apenas dos pasadas coincidan
+# en venta neta (tolerancia minima, solo para redondeos de punto flotante) ---
+$MAX_INTENTOS = 4
+$TOLERANCIA = 1.0
+$pasadas = @()
+$agg = $null
+$total = $null
+for ($intento = 1; $intento -le $MAX_INTENTOS; $intento++) {
+    $r = Get-VentasAgregadas -Intento $intento
+    $pasadas += $r
+    $coincide = $pasadas | Where-Object { [math]::Abs($_.ventaNeta - $r.ventaNeta) -le $TOLERANCIA -and $_ -ne $r }
+    if ($coincide) {
+        Write-Log "Dos pasadas coincidieron en venta neta ($([math]::Round($r.ventaNeta,2))) -- se acepta el resultado."
+        $agg = $r.agg
+        $total = $r.total
+        break
+    }
+}
+if (-not $agg) {
+    $ultimasVentaNeta = ($pasadas | ForEach-Object { [math]::Round($_.ventaNeta,0) }) -join ", "
+    throw "La API de Gescom devolvio resultados distintos en las $MAX_INTENTOS pasadas ($ultimasVentaNeta) -- no se pudo verificar un numero confiable para $mesKey. No se sobreescribe el data.json existente."
 }
 Write-Log "Ventas procesadas: $total"
 
