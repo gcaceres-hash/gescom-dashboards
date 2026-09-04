@@ -13,9 +13,17 @@ Reglas de negocio (mismas que la version por API):
   - ImporteNetoItem ya viene con el signo correcto en el archivo (negativo
     para devoluciones/notas de credito, no hay que invertirlo)
   - items sin proveedor asignado: se agrupan en "_SIN_PROVEEDOR_" (no se excluyen)
-  - CMV = PrecioCosto tal cual viene (en este archivo NO es costo unitario,
-    es el costo total de la linea -- ya viene con el signo correcto, negativo
-    en devoluciones; NO hay que multiplicarlo por CantBase)
+  - CMV = PrecioCosto tal cual viene (en este archivo es el costo total de
+    la linea, no hay que multiplicarlo por CantBase) EXCEPTO para RIOSMA:
+    ahi los articulos son pesables, PrecioCosto viene por GRAMO pero
+    escalado por CantBase (no es el costo total de la linea ni un puro
+    costo por gramo) -- para RIOSMA con PesoKgReal<>0:
+      CMV = (PrecioCosto / CantBase) x PesoKgReal x 1000
+    (verificado fila por fila contra el archivo: con esta formula el
+    margen de RIOSMA da ~14% de forma consistente, sea CantBase=1 o mayor;
+    otros proveedores tambien completan PesoKg/PesoKgReal para logistica
+    (ej. ILOLAY con leche por litro) pero ahi PrecioCosto SI es el costo
+    total ya calculado, por eso el ajuste NO se generaliza a todos)
   - descuentos = valorDescuento, solo para filas de tipo "Venta" (no devoluciones)
   - agrupa por proveedor y por proveedor+familia
   - el mes que arma queda determinado por el mes de las fechas del archivo
@@ -43,7 +51,7 @@ $lines = [System.IO.File]::ReadAllLines($CsvPath, $enc)
 $header = $lines[0] -split ';'
 $col = @{}
 for ($i = 0; $i -lt $header.Count; $i++) { $col[$header[$i]] = $i }
-foreach ($req in @("FechaComprobante","FechaEntrega","ImporteNetoItem","ImporteItem","CodVendedor","PrecioCosto","CantBase","Descuento","valorDescuento","Proveedor","Familia","TipoDeVenta","NumeroVenta")) {
+foreach ($req in @("FechaComprobante","FechaEntrega","ImporteNetoItem","ImporteItem","CodVendedor","PrecioCosto","CantBase","Descuento","valorDescuento","Proveedor","Familia","TipoDeVenta","NumeroVenta","PesoKgReal")) {
     if (-not $col.ContainsKey($req)) { throw "El CSV no tiene la columna esperada '$req'. Encabezado: $($header -join ', ')" }
 }
 Write-Log "Filas de datos: $($lines.Count - 1)"
@@ -78,7 +86,10 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
 
     $neto = ToNum $f[$col['ImporteNetoItem']]
     $conImp = ToNum $f[$col['ImporteItem']]
-    $cmvItem = $precioCosto
+    $pesoKgReal = ToNum $f[$col['PesoKgReal']]
+    $cantidad = ToNum $f[$col['CantBase']]
+    $esRiosma = $prov -eq "RIOSMA"
+    $cmvItem = if ($esRiosma -and $pesoKgReal -ne 0 -and $cantidad -ne 0) { ($precioCosto / $cantidad) * $pesoKgReal * 1000 } else { $precioCosto }
     $esVenta = $f[$col['TipoDeVenta']] -eq "Venta"
     $desc = if ($esVenta) { ToNum $f[$col['valorDescuento']] } else { 0.0 }
 
