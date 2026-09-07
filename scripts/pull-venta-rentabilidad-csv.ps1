@@ -41,7 +41,20 @@ param(
 $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 function ToNum($s) { if ([string]::IsNullOrWhiteSpace($s)) { return 0.0 }; return [double]($s -replace ',', '.') }
-function ToFecha($s) { [datetime]::ParseExact($s, "d/M/yyyy", [System.Globalization.CultureInfo]::InvariantCulture) }
+$FORMATOS_FECHA = @("d/M/yyyy","yyyy-MM-dd","dd-MM-yyyy","d-M-yyyy","M/d/yyyy")
+function ToFecha($s) {
+    # Gescom (o Excel al re-guardar el CSV) no siempre usa el mismo formato de
+    # fecha en todas las columnas del mismo archivo -- FechaComprobante puede
+    # venir "yyyy-MM-dd" mientras FechaEntrega viene "dd-MM-yyyy" en la misma
+    # fila. Se prueban varios formatos conocidos en vez de asumir uno solo.
+    $fecha = [datetime]::MinValue
+    foreach ($fmt in $FORMATOS_FECHA) {
+        if ([datetime]::TryParseExact($s, $fmt, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$fecha)) {
+            return $fecha
+        }
+    }
+    throw "No se pudo interpretar la fecha '$s' con ninguno de los formatos conocidos ($($FORMATOS_FECHA -join ', '))."
+}
 function Read-AllLinesCompartido($path, $encoding) {
     # el CSV puede estar abierto en Excel u otro proceso al mismo tiempo -- se
     # abre con acceso compartido de lectura/escritura en vez de exclusivo
@@ -80,10 +93,10 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
     if ($EXCLUDED -contains $codVend) { continue }
     $precioCosto = ToNum $f[$col['PrecioCosto']]
     if ($precioCosto -eq 1.0) { continue }
-    $fc = $f[$col['FechaComprobante']]
-    $fe = $f[$col['FechaEntrega']]
-    if ($fc -ne $fe) { continue }
-    $fecha = ToFecha $fc
+    $fechaComprobante = ToFecha $f[$col['FechaComprobante']]
+    $fechaEntrega = ToFecha $f[$col['FechaEntrega']]
+    if ($fechaComprobante -ne $fechaEntrega) { continue }
+    $fecha = $fechaComprobante
     $mesKey = $fecha.ToString("yyyy-MM")
     $totalCalifican++
 

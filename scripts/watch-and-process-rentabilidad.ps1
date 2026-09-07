@@ -1,14 +1,16 @@
 <#
-Busca en el Escritorio el export mas reciente de "Detallado de ventas
-extendido" (el que Gisela genera a mano desde la web de Gescom), lo procesa
-con pull-venta-rentabilidad-csv.ps1 y sube el resultado a GitHub -- todo sin
-intervencion manual, mas alla del export en si (que Gescom no expone por API).
+Busca en el Escritorio y en Descargas el export mas reciente de "Detallado de
+ventas extendido" (el que Gisela genera a mano desde la web de Gescom -- el
+navegador a veces lo guarda en Descargas en vez de en el Escritorio), lo
+procesa con pull-venta-rentabilidad-csv.ps1 y sube el resultado a GitHub --
+todo sin intervencion manual, mas alla del export en si (que Gescom no
+expone por API).
 
 Pensado para correr en una Tarea Programada de Windows cada cierto tiempo.
 Si no hay un archivo mas nuevo que la ultima vez procesada, no hace nada.
 #>
 param(
-    [string]$Escritorio = "C:\Users\gcaceres\Desktop",
+    [string[]]$Carpetas = @("C:\Users\gcaceres\Desktop", "C:\Users\gcaceres\Downloads"),
     [string]$Patron = "ventas-Detallado de ventas extendido-*.csv",
     [string]$RepoDir = "C:\Users\gcaceres\gescom-dashboards",
     [string]$MarcadorPath = (Join-Path $PSScriptRoot "ultimo-csv-procesado.txt")
@@ -16,8 +18,9 @@ param(
 $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $m" }
 
-# --- elegir el candidato mas reciente que tenga el formato de detalle (no el pivot chico) ---
-$candidatos = Get-ChildItem -Path $Escritorio -Filter $Patron -ErrorAction SilentlyContinue |
+# --- elegir el candidato mas reciente (de cualquiera de las carpetas) que
+# tenga el formato de detalle (no el pivot chico) ---
+$candidatos = Get-ChildItem -Path $Carpetas -Filter $Patron -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending
 $elegido = $null
 foreach ($c in $candidatos) {
@@ -35,7 +38,7 @@ foreach ($c in $candidatos) {
     }
 }
 if (-not $elegido) {
-    Write-Log "No se encontro ningun archivo de detalle valido en $Escritorio con el patron '$Patron'."
+    Write-Log "No se encontro ningun archivo de detalle valido en $($Carpetas -join ', ') con el patron '$Patron'."
     exit 0
 }
 
