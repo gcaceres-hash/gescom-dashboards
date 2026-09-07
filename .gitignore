@@ -4,3 +4,4 @@ scripts/*.log
 scripts/stock-dashboard.html
 scripts/stock-dashboard-share.html
 scripts/venta-rentabilidad.html
+scripts/ultimo-csv-procesado.txt

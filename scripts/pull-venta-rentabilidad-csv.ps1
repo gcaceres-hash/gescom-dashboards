@@ -42,12 +42,25 @@ $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 function ToNum($s) { if ([string]::IsNullOrWhiteSpace($s)) { return 0.0 }; return [double]($s -replace ',', '.') }
 function ToFecha($s) { [datetime]::ParseExact($s, "d/M/yyyy", [System.Globalization.CultureInfo]::InvariantCulture) }
+function Read-AllLinesCompartido($path, $encoding) {
+    # el CSV puede estar abierto en Excel u otro proceso al mismo tiempo -- se
+    # abre con acceso compartido de lectura/escritura en vez de exclusivo
+    $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $sr = New-Object System.IO.StreamReader($fs, $encoding)
+        $lineas = New-Object System.Collections.Generic.List[string]
+        while (-not $sr.EndOfStream) { $lineas.Add($sr.ReadLine()) }
+        return $lineas
+    } finally {
+        $fs.Dispose()
+    }
+}
 
 $EXCLUDED = @("43","1176","16","37")
 
 Write-Log "Leyendo $CsvPath ..."
 $enc = [System.Text.Encoding]::GetEncoding(1252)
-$lines = [System.IO.File]::ReadAllLines($CsvPath, $enc)
+$lines = Read-AllLinesCompartido $CsvPath $enc
 $header = $lines[0] -split ';'
 $col = @{}
 for ($i = 0; $i -lt $header.Count; $i++) { $col[$header[$i]] = $i }
