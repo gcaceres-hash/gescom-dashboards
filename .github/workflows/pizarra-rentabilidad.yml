@@ -1,8 +1,12 @@
 name: Pizarra de Rentabilidad
 
 on:
-  schedule:
-    - cron: "0 */4 * * *"
+  # Desactivado: esta pizarra ahora se arma desde el export manual de Gescom
+  # ("Detallado de ventas extendido"), procesado localmente por
+  # scripts/watch-and-process-rentabilidad.ps1 -- la API de ventas usada acá
+  # demostró faltar ventas reales de forma inconsistente y no trae el peso
+  # real de los artículos (necesario para el costo de RIOSMA). Se deja
+  # workflow_dispatch por si hace falta correrlo a mano en el futuro.
   workflow_dispatch:
 
 permissions:
