@@ -1,0 +1,361 @@
+<title>Rechazos y Devoluciones por Vendedor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0e0a0a;
+    --surface:   #1a1213;
+    --surface-2: #201718;
+    --ink:       #f4eeee;
+    --ink-2:     #b3a2a2;
+    --ink-3:     #706061;
+    --hair:      #302425;
+    --border:    rgba(244,238,238,0.10);
+    --rose:      #ec6f6f;
+    --rose-dim:  #4c1e1e;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#e66767;
+    --good-ink: #4bd07a;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#0e0a0a; --surface:#1a1213; --surface-2:#201718; --ink:#f4eeee; --ink-2:#b3a2a2; --ink-3:#706061;
+    --hair:#302425; --border:rgba(244,238,238,0.10); --rose:#ec6f6f; --rose-dim:#4c1e1e;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767; --good-ink:#4bd07a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--rose);box-shadow:0 0 8px var(--rose);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+
+  .month-tabs{display:flex;gap:6px;margin:18px 0 4px;flex-wrap:wrap;}
+  .month-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.02em;text-transform:uppercase;}
+  .month-tab:hover{border-color:var(--rose-dim);color:var(--ink);}
+  .month-tab.active{background:var(--rose);border-color:var(--rose);color:var(--bg);font-weight:700;}
+  .month-tab .badge{font-size:9.5px;opacity:.75;margin-left:5px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 30px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.rose{color:var(--rose);}
+  .board .cell .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+
+  section{margin-bottom:32px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);}
+  .legend .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:260px;}
+  .search::placeholder{color:var(--ink-3);}
+  .search:focus{outline:1px solid var(--rose);outline-offset:-1px;}
+  .hint{font-size:11.5px;color:var(--ink-3);}
+
+  .ticker-head{display:grid;grid-template-columns:26px 1fr 130px 130px 90px 120px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head span{cursor:pointer;user-select:none;}
+  .ticker-head span.num{text-align:right;}
+  .ticker-head span.sorted{color:var(--rose);}
+  .ticker-list{border:1px solid var(--hair);border-top:none;}
+  .trow{display:grid;grid-template-columns:26px 1fr 130px 130px 90px 120px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);cursor:pointer;}
+  .trow:hover{background:var(--surface);}
+  .trow.open{background:var(--surface-2);}
+  .trow.total-row{cursor:default;border-top:1px solid var(--rose-dim);border-bottom:none;background:var(--surface);}
+  .trow.total-row:hover{background:var(--surface);}
+  .trow.total-row .name{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;font-size:11.5px;letter-spacing:.06em;color:var(--ink-2);}
+  .trow .chev{color:var(--ink-3);font-size:10px;transition:transform .15s;}
+  .trow.open .chev{transform:rotate(90deg);color:var(--rose);}
+  .trow .name{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trow .name .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  .trow .num{text-align:right;font-size:13px;}
+  .status-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;justify-content:flex-end;width:100%;}
+  .status-chip .sw{width:7px;height:7px;border-radius:50%;}
+  .status-chip.good .sw{background:var(--good-ink);} .status-chip.good{color:var(--good-ink);}
+  .status-chip.warning .sw{background:var(--warning);} .status-chip.warning{color:var(--warning);}
+  .status-chip.serious .sw{background:var(--serious);} .status-chip.serious{color:var(--serious);}
+  .status-chip.critical .sw{background:var(--critical);} .status-chip.critical{color:var(--critical);}
+
+  .expand-inner{padding:14px 14px 20px 52px;background:var(--surface-2);border-bottom:1px solid var(--hair);}
+  .expand-inner h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:0 0 10px;font-weight:600;}
+  table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.data-table th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:6px 10px;border-bottom:1px solid var(--hair);}
+  table.data-table th.num, table.data-table td.num{text-align:right;}
+  table.data-table td{padding:6px 10px;border-bottom:1px solid var(--hair);color:var(--ink-2);}
+  table.data-table td.strong{color:var(--ink);font-weight:600;}
+  .badge{display:inline-block;font-size:9.5px;font-weight:700;border-radius:3px;padding:2px 6px;text-transform:uppercase;letter-spacing:.03em;background:rgba(236,131,90,0.15);color:var(--serious);}
+  .empty-note{color:var(--ink-3);font-size:12.5px;font-style:italic;padding:8px 0;}
+
+  .bar-list{border:1px solid var(--hair);}
+  .bar-row{display:grid;grid-template-columns:1fr 2fr 100px 70px;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--hair);font-size:12.5px;}
+  .bar-row:last-child{border-bottom:none;}
+  .bar-row .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);}
+  .bar-track{height:8px;background:var(--hair);border-radius:3px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--rose);border-radius:3px;}
+  .bar-val{text-align:right;color:var(--ink);font-weight:600;}
+  .bar-cant{text-align:right;color:var(--ink-3);}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:repeat(2,1fr);}
+    .two-col{grid-template-columns:1fr;}
+    .ticker-head, .trow{grid-template-columns:20px 1fr 100px 120px;}
+    .ticker-head span:nth-child(4), .ticker-head span:nth-child(5),
+    .trow > :nth-child(4), .trow > :nth-child(5){display:none;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Rechazos y Devoluciones</h1></div>
+      <div class="sub">Peso de rechazos sobre la venta real, por vendedor — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Período: <b id="periodoText">—</b>
+    </div>
+  </header>
+
+  <div class="month-tabs" id="monthTabs"></div>
+
+  <div class="board" id="kpiRow"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Ranking por vendedor</h2>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--good-ink)"></span>&lt;2%</span>
+        <span><span class="sw" style="background:var(--warning)"></span>2–5%</span>
+        <span><span class="sw" style="background:var(--serious)"></span>5–10%</span>
+        <span><span class="sw" style="background:var(--critical)"></span>&gt;10%</span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="buscar_vendedor...">
+      <span class="hint">click en una fila → detalle de rechazos</span>
+    </div>
+    <div class="ticker-head">
+      <span></span>
+      <span data-key="nombre">Vendedor</span>
+      <span data-key="ventaNeta" class="num">Venta neta</span>
+      <span data-key="rechazosMonto" class="num">Rechazos</span>
+      <span data-key="rechazosCantidad" class="num">Eventos</span>
+      <span data-key="pct" class="num sorted">Peso s/ venta</span>
+    </div>
+    <div class="ticker-list" id="tickerList"></div>
+  </section>
+
+  <div class="two-col">
+    <section>
+      <div class="sec-head">
+        <h2>Proveedores más rechazados</h2>
+        <div class="n">por monto</div>
+      </div>
+      <div class="bar-list" id="provList"></div>
+    </section>
+    <section>
+      <div class="sec-head">
+        <h2>Motivos más frecuentes</h2>
+        <div class="n">por monto</div>
+      </div>
+      <div class="bar-list" id="motivoList"></div>
+    </section>
+  </div>
+
+  <footer>
+    <div><b>Metodología:</b> "venta real" del vendedor = ventas cerradas (no rechazo, no nota de crédito) con fecha de entrega = fecha de comprobante, dentro del mes. "Rechazo" = comprobantes DEV-RE (rechazo en la entrega) o DEV-CA (devolución por canje). Peso s/ venta = monto de rechazos ÷ venta real del vendedor en el mes. Se excluyen los vendedores 1176, 43, 16 y 37 (no son vendedores reales).</div>
+    <div style="margin-top:6px">Fuente: API Gescom. Foto fija — pedile a Claude que la actualice, o se actualiza sola si configuraste la rutina automática.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null;
+
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%'; }
+
+function statusFromPct(p){
+  if (p > 0.10) return 'critical';
+  if (p > 0.05) return 'serious';
+  if (p > 0.02) return 'warning';
+  return 'good';
+}
+
+let MESES_ORDENADOS = [];
+let currentMonthKey = null;
+function mesData(){ return DATA.meses[currentMonthKey]; }
+
+const MESES_NOMBRE = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function nombreMes(key){
+  const [y,m] = key.split('-');
+  return MESES_NOMBRE[parseInt(m,10)-1] + ' ' + y;
+}
+
+function renderMonthTabs(){
+  document.getElementById('monthTabs').innerHTML = MESES_ORDENADOS.map(key => {
+    const m = DATA.meses[key];
+    const active = key === currentMonthKey ? 'active' : '';
+    const badge = m.cerrado ? '' : '<span class="badge">● en curso</span>';
+    return `<button class="month-tab ${active}" data-mes="${key}">${nombreMes(key)}${badge}</button>`;
+  }).join('');
+  document.querySelectorAll('.month-tab').forEach(btn => btn.addEventListener('click', () => {
+    currentMonthKey = btn.getAttribute('data-mes');
+    openVend = null;
+    renderAll();
+  }));
+}
+
+function renderKPIs(){
+  const t = mesData().totales;
+  const cells = [
+    { label:'Venta neta', value: fmtMoneyCompact(t.ventaNeta), foot: fmtMoney(t.ventaNeta) },
+    { label:'Rechazos', value: fmtMoneyCompact(t.rechazosMonto), foot: fmtMoney(t.rechazosMonto), rose:true },
+    { label:'Eventos de rechazo', value: t.rechazosCantidad.toLocaleString('es-AR'), foot: 'devoluciones y rechazos' },
+    { label:'Peso sobre la venta', value: fmtPct(t.pct), foot: 'rechazos ÷ venta neta total' }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `
+    <div class="cell"><div class="label">${c.label}</div><div class="value mono ${c.rose?'rose':''}">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
+}
+
+let sortKey = 'pct';
+let sortDir = -1;
+let openVend = null;
+let searchTerm = '';
+
+function sortRows(rows){
+  return rows.slice().sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+}
+
+function renderExpand(row){
+  if (!row.eventos || !row.eventos.length) return `<div class="expand-inner"><div class="empty-note">sin rechazos de este vendedor en el período</div></div>`;
+  return `<div class="expand-inner">
+    <h3>rechazos y devoluciones</h3>
+    <table class="data-table"><thead><tr>
+      <th>Cliente</th><th>Fecha</th><th>Comprobante</th><th>Motivo</th><th class="num">Monto</th>
+    </tr></thead><tbody>
+      ${row.eventos.map(e => `
+        <tr>
+          <td>#${e.codigoCliente}</td>
+          <td>${e.fecha.split('-').reverse().join('/')}</td>
+          <td>${e.comprobante} <span class="badge">${e.tipo}</span></td>
+          <td>${e.motivo || '—'}</td>
+          <td class="num strong mono">${fmtMoney(e.monto)}</td>
+        </tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+function renderList(){
+  let rows = mesData().vendedores.map(v => ({ ...v, status: statusFromPct(v.pct) }));
+  if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm) || r.codigo.includes(searchTerm));
+  rows = sortRows(rows);
+  document.querySelectorAll('.ticker-head span[data-key]').forEach(s => s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey));
+
+  const list = document.getElementById('tickerList');
+  list.innerHTML = rows.map(r => {
+    const isOpen = openVend === r.codigo;
+    const row = `
+      <div class="trow ${isOpen?'open':''}" data-codigo="${r.codigo}">
+        <span class="chev">▸</span>
+        <span class="name">${r.nombre}<span class="code">#${r.codigo}</span></span>
+        <span class="num mono">${fmtMoneyCompact(r.ventaNeta)}</span>
+        <span class="num mono">${fmtMoneyCompact(r.rechazosMonto)}</span>
+        <span class="num mono">${r.rechazosCantidad}</span>
+        <span class="status-chip ${r.status}"><span class="sw"></span>${fmtPct(r.pct)}</span>
+      </div>`;
+    return isOpen ? row + renderExpand(r) : row;
+  }).join('');
+
+  const t = mesData().totales;
+  list.innerHTML += `
+    <div class="trow total-row">
+      <span></span>
+      <span class="name">TOTAL</span>
+      <span class="num mono">${fmtMoneyCompact(t.ventaNeta)}</span>
+      <span class="num mono">${fmtMoneyCompact(t.rechazosMonto)}</span>
+      <span class="num mono">${t.rechazosCantidad}</span>
+      <span class="status-chip ${statusFromPct(t.pct)}"><span class="sw"></span>${fmtPct(t.pct)}</span>
+    </div>`;
+
+  list.querySelectorAll('.trow:not(.total-row)').forEach(el => el.addEventListener('click', () => {
+    const codigo = el.getAttribute('data-codigo');
+    openVend = openVend === codigo ? null : codigo;
+    renderList();
+  }));
+}
+
+function renderBarList(containerId, items, nameKey){
+  const max = Math.max(1, ...items.map(i=>i.monto));
+  const el = document.getElementById(containerId);
+  if (!items.length) { el.innerHTML = `<div class="empty-note" style="padding:14px">sin datos en este período</div>`; return; }
+  el.innerHTML = items.slice(0,10).map(i => `
+    <div class="bar-row">
+      <div class="name">${i[nameKey]}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(i.monto/max*100).toFixed(1)}%"></div></div>
+      <div class="bar-val mono">${fmtMoneyCompact(i.monto)}</div>
+      <div class="bar-cant mono">${i.cantidad}×</div>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.ticker-head span[data-key]').forEach(s => {
+  s.addEventListener('click', () => {
+    const key = s.getAttribute('data-key');
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+    renderList();
+  });
+});
+document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+
+function renderAll(){
+  const m = mesData();
+  document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
+  renderMonthTabs();
+  renderKPIs();
+  renderList();
+  renderBarList('provList', m.topProveedores, 'nombre');
+  renderBarList('motivoList', m.topMotivos, 'motivo');
+}
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    MESES_ORDENADOS = Object.keys(DATA.meses).sort().reverse();
+    currentMonthKey = MESES_ORDENADOS.includes(DATA.mesActual) ? DATA.mesActual : MESES_ORDENADOS[0];
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${err.message}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>

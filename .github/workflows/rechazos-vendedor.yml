@@ -1,0 +1,32 @@
+name: Rechazos y Devoluciones
+
+on:
+  schedule:
+    - cron: "45 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escribir config.json desde el secret
+        shell: bash
+        run: echo '${{ secrets.GESCOM_CONFIG }}' > scripts/config.json
+
+      - name: Correr pull-rechazos-vendedor.ps1
+        shell: pwsh
+        run: ./scripts/pull-rechazos-vendedor.ps1
+
+      - name: Publicar cambios (commit + push a docs/rechazos)
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/rechazos
+          git diff --cached --quiet || git commit -m "Actualiza Rechazos y Devoluciones"
+          git push
