@@ -56,7 +56,7 @@
   .progress-track{height:10px;background:var(--hair);border-radius:5px;overflow:hidden;}
   .progress-fill{height:100%;background:var(--amber);border-radius:5px;}
 
-  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 30px;}
+  .board{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 30px;}
   .board .cell{background:var(--bg);padding:18px 20px;}
   .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
   .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
@@ -74,12 +74,13 @@
   .search::placeholder{color:var(--ink-3);}
   .search:focus{outline:1px solid var(--amber);outline-offset:-1px;}
 
-  .ticker-head{display:grid;grid-template-columns:1fr 140px 140px 110px 130px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head{display:grid;grid-template-columns:1fr 160px 160px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head.cerrado, .trow.cerrado{grid-template-columns:1fr 160px;}
   .ticker-head span{cursor:pointer;user-select:none;}
   .ticker-head span.num{text-align:right;}
   .ticker-head span.sorted{color:var(--amber);}
   .ticker-list{border:1px solid var(--hair);border-top:none;}
-  .trow{display:grid;grid-template-columns:1fr 140px 140px 110px 130px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);}
+  .trow{display:grid;grid-template-columns:1fr 160px 160px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);}
   .trow:hover{background:var(--surface);}
   .trow.total-row{border-top:1px solid var(--amber-dim);border-bottom:none;background:var(--surface);}
   .trow.total-row .name{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;font-size:11.5px;letter-spacing:.06em;color:var(--ink-2);}
@@ -95,10 +96,8 @@
   footer b{color:var(--ink-2);}
 
   @media (max-width: 900px){
-    .board{grid-template-columns:repeat(2,1fr);}
     .ticker-head, .trow{grid-template-columns:1fr 100px 100px;}
-    .ticker-head span:nth-child(4), .ticker-head span:nth-child(5),
-    .trow > :nth-child(4), .trow > :nth-child(5){display:none;}
+    .ticker-head.cerrado, .trow.cerrado{grid-template-columns:1fr 100px;}
   }
 </style>
 
@@ -133,13 +132,7 @@
     <div class="toolbar">
       <input class="search" id="searchBox" type="text" placeholder="buscar_proveedor...">
     </div>
-    <div class="ticker-head">
-      <span data-key="nombre">Proveedor</span>
-      <span data-key="ventaNetaActual" class="num sorted">Venta actual</span>
-      <span data-key="ventaNetaProyectada" class="num">Proyectada</span>
-      <span data-key="rentabilidadActual" class="num">Rent. actual</span>
-      <span data-key="rentabilidadProyectada" class="num">Rent. proyectada</span>
-    </div>
+    <div class="ticker-head" id="tickerHead"></div>
     <div class="ticker-list" id="tickerList"></div>
   </section>
 
@@ -198,9 +191,7 @@ function renderKPIs(){
   const m = mesData();
   const cells = [
     { label:'Venta neta actual', value: fmtMoneyCompact(m.actual.ventaNeta), foot: fmtMoney(m.actual.ventaNeta) },
-    { label:'Venta neta proyectada', value: fmtMoneyCompact(m.proyectado.ventaNeta), foot: fmtMoney(m.proyectado.ventaNeta), amber:true },
-    { label:'Rentabilidad proyectada', value: fmtMoneyCompact(m.proyectado.rentabilidad), foot: fmtPct(m.proyectado.margen) + ' margen' },
-    { label:'CMV proyectado', value: fmtMoneyCompact(m.proyectado.cmv), foot: fmtMoney(m.proyectado.cmv) }
+    { label:'Venta neta proyectada', value: fmtMoneyCompact(m.proyectado.ventaNeta), foot: fmtMoney(m.proyectado.ventaNeta), amber:true }
   ];
   document.getElementById('kpiRow').innerHTML = cells.map(c => `
     <div class="cell"><div class="label">${c.label}</div><div class="value mono ${c.amber?'amber':''}">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
@@ -218,41 +209,55 @@ function sortRows(rows){
   });
 }
 
+function renderTickerHead(cerrado){
+  const head = document.getElementById('tickerHead');
+  head.className = 'ticker-head' + (cerrado ? ' cerrado' : '');
+  head.innerHTML = cerrado
+    ? `<span data-key="nombre">Proveedor</span><span data-key="ventaNetaActual" class="num sorted">Venta neta</span>`
+    : `<span data-key="nombre">Proveedor</span><span data-key="ventaNetaActual" class="num sorted">Venta actual</span><span data-key="ventaNetaProyectada" class="num">Proyectada</span>`;
+  head.querySelectorAll('span[data-key]').forEach(s => {
+    s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey);
+    s.addEventListener('click', () => {
+      const key = s.getAttribute('data-key');
+      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+      renderList();
+    });
+  });
+}
+
 function renderList(){
-  let rows = mesData().proveedores;
+  const m = mesData();
+  let rows = m.proveedores;
   if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm));
   rows = sortRows(rows);
   document.getElementById('provCount').textContent = '(' + rows.length + ' proveedores)';
-  document.querySelectorAll('.ticker-head span[data-key]').forEach(s => s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey));
+  renderTickerHead(m.cerrado);
 
   const list = document.getElementById('tickerList');
-  list.innerHTML = rows.map(r => `
-    <div class="trow">
+  const rowClass = 'trow' + (m.cerrado ? ' cerrado' : '');
+  list.innerHTML = rows.map(r => m.cerrado ? `
+    <div class="${rowClass}">
       <span class="name">${r.nombre}<span class="code">#${r.codigo}</span></span>
       <span class="num mono">${fmtMoneyCompact(r.ventaNetaActual)}</span>
-      <span class="num mono ${mesData().cerrado?'dim':''}">${fmtMoneyCompact(r.ventaNetaProyectada)}</span>
-      <span class="num mono">${fmtMoneyCompact(r.rentabilidadActual)}</span>
-      <span class="num mono ${mesData().cerrado?'dim':''}">${fmtMoneyCompact(r.rentabilidadProyectada)}</span>
+    </div>` : `
+    <div class="${rowClass}">
+      <span class="name">${r.nombre}<span class="code">#${r.codigo}</span></span>
+      <span class="num mono">${fmtMoneyCompact(r.ventaNetaActual)}</span>
+      <span class="num mono">${fmtMoneyCompact(r.ventaNetaProyectada)}</span>
     </div>`).join('');
 
-  const m = mesData();
-  list.innerHTML += `
-    <div class="trow total-row">
+  list.innerHTML += m.cerrado ? `
+    <div class="${rowClass} total-row">
+      <span class="name">TOTAL</span>
+      <span class="num mono">${fmtMoneyCompact(m.actual.ventaNeta)}</span>
+    </div>` : `
+    <div class="${rowClass} total-row">
       <span class="name">TOTAL</span>
       <span class="num mono">${fmtMoneyCompact(m.actual.ventaNeta)}</span>
       <span class="num mono">${fmtMoneyCompact(m.proyectado.ventaNeta)}</span>
-      <span class="num mono">${fmtMoneyCompact(m.actual.rentabilidad)}</span>
-      <span class="num mono">${fmtMoneyCompact(m.proyectado.rentabilidad)}</span>
     </div>`;
 }
 
-document.querySelectorAll('.ticker-head span[data-key]').forEach(s => {
-  s.addEventListener('click', () => {
-    const key = s.getAttribute('data-key');
-    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
-    renderList();
-  });
-});
 document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
 
 function renderAll(){
