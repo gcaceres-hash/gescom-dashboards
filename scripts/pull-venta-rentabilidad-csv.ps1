@@ -6,10 +6,25 @@ vivo. Se uso porque la API (ventas/api/v2/get) mostro ser poco confiable en
 consultas anchas: omitia ventas reales de forma inconsistente entre corridas
 (confirmado con casos concretos). El export de Gescom es la fuente de verdad.
 
-Reglas de negocio (mismas que la version por API):
-  - excluye vendedores 1176, 43, 16, 37 (no son ventas reales)
+Reglas de negocio:
+  - excluye SOLO los vendedores 1176 y 43: se confirmo contra la tabla
+    dinamica nativa de Gescom (sin filtro de vendedor) que estos dos
+    codigos se usan para renglones sin proveedor real (ej. articulo
+    "DESCUENTO", ajustes) -- ningun renglon de 1176/43 tiene proveedor
+    asignado, asi que excluirlos no afecta ninguna venta real.
+  - a diferencia de los reportes agrupados por vendedor (Cobertura
+    General, Potenciales, Seguimiento Di Giorno), ACA NO se excluyen los
+    vendedores 16 y 37: se confirmo con un caso concreto (LCB) que casi
+    toda su venta de septiembre estaba atribuida al vendedor "16"
+    (deposito/logistica) y es venta real con proveedor asignado -- la
+    tabla dinamica nativa de Gescom si la cuenta.
   - excluye items con PrecioCosto=1 (servicios/transporte)
-  - solo cuenta filas donde FechaComprobante = FechaEntrega
+  - el mes de una fila lo define FechaComprobante (fecha de factura) -- ya
+    NO se exige que coincida con FechaEntrega. Se probo esa igualdad antes
+    (a pedido de la usuaria) pero se confirmo con su propia tabla dinamica
+    de Gescom (filtro FechaEntrega en "Todas") que descartaba ventas reales
+    cuya entrega se registra unos dias despues de la factura -- un caso
+    concreto (LCB) mostro solo 1/7 parte de la venta real por esta razon
   - ImporteNetoItem ya viene con el signo correcto en el archivo (negativo
     para devoluciones/notas de credito, no hay que invertirlo)
   - items sin proveedor asignado: se agrupan en "_SIN_PROVEEDOR_" (no se excluyen)
@@ -69,7 +84,7 @@ function Read-AllLinesCompartido($path, $encoding) {
     }
 }
 
-$EXCLUDED = @("43","1176","16","37")
+$EXCLUDED_VENDEDOR = @("1176","43")
 
 Write-Log "Leyendo $CsvPath ..."
 $enc = [System.Text.Encoding]::GetEncoding(1252)
@@ -89,14 +104,10 @@ $totalCalifican = 0
 for ($i = 1; $i -lt $lines.Count; $i++) {
     $f = $lines[$i] -split ';'
     $totalFilas++
-    $codVend = $f[$col['CodVendedor']]
-    if ($EXCLUDED -contains $codVend) { continue }
+    if ($EXCLUDED_VENDEDOR -contains $f[$col['CodVendedor']]) { continue }
     $precioCosto = ToNum $f[$col['PrecioCosto']]
     if ($precioCosto -eq 1.0) { continue }
-    $fechaComprobante = ToFecha $f[$col['FechaComprobante']]
-    $fechaEntrega = ToFecha $f[$col['FechaEntrega']]
-    if ($fechaComprobante -ne $fechaEntrega) { continue }
-    $fecha = $fechaComprobante
+    $fecha = ToFecha $f[$col['FechaComprobante']]
     $mesKey = $fecha.ToString("yyyy-MM")
     $totalCalifican++
 
@@ -126,7 +137,7 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
     $m.agg[$key].cmv += $cmvItem
     $m.agg[$key].descuentos += $desc
 }
-Write-Log "Filas leidas: $totalFilas | filas que califican (FechaComprobante=FechaEntrega, vendedor real, no servicio): $totalCalifican"
+Write-Log "Filas leidas: $totalFilas | filas que califican (vendedor no ficticio, no servicio): $totalCalifican"
 
 # --- cargar historico existente y fusionar cada mes del archivo ---
 $meses = [ordered]@{}
