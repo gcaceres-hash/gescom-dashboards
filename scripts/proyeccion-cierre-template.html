@@ -1,0 +1,279 @@
+<title>Proyección de Cierre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0a0e0f;
+    --surface:   #12181a;
+    --surface-2: #171f21;
+    --ink:       #eef2f0;
+    --ink-2:     #9fb0ab;
+    --ink-3:     #64726e;
+    --hair:      #263030;
+    --border:    rgba(238,242,240,0.10);
+    --amber:     #ffb020;
+    --amber-dim: #7a5416;
+
+    --good:    #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical:#e66767;
+    --good-ink: #4bd07a;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#0a0e0f; --surface:#12181a; --surface-2:#171f21; --ink:#eef2f0; --ink-2:#9fb0ab; --ink-3:#64726e;
+    --hair:#263030; --border:rgba(238,242,240,0.10); --amber:#ffb020; --amber-dim:#7a5416;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#e66767; --good-ink:#4bd07a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+
+  .month-tabs{display:flex;gap:6px;margin:18px 0 4px;flex-wrap:wrap;}
+  .month-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.02em;text-transform:uppercase;}
+  .month-tab:hover{border-color:var(--amber-dim);color:var(--ink);}
+  .month-tab.active{background:var(--amber);border-color:var(--amber);color:var(--bg);font-weight:700;}
+  .month-tab .badge{font-size:9.5px;opacity:.75;margin-left:5px;}
+
+  /* avance del mes */
+  .progress-wrap{margin:18px 0 30px;}
+  .progress-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--ink-2);margin-bottom:8px;}
+  .progress-head b{color:var(--ink);font-family:"IBM Plex Mono",monospace;}
+  .progress-track{height:10px;background:var(--hair);border-radius:5px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--amber);border-radius:5px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 30px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.amber{color:var(--amber);}
+  .board .cell .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+  .board .cell .sub-value{font-size:13px;color:var(--ink-3);margin-top:4px;font-family:"IBM Plex Mono",monospace;}
+
+  section{margin-bottom:32px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:260px;}
+  .search::placeholder{color:var(--ink-3);}
+  .search:focus{outline:1px solid var(--amber);outline-offset:-1px;}
+
+  .ticker-head{display:grid;grid-template-columns:1fr 140px 140px 110px 130px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head span{cursor:pointer;user-select:none;}
+  .ticker-head span.num{text-align:right;}
+  .ticker-head span.sorted{color:var(--amber);}
+  .ticker-list{border:1px solid var(--hair);border-top:none;}
+  .trow{display:grid;grid-template-columns:1fr 140px 140px 110px 130px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);}
+  .trow:hover{background:var(--surface);}
+  .trow.total-row{border-top:1px solid var(--amber-dim);border-bottom:none;background:var(--surface);}
+  .trow.total-row .name{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;font-size:11.5px;letter-spacing:.06em;color:var(--ink-2);}
+  .trow .name{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trow .name .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  .trow .num{text-align:right;font-size:13px;}
+  .trow .num.dim{color:var(--ink-3);}
+  .delta{font-size:11px;margin-left:6px;}
+  .delta.up{color:var(--good-ink);}
+  .delta.down{color:var(--critical);}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:repeat(2,1fr);}
+    .ticker-head, .trow{grid-template-columns:1fr 100px 100px;}
+    .ticker-head span:nth-child(4), .ticker-head span:nth-child(5),
+    .trow > :nth-child(4), .trow > :nth-child(5){display:none;}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Proyección de Cierre</h1></div>
+      <div class="sub">Estimación de fin de mes según el ritmo de venta hábil — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Período: <b id="periodoText">—</b>
+    </div>
+  </header>
+
+  <div class="month-tabs" id="monthTabs"></div>
+
+  <div class="progress-wrap">
+    <div class="progress-head">
+      <span id="progressLabel">—</span>
+      <b id="progressPct">—</b>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="board" id="kpiRow"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Proyección por proveedor</h2>
+      <div class="n" id="provCount"></div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="buscar_proveedor...">
+    </div>
+    <div class="ticker-head">
+      <span data-key="nombre">Proveedor</span>
+      <span data-key="ventaNetaActual" class="num sorted">Venta actual</span>
+      <span data-key="ventaNetaProyectada" class="num">Proyectada</span>
+      <span data-key="rentabilidadActual" class="num">Rent. actual</span>
+      <span data-key="rentabilidadProyectada" class="num">Rent. proyectada</span>
+    </div>
+    <div class="ticker-list" id="tickerList"></div>
+  </section>
+
+  <footer>
+    <div><b>Metodología:</b> proyectado = valor actual del mes ÷ días hábiles transcurridos × días hábiles totales del mes (lunes a viernes, sin descontar feriados). Un mes ya cerrado no tiene proyección real: el valor "proyectado" coincide con el "actual" porque ya transcurrieron todos sus días hábiles.</div>
+    <div style="margin-top:6px">Fuente: calculado sobre los datos ya publicados de la Pizarra de Rentabilidad. Se actualiza sola cada vez que se procesa un nuevo export.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null;
+
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtMoneyCompact(n){
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%'; }
+
+let MESES_ORDENADOS = [];
+let currentMonthKey = null;
+function mesData(){ return DATA.meses[currentMonthKey]; }
+
+const MESES_NOMBRE = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function nombreMes(key){
+  const [y,m] = key.split('-');
+  return MESES_NOMBRE[parseInt(m,10)-1] + ' ' + y;
+}
+
+function renderMonthTabs(){
+  document.getElementById('monthTabs').innerHTML = MESES_ORDENADOS.map(key => {
+    const m = DATA.meses[key];
+    const active = key === currentMonthKey ? 'active' : '';
+    const badge = m.cerrado ? '' : '<span class="badge">● en curso</span>';
+    return `<button class="month-tab ${active}" data-mes="${key}">${nombreMes(key)}${badge}</button>`;
+  }).join('');
+  document.querySelectorAll('.month-tab').forEach(btn => btn.addEventListener('click', () => {
+    currentMonthKey = btn.getAttribute('data-mes');
+    renderAll();
+  }));
+}
+
+function renderProgress(){
+  const m = mesData();
+  const pct = m.diasHabilesTotal > 0 ? m.diasHabilesTranscurridos / m.diasHabilesTotal : 0;
+  document.getElementById('progressLabel').textContent = m.cerrado
+    ? `Mes cerrado — ${m.diasHabilesTotal} días hábiles completos`
+    : `Día hábil ${m.diasHabilesTranscurridos} de ${m.diasHabilesTotal} (quedan ${m.diasHabilesRestantes})`;
+  document.getElementById('progressPct').textContent = fmtPct(pct);
+  document.getElementById('progressFill').style.width = (pct*100).toFixed(1) + '%';
+}
+
+function renderKPIs(){
+  const m = mesData();
+  const cells = [
+    { label:'Venta neta actual', value: fmtMoneyCompact(m.actual.ventaNeta), foot: fmtMoney(m.actual.ventaNeta) },
+    { label:'Venta neta proyectada', value: fmtMoneyCompact(m.proyectado.ventaNeta), foot: fmtMoney(m.proyectado.ventaNeta), amber:true },
+    { label:'Rentabilidad proyectada', value: fmtMoneyCompact(m.proyectado.rentabilidad), foot: fmtPct(m.proyectado.margen) + ' margen' },
+    { label:'CMV proyectado', value: fmtMoneyCompact(m.proyectado.cmv), foot: fmtMoney(m.proyectado.cmv) }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `
+    <div class="cell"><div class="label">${c.label}</div><div class="value mono ${c.amber?'amber':''}">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
+}
+
+let sortKey = 'ventaNetaActual';
+let sortDir = -1;
+let searchTerm = '';
+
+function sortRows(rows){
+  return rows.slice().sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+}
+
+function renderList(){
+  let rows = mesData().proveedores;
+  if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm));
+  rows = sortRows(rows);
+  document.getElementById('provCount').textContent = '(' + rows.length + ' proveedores)';
+  document.querySelectorAll('.ticker-head span[data-key]').forEach(s => s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey));
+
+  const list = document.getElementById('tickerList');
+  list.innerHTML = rows.map(r => `
+    <div class="trow">
+      <span class="name">${r.nombre}<span class="code">#${r.codigo}</span></span>
+      <span class="num mono">${fmtMoneyCompact(r.ventaNetaActual)}</span>
+      <span class="num mono ${mesData().cerrado?'dim':''}">${fmtMoneyCompact(r.ventaNetaProyectada)}</span>
+      <span class="num mono">${fmtMoneyCompact(r.rentabilidadActual)}</span>
+      <span class="num mono ${mesData().cerrado?'dim':''}">${fmtMoneyCompact(r.rentabilidadProyectada)}</span>
+    </div>`).join('');
+
+  const m = mesData();
+  list.innerHTML += `
+    <div class="trow total-row">
+      <span class="name">TOTAL</span>
+      <span class="num mono">${fmtMoneyCompact(m.actual.ventaNeta)}</span>
+      <span class="num mono">${fmtMoneyCompact(m.proyectado.ventaNeta)}</span>
+      <span class="num mono">${fmtMoneyCompact(m.actual.rentabilidad)}</span>
+      <span class="num mono">${fmtMoneyCompact(m.proyectado.rentabilidad)}</span>
+    </div>`;
+}
+
+document.querySelectorAll('.ticker-head span[data-key]').forEach(s => {
+  s.addEventListener('click', () => {
+    const key = s.getAttribute('data-key');
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+    renderList();
+  });
+});
+document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+
+function renderAll(){
+  const m = mesData();
+  document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
+  renderMonthTabs();
+  renderProgress();
+  renderKPIs();
+  renderList();
+}
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    MESES_ORDENADOS = Object.keys(DATA.meses).sort().reverse();
+    currentMonthKey = MESES_ORDENADOS.includes(DATA.mesActual) ? DATA.mesActual : MESES_ORDENADOS[0];
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${err.message}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>

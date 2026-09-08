@@ -53,13 +53,17 @@ Write-Log "Procesando '$($elegido.Name)' (modificado $($elegido.LastWriteTime)).
 & powershell -NoProfile -Command "& '$RepoDir\scripts\pull-venta-rentabilidad-csv.ps1' -CsvPath '$($elegido.FullName)' -DocsDir '$RepoDir\docs\rentabilidad' -TemplatePath '$RepoDir\scripts\venta-rentabilidad-template.html'"
 if ($LASTEXITCODE -ne 0) { throw "pull-venta-rentabilidad-csv.ps1 fallo con codigo $LASTEXITCODE" }
 
+Write-Log "Recalculando proyeccion de cierre..."
+& powershell -NoProfile -File "$RepoDir\scripts\pull-proyeccion-cierre.ps1"
+if ($LASTEXITCODE -ne 0) { throw "pull-proyeccion-cierre.ps1 fallo con codigo $LASTEXITCODE" }
+
 Set-Content -Path $MarcadorPath -Value $marcaActual -NoNewline
 
 Write-Log "Subiendo a GitHub..."
 Push-Location $RepoDir
 try {
-    git add scripts/pull-venta-rentabilidad-csv.ps1 docs/rentabilidad/data.json docs/rentabilidad/index.html
-    $cambios = @(git status --porcelain -- docs/rentabilidad scripts/pull-venta-rentabilidad-csv.ps1)
+    git add scripts/pull-venta-rentabilidad-csv.ps1 docs/rentabilidad/data.json docs/rentabilidad/index.html docs/proyeccion/data.json docs/proyeccion/index.html
+    $cambios = @(git status --porcelain -- docs/rentabilidad docs/proyeccion scripts/pull-venta-rentabilidad-csv.ps1)
     if ($cambios.Count -eq 0) {
         Write-Log "No hay cambios para commitear (el data.json ya estaba igual)."
     } else {
