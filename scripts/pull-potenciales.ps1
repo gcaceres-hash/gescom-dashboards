@@ -106,12 +106,14 @@ while ($true) {
         if (-not $clienteInfo.ContainsKey($codCli)) { continue }
         $ci = $clienteInfo[$codCli]
         $ci.ventaNeta3m += [double]$venta.importeNeto
-        # "compro este mes" se define por fecha de ENTREGA, y solo cuenta si
-        # coincide con la fecha del comprobante (venta ya facturada el mismo
-        # dia de la entrega) -- el ranking de 3 meses ya cubre de sobra el
-        # buffer hacia atras necesario para capturar ventas creadas antes.
-        $entregaFacturada = $venta.fechaEntrega -and $venta.comprobantePrincipal -and $venta.comprobantePrincipal.fechaComprobante -and (([datetime]$venta.fechaEntrega).Date -eq ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date)
-        if ($entregaFacturada -and ([datetime]$venta.fechaEntrega).Date -ge $inicioMesActual) {
+        # "compro este mes" se define por fecha de COMPROBANTE (factura) --
+        # ya no se exige que coincida con la fecha de entrega (se confirmo
+        # contra la tabla dinamica nativa de Gescom que esa igualdad
+        # descartaba compras reales cuya entrega se registra dias despues).
+        # El ranking de 3 meses ya cubre de sobra el buffer hacia atras
+        # necesario para capturar ventas creadas antes.
+        $tieneComprobante = $venta.comprobantePrincipal -and $venta.comprobantePrincipal.fechaComprobante
+        if ($tieneComprobante -and ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date -ge $inicioMesActual) {
             $ci.compro = $true
             foreach ($item in $venta.items) {
                 $prov = $artProv[[string]$item.codigoItem]

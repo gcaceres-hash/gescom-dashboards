@@ -5,8 +5,14 @@ proveedor -- y tambien filtrable por dia de visita de la ruta de preventa
 (lunes, martes, etc).
 
 Reglas (mismo criterio que los otros dashboards):
-  - Se excluyen los vendedores 1176, 43, 16, 37 (no son vendedores reales).
-  - "Compro" = venta cerrada (facturada fiscalmente), no nota de credito, en el mes en curso.
+  - Se excluyen los vendedores 1176, 43, 16, 37 al armar la CARTERA (no son
+    vendedores reales, un cliente no puede estar "asignado" a ellos) --
+    pero una compra de ese cliente SI cuenta aunque el renglon de venta en
+    si haya pasado por uno de esos codigos (ej. deposito/logistica).
+  - "Compro" = venta cerrada (facturada fiscalmente), no nota de credito,
+    con fecha de COMPROBANTE (factura) dentro del mes -- ya no se exige
+    que coincida con la fecha de entrega (se confirmo contra la tabla
+    dinamica nativa de Gescom que esa igualdad descartaba compras reales).
   - Cartera = clientes cuya ruta de preventa (primera entrada) tiene a ese
     vendedor asignado. Los dias de esa misma ruta definen "dia de visita".
 #>
@@ -107,12 +113,9 @@ while ($true) {
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if (-not $venta.fechaEntrega) { continue }
         if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
-        $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
         $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
-        if ($fechaEntrega -ne $fechaComprobante) { continue }
-        if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
+        if ($fechaComprobante -lt $inicioMes -or $fechaComprobante -ge $fechaHastaReal) { continue }
         if ($venta.esCredito -eq $true) { continue }
         $codCli = [string]$venta.codigoCliente
         if (-not $clienteInfo.ContainsKey($codCli)) { continue }

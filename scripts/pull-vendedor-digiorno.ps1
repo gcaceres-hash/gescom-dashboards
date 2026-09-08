@@ -112,12 +112,9 @@ while ($true) {
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if (-not $venta.fechaEntrega) { continue }
         if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
-        $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
         $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
-        if ($fechaEntrega -ne $fechaComprobante) { continue }
-        if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
+        if ($fechaComprobante -lt $inicioMes -or $fechaComprobante -ge $fechaHastaReal) { continue }
         if ([string]$venta.codigoVendedor -ne $CodigoVendedor) { continue }
         $totalVendedor++
         $esCredito = $venta.esCredito -eq $true

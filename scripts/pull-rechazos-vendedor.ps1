@@ -4,9 +4,12 @@ los rechazos sobre la venta real de cada vendedor, y cuales son los
 proveedores y motivos de rechazo mas preponderantes del mes.
 
 Reglas de negocio (mismas que el resto de los dashboards):
-  - excluye vendedores 1176, 43, 16, 37 (no son vendedores reales)
+  - excluye vendedores 1176, 43, 16, 37 (no son vendedores reales -- esto
+    es un reporte agrupado POR VENDEDOR, a diferencia de Rentabilidad)
   - "venta real" del vendedor = venta cerrada, no rechazo, con fecha de
-    entrega = fecha de comprobante, dentro del mes
+    COMPROBANTE (factura) dentro del mes -- ya no se exige que coincida
+    con la fecha de entrega (se confirmo contra la tabla dinamica nativa
+    de Gescom que esa igualdad descartaba ventas reales)
   - "rechazo" = comprobantes de tipo DEV-RE (rechazo en la entrega) o DEV-CA
     (devolucion por canje), mismo criterio que Seguimiento Di Giorno
   - pct = monto de rechazos / venta real del vendedor en el mes
@@ -93,12 +96,9 @@ while ($true) {
     if (-not $page -or $page.Count -eq 0) { break }
     $total += $page.Count
     foreach ($venta in $page) {
-        if (-not $venta.fechaEntrega) { continue }
         if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
-        $fechaEntrega = ([datetime]$venta.fechaEntrega).Date
         $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
-        if ($fechaEntrega -ne $fechaComprobante) { continue }
-        if ($fechaEntrega -lt $inicioMes -or $fechaEntrega -ge $fechaHastaReal) { continue }
+        if ($fechaComprobante -lt $inicioMes -or $fechaComprobante -ge $fechaHastaReal) { continue }
         $codVend = [string]$venta.codigoVendedor
         if ($EXCLUDED -contains $codVend) { continue }
 
@@ -140,7 +140,7 @@ while ($true) {
             if (-not $eventosPorVendedor.ContainsKey($codVend)) { $eventosPorVendedor[$codVend] = @() }
             $eventosPorVendedor[$codVend] += [pscustomobject]@{
                 codigoCliente = [string]$venta.codigoCliente
-                fecha = $fechaEntrega.ToString("yyyy-MM-dd")
+                fecha = $fechaComprobante.ToString("yyyy-MM-dd")
                 comprobante = [string]$venta.numeroComprobante
                 tipo = [string]$venta.codigoTipoVenta
                 motivo = $motivoDesc
