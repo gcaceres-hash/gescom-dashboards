@@ -1,0 +1,56 @@
+{
+  "generadoEn": "2026-09-16T00:00:00-03:00",
+  "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
+  "bien": [
+    {
+      "titulo": "Pedidos eliminados en baja",
+      "detalle": "0,45% de los pedidos de septiembre se eliminaron (25 de 5.517) — en julio y agosto rondaba el 1% (97 y 95 respectivamente)."
+    },
+    {
+      "titulo": "Cero remisiones rechazadas",
+      "detalle": "Ninguna remisión rechazada en lo que va del mes."
+    },
+    {
+      "titulo": "Ritmo de despacho firme",
+      "detalle": "247 camiones despachados en los primeros 16 días de septiembre — agosto completo (31 días) cerró en 399, así que septiembre viene a un ritmo igual o mayor."
+    }
+  ],
+  "atencion": [
+    {
+      "titulo": "7 pedidos pendientes con más de una semana",
+      "detalle": "El más viejo tiene 9 días. Los de mayor monto entre los atrasados: $3.818.760 (código de vendedor 18) y $1.230.593 (código 054)."
+    },
+    {
+      "titulo": "2.098 unidades de stock ya vencidas sin dar de baja",
+      "detalle": "13 lotes. Los más grandes: 1.040 unidades de Azúcar Ledesma Sucralosa (3 lotes distintos, vencidos hace 20-45 días), 296 unidades de Pal de la Selva Ananá y 531 de Mantecol Café."
+    },
+    {
+      "titulo": "1.713 unidades de yogur Ilolay vencen en 2 días",
+      "detalle": "Es el lote más grande de todo el próximo-a-vencer. Si no se mueve ahora se pierde entero."
+    }
+  ],
+  "vigilar": [
+    {
+      "titulo": "7.809 unidades vencen en los próximos 15 días",
+      "detalle": "21 lotes distintos — conviene priorizar su salida o armar alguna promoción antes de que pasen a \"vencido\"."
+    },
+    {
+      "titulo": "15.634 unidades vencen entre 16 y 30 días",
+      "detalle": "30 lotes — todavía hay margen para reaccionar, pero vale la pena tenerlos en el radar."
+    },
+    {
+      "titulo": "70 pedidos pendientes de 1 a 3 días",
+      "detalle": "Es normal si se despachan en los próximos días, pero conviene no dejar que se acumulen."
+    }
+  ],
+  "numeros": {
+    "pendientesTotal": 205,
+    "pendientesImporte": 19496809.43,
+    "pendientesAntiguedad": { "masDe7dias": 7, "de3a7dias": 9, "de1a3dias": 70, "menosDe1dia": 119 },
+    "vencidoUnidades": 2098,
+    "proximoVencerUnidades": { "0a15dias": 7809, "16a30dias": 15634, "masDe30dias": 8284 },
+    "eliminadosPctSeptiembre": 0.45,
+    "eliminadosPctAgosto": 1.0,
+    "eliminadosPctJulio": 1.02
+  }
+}
