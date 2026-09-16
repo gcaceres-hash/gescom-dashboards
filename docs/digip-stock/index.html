@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Digip - Stock</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0a0e0f;
+    --surface:   #12181a;
+    --surface-2: #171f21;
+    --ink:       #eef2f0;
+    --ink-2:     #9fb0ab;
+    --ink-3:     #64726e;
+    --hair:      #263030;
+    --border:    rgba(238,242,240,0.10);
+    --amber:     #ffb020;
+    --amber-dim: #7a5416;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:24px 0 30px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.amber{color:var(--amber);}
+
+  section{margin-bottom:32px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:260px;}
+  .search::placeholder{color:var(--ink-3);}
+  .search:focus{outline:1px solid var(--amber);outline-offset:-1px;}
+
+  .ticker-head{display:grid;grid-template-columns:1fr 110px 110px 100px;gap:12px;padding:0 14px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .ticker-head span{cursor:pointer;user-select:none;}
+  .ticker-head span.num{text-align:right;}
+  .ticker-head span.sorted{color:var(--amber);}
+  .ticker-list{border:1px solid var(--hair);border-top:none;}
+  .trow{display:grid;grid-template-columns:1fr 110px 110px 100px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--hair);}
+  .trow:hover{background:var(--surface);}
+  .trow.total-row{border-top:1px solid var(--amber-dim);border-bottom:none;background:var(--surface);}
+  .trow.total-row .name{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;font-size:11.5px;letter-spacing:.06em;color:var(--ink-2);}
+  .trow .name{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trow .num{text-align:right;font-size:13px;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+
+  @media (max-width: 900px){
+    .board{grid-template-columns:1fr;}
+    .ticker-head, .trow{grid-template-columns:1fr 80px 80px 70px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Digip · Stock</h1></div>
+      <div class="sub">Inventario por proveedor — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Generado: <b id="generadoText">—</b>
+    </div>
+  </header>
+
+  <div class="board" id="kpiRow"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Stock por proveedor</h2>
+      <div class="n" id="provCount"></div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="buscar_proveedor...">
+    </div>
+    <div class="ticker-head" id="tickerHead"></div>
+    <div class="ticker-list" id="tickerList"></div>
+  </section>
+
+  <footer>
+    <div><b>Cómo se arma:</b> se exporta el CSV de stock de Digip ("Descargar completo", sin filtrar por fabricante) desde la sesión ya logueada de Gisela. Digip no permite automatizar esto sin sesión activa, así que este dashboard se actualiza a pedido, no solo.</div>
+    <div style="margin-top:6px">Verificado contra la pantalla de Digip (Reportes &gt; Stock &gt; Por artículos) para al menos un proveedor antes de publicar.</div>
+  </footer>
+</div>
+
+<script>
+function fmtNum(n){ return Math.round(n).toLocaleString('es-AR'); }
+
+let DATA = null;
+let sortKey = 'unidades';
+let sortDir = -1;
+let searchTerm = '';
+
+function renderKPIs(d){
+  const cells = [
+    { label:'Artículos (SKU)', value: fmtNum(d.totales.articulos) },
+    { label:'Unidades totales', value: fmtNum(d.totales.unidades) },
+    { label:'Proveedores', value: fmtNum(d.totales.proveedores) }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `
+    <div class="cell"><div class="label">${c.label}</div><div class="value mono">${c.value}</div></div>`).join('');
+}
+
+function sortRows(rows){
+  return rows.slice().sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+}
+
+function renderHead(){
+  const head = document.getElementById('tickerHead');
+  head.innerHTML = `<span data-key="nombre">Proveedor</span><span data-key="articulos" class="num">SKU</span><span data-key="unidades" class="num sorted">Unidades</span><span data-key="bultos" class="num">Bultos</span>`;
+  head.querySelectorAll('span[data-key]').forEach(s => {
+    s.classList.toggle('sorted', s.getAttribute('data-key')===sortKey);
+    s.addEventListener('click', () => {
+      const key = s.getAttribute('data-key');
+      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key==='nombre' ? 1 : -1; }
+      renderList();
+    });
+  });
+}
+
+function renderList(){
+  let rows = DATA.proveedores;
+  if (searchTerm) rows = rows.filter(r => r.nombre.toLowerCase().includes(searchTerm));
+  rows = sortRows(rows);
+  document.getElementById('provCount').textContent = '(' + rows.length + ' proveedores)';
+  renderHead();
+
+  const totalArt = rows.reduce((s,r) => s + r.articulos, 0);
+  const totalUn = rows.reduce((s,r) => s + r.unidades, 0);
+  const totalBu = rows.reduce((s,r) => s + r.bultos, 0);
+
+  const list = document.getElementById('tickerList');
+  list.innerHTML = rows.map(r => `
+    <div class="trow">
+      <span class="name">${r.nombre}</span>
+      <span class="num mono">${fmtNum(r.articulos)}</span>
+      <span class="num mono">${fmtNum(r.unidades)}</span>
+      <span class="num mono">${fmtNum(r.bultos)}</span>
+    </div>`).join('');
+  list.innerHTML += `
+    <div class="trow total-row">
+      <span class="name">TOTAL</span>
+      <span class="num mono">${fmtNum(totalArt)}</span>
+      <span class="num mono">${fmtNum(totalUn)}</span>
+      <span class="num mono">${fmtNum(totalBu)}</span>
+    </div>`;
+}
+
+document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(d => {
+    DATA = d;
+    document.getElementById('generadoText').textContent = new Date(d.generadoEn).toLocaleString('es-AR');
+    renderKPIs(d);
+    renderList();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${err.message}).</div></div>`;
+  });
+</script>
+</body>
+</html>

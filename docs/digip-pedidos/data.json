@@ -1,0 +1,40 @@
+{
+  "generadoEn": "2026-09-16T00:00:00-03:00",
+  "fuente": "Digip WMS - Preparacion/Pedido (export CSV, sesion de Gisela)",
+  "periodoDespachados": { "desde": "2026-09-01", "hasta": "2026-09-16" },
+  "kpis": {
+    "pendientes": { "count": 205, "importe": 19496809.43 },
+    "despachadosMes": { "count": 5287, "importe": 715842777.24 },
+    "incidencias": { "count": 864, "importe": 109470632.37 }
+  },
+  "detalle": {
+    "pendiente": { "count": 205, "importe": 19496809.43 },
+    "enPreparacion": { "count": 0, "importe": 0 },
+    "completo": { "count": 9, "importe": 1316316.9984 },
+    "remitido": { "count": 0, "importe": 0 },
+    "remitidoExterno": { "count": 5278, "importe": 714526460.2456 },
+    "eliminado": { "count": 864, "importe": 109470632.3725 },
+    "remisionRechazada": { "count": 0, "importe": 0 }
+  },
+  "pendientesPorCodigoVendedor": [
+    { "codigo": "052", "count": 29 },
+    { "codigo": "2", "count": 28 },
+    { "codigo": "6", "count": 24 },
+    { "codigo": "064", "count": 24 },
+    { "codigo": "5", "count": 22 },
+    { "codigo": "075", "count": 15 },
+    { "codigo": "074", "count": 11 },
+    { "codigo": "30", "count": 8 },
+    { "codigo": "7", "count": 5 },
+    { "codigo": "29", "count": 5 },
+    { "codigo": "053", "count": 6 },
+    { "codigo": "4", "count": 6 },
+    { "codigo": "056", "count": 3 },
+    { "codigo": "3", "count": 4 },
+    { "codigo": "054", "count": 4 },
+    { "codigo": "27", "count": 2 },
+    { "codigo": "18", "count": 1 },
+    { "codigo": "051", "count": 7 },
+    { "codigo": "073", "count": 1 }
+  ]
+}

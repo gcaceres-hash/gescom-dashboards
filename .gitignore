@@ -1,4 +1,5 @@
 scripts/config.json
+scripts/digip-config.json
 scripts/*-data.json
 scripts/*.log
 scripts/stock-dashboard.html
