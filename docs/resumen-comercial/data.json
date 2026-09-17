@@ -1,68 +1,59 @@
 {
-  "generadoEn": "2026-09-16T14:30:00-03:00",
+  "generadoEn": "2026-09-17T17:10:00-03:00",
   "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos",
   "bien": [
     {
-      "titulo": "Ritmo de venta por encima de agosto",
-      "detalle": "$587,3M vendidos en 12 de 22 días hábiles de septiembre. Si se sostiene el ritmo, el mes cerraría en $1.076,7M — un 26% más que agosto ($851,8M)."
+      "titulo": "La cuenta corriente bajó $46,7M en un día",
+      "detalle": "De $193,4M a $146,6M. La deuda de Di Giorno en particular pasó de $24,8M a $14,3M — se cobró la mayor parte de lo que se estaba gestionando."
+    },
+    {
+      "titulo": "El margen dejó de caer",
+      "detalle": "13,22% ayer → 13,39% hoy (proyectado). Sigue por debajo de agosto (13,46%) pero la tendencia de 3 meses a la baja se frenó."
     },
     {
       "titulo": "Mejor cobertura de cartera",
-      "detalle": "Romina Báez (69,6% de cobertura) y Nahuel Martínez (65,3%) muy por encima del promedio general (47%) — vale la pena ver qué están haciendo distinto."
-    },
-    {
-      "titulo": "Cero rechazos en la cartera de Di Giorno",
-      "detalle": "Ningún rechazo este mes en su cartera de 23 clientes."
+      "detalle": "Romina Báez (72% de cobertura) y Nahuel Martínez (67,7%) siguen muy por encima del promedio general."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los rechazos casi se quintuplicaron",
-      "detalle": "0,79% de la venta en agosto → 3,78% en septiembre ($21,5M en 755 casos). El motivo más común es \"no quiere el cliente\" ($7,0M / 173 casos) y el proveedor más afectado es Ilolay ($6,0M / 390 casos)."
+      "titulo": "El vendedor \"VACANTE\" sigue igual: 79,3% sin compra",
+      "detalle": "146 clientes sin nadie a cargo, prácticamente sin cambio respecto de ayer (80,1%) — nadie está tomando esa cartera."
     },
     {
-      "titulo": "146 clientes sin vendedor asignado (puesto vacante)",
-      "detalle": "El código de vendedor \"3\" figura como VACANTE: 80,1% de esos 146 clientes no compró este mes — nadie está haciendo seguimiento activo de esa cartera."
+      "titulo": "Los rechazos no bajan",
+      "detalle": "3,78% ayer → 3,85% hoy ($23,3M en 818 casos). Sigue siendo ~5 veces el nivel de agosto (0,79%). El motivo principal sigue siendo \"no quiere el cliente\" ($8,1M / 187 casos)."
     },
     {
-      "titulo": "El margen viene bajando hace 3 meses",
-      "detalle": "14,51% en julio → 13,46% en agosto → 13,22% proyectado en septiembre. Se está vendiendo más pero ganando un porcentaje menor sobre cada venta."
-    },
-    {
-      "titulo": "$11,3M en cuenta corriente vencidos hace más de 90 días",
-      "detalle": "Incluye un cliente con $4,7M sin pagar hace 702 días y otro con $2,1M hace 544 días — ninguno tiene vendedor asignado, conviene decidir si se gestionan o se dan de baja."
+      "titulo": "$11,3M en cuenta corriente de más de 90 días, sin moverse",
+      "detalle": "A diferencia del resto de la cartera, esta franja no bajó nada — son los casos más viejos (700+ días) los que quedan estancados mientras se cobra todo lo demás."
     }
   ],
   "vigilar": [
     {
-      "titulo": "$321M en potencial sin comprar este mes",
-      "detalle": "Clientes que en los últimos 3 meses compraron fuerte pero no en septiembre. El más grande: Distribuidora Sourigues SRL, $30,4M (vendedor 038)."
-    },
-    {
-      "titulo": "Un solo cliente concentra el 58% de la deuda de Di Giorno",
-      "detalle": "Miguel Gómez debe $14,3M de los $24,8M totales de esa cartera, con una factura de $14,3M vencida hace 26 días."
+      "titulo": "$302,6M en potencial sin comprar este mes",
+      "detalle": "Bajó un poco desde ayer ($321M) pero sigue siendo el bloque más grande. El más importante: Distribuidora Sourigues SRL, $30,4M (vendedor 038), sin cambios."
     },
     {
       "titulo": "Cinco vendedores con más del 60% de su cartera sin compra",
-      "detalle": "Myrian Lertora (69,8%), Cecilia Gauchez (69,4%), Fernanda Cejas (67,2%), Nadia Díaz (64%) y Leonel Caruso (63,5%)."
+      "detalle": "Cecilia Gauchez (68%), Myrian Lertora (67,7%), Fernanda Cejas (61,9%), Nadia Díaz (60,7%) y Leonel Caruso (60,1%)."
     },
     {
-      "titulo": "Línea Dorada S.A. con margen casi del 100% en septiembre",
-      "detalle": "Venta neta $357.777 contra un CMV de apenas $84 — probablemente falta cargar el costo real de sus ventas recientes. No tomarlo como ganancia real sin revisar."
+      "titulo": "Línea Dorada S.A. con margen casi del 100%",
+      "detalle": "Sigue sin cargarse el costo real de sus ventas de septiembre — mismo dato raro que ayer, conviene revisarlo antes de tomarlo como ganancia real."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 587267946.48,
-    "ventaNetaSepProyectada": 1076657901.88,
+    "ventaNetaSepActual": 624632230.44,
+    "ventaNetaSepProyectada": 1057069928.44,
     "ventaNetaAgoCerrado": 851843793.97,
-    "margenJul": 0.1451,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1322,
+    "margenSepProyectado": 0.1339,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0378,
-    "rechazosMontoSep": 21491810.02,
-    "cuentaCorrienteTotal": 193368157.58,
-    "cuentaCorrienteD90mas": 11321729.42,
-    "potencialesEnRiesgo": 321144243.14
+    "rechazosPctSep": 0.0385,
+    "rechazosMontoSep": 23325606.86,
+    "cuentaCorrienteTotal": 146622397.63,
+    "cuentaCorrienteD90mas": 11325055.81,
+    "potencialesEnRiesgo": 302647149.34
   }
 }
