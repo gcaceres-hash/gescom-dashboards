@@ -42,8 +42,13 @@ function Invoke-GescomApi {
         try {
             return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
         } catch {
+            # El token de Gescom (Keycloak) puede vencer a mitad de un pull largo --
+            # si el error es de autenticacion, pedimos uno nuevo antes de reintentar
+            # en vez de repetir la misma llamada con el token vencido.
+            $esAuthError = ($_.ErrorDetails.Message -match "Acceso denegado") -or ($_.Exception.Response.StatusCode.value__ -in 401, 403)
+            if ($esAuthError) { $script:token = Get-GescomToken }
             if ($intento -eq 4) { throw }
-            Start-Sleep -Seconds ($intento * 5)
+            if (-not $esAuthError) { Start-Sleep -Seconds ($intento * 5) }
         }
     }
 }

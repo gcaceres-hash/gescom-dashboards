@@ -30,7 +30,21 @@ function Invoke-GescomApi {
     param([string]$Path, [string]$Query = "")
     $url = "$($config.baseUrl)$Path"
     if ($Query) { $url += "?$Query" }
-    Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+    for ($intento = 1; $intento -le 4; $intento++) {
+        try {
+            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
+        } catch {
+            # El token de Gescom (Keycloak) puede vencer a mitad de un pull largo --
+            # si el error es de autenticacion, pedimos uno nuevo antes de reintentar
+            # en vez de repetir la misma llamada con el token vencido. Este script
+            # en particular (resolver ventaId -> vendedor) es el mas largo de todos
+            # y antes no tenia reintento -- de ahi los OutOfMemoryException/502 previos.
+            $esAuthError = ($_.ErrorDetails.Message -match "Acceso denegado") -or ($_.Exception.Response.StatusCode.value__ -in 401, 403)
+            if ($esAuthError) { $script:token = Get-GescomToken }
+            if ($intento -eq 4) { throw }
+            if (-not $esAuthError) { Start-Sleep -Seconds ($intento * 5) }
+        }
+    }
 }
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 
