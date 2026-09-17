@@ -1,56 +1,55 @@
 {
-  "generadoEn": "2026-09-16T00:00:00-03:00",
+  "generadoEn": "2026-09-17T16:35:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Pedidos eliminados en baja",
-      "detalle": "0,45% de los pedidos de septiembre se eliminaron (25 de 5.517) — en julio y agosto rondaba el 1% (97 y 95 respectivamente)."
+      "titulo": "Los vencimientos bajaron a la mitad",
+      "detalle": "1.802 unidades vencidas hoy vs 3.811 ayer — se resolvieron los 2 lotes más grandes que estaban en alerta: 296 unidades de Pal de la Selva Ananá y el lote de 1.713 unidades de yogur Ilolay."
     },
     {
-      "titulo": "Cero remisiones rechazadas",
-      "detalle": "Ninguna remisión rechazada en lo que va del mes."
+      "titulo": "Pedidos eliminados siguen bajos",
+      "detalle": "0,43% de los pedidos de septiembre se eliminaron (26 de 6.036) — se mantiene la mejora vs. el ~1% de julio/agosto."
     },
     {
-      "titulo": "Ritmo de despacho firme",
-      "detalle": "247 camiones despachados en los primeros 16 días de septiembre — agosto completo (31 días) cerró en 399, así que septiembre viene a un ritmo igual o mayor."
+      "titulo": "Buen movimiento en preparación",
+      "detalle": "399 pedidos están activamente en preparación ahora mismo — el depósito está procesando, no solo acumulando pendientes."
     }
   ],
   "atencion": [
     {
-      "titulo": "7 pedidos pendientes con más de una semana",
-      "detalle": "El más viejo tiene 9 días. Los de mayor monto entre los atrasados: $3.818.760 (código de vendedor 18) y $1.230.593 (código 054)."
+      "titulo": "Los mismos 2 pedidos grandes siguen sin moverse",
+      "detalle": "El de $3.818.760 (código de vendedor 18) y el de $1.230.593 (código 054) ya llevan más de 9 días sin tocarse — son los mismos de ayer, todavía sin resolver."
     },
     {
-      "titulo": "2.098 unidades de stock ya vencidas sin dar de baja",
-      "detalle": "13 lotes. Los más grandes: 1.040 unidades de Azúcar Ledesma Sucralosa (3 lotes distintos, vencidos hace 20-45 días), 296 unidades de Pal de la Selva Ananá y 531 de Mantecol Café."
+      "titulo": "Los pedidos de más de una semana subieron de 7 a 8",
+      "detalle": "La cola de pendientes viejos no se achica, solo cambia de quién los tiene."
     },
     {
-      "titulo": "1.713 unidades de yogur Ilolay vencen en 2 días",
-      "detalle": "Es el lote más grande de todo el próximo-a-vencer. Si no se mueve ahora se pierde entero."
+      "titulo": "7.853 unidades vencen en los próximos 15 días",
+      "detalle": "20 lotes distintos — misma urgencia que ayer, conviene priorizar su salida."
     }
   ],
   "vigilar": [
     {
-      "titulo": "7.809 unidades vencen en los próximos 15 días",
-      "detalle": "21 lotes distintos — conviene priorizar su salida o armar alguna promoción antes de que pasen a \"vencido\"."
+      "titulo": "Código de vendedor 051 concentra 45 pedidos pendientes",
+      "detalle": "Es, por lejos, el que más pendientes acumula hoy — antes no aparecía entre los primeros puestos."
     },
     {
-      "titulo": "15.634 unidades vencen entre 16 y 30 días",
-      "detalle": "30 lotes — todavía hay margen para reaccionar, pero vale la pena tenerlos en el radar."
+      "titulo": "11.848 unidades vencen entre 16 y 30 días",
+      "detalle": "28 lotes — todavía hay margen de reacción."
     },
     {
-      "titulo": "70 pedidos pendientes de 1 a 3 días",
-      "detalle": "Es normal si se despachan en los próximos días, pero conviene no dejar que se acumulen."
+      "titulo": "15.170 unidades vencen en más de 30 días",
+      "detalle": "38 lotes — subió respecto de ayer (8.284), vale la pena tenerlo en el radar para no repetir el problema de vencidos."
     }
   ],
   "numeros": {
-    "pendientesTotal": 205,
-    "pendientesImporte": 19496809.43,
-    "pendientesAntiguedad": { "masDe7dias": 7, "de3a7dias": 9, "de1a3dias": 70, "menosDe1dia": 119 },
-    "vencidoUnidades": 2098,
-    "proximoVencerUnidades": { "0a15dias": 7809, "16a30dias": 15634, "masDe30dias": 8284 },
-    "eliminadosPctSeptiembre": 0.45,
-    "eliminadosPctAgosto": 1.0,
-    "eliminadosPctJulio": 1.02
+    "pendientesTotal": 183,
+    "pendientesImporte": 19494637.05,
+    "pendientesAntiguedad": { "masDe7dias": 8, "de3a7dias": 9, "de1a3dias": 32, "menosDe1dia": 134 },
+    "vencidoUnidades": 1802,
+    "proximoVencerUnidades": { "0a15dias": 7853, "16a30dias": 11848, "masDe30dias": 15170 },
+    "eliminadosPctSeptiembre": 0.43,
+    "eliminadosPctAgosto": 1.0
   }
 }
