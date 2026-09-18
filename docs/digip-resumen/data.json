@@ -1,54 +1,54 @@
 {
-  "generadoEn": "2026-09-17T16:35:00-03:00",
+  "generadoEn": "2026-09-18T13:35:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Los vencimientos bajaron a la mitad",
-      "detalle": "1.802 unidades vencidas hoy vs 3.811 ayer — se resolvieron los 2 lotes más grandes que estaban en alerta: 296 unidades de Pal de la Selva Ananá y el lote de 1.713 unidades de yogur Ilolay."
+      "titulo": "Los 2 pedidos grandes que estaban trabados se resolvieron",
+      "detalle": "El de $3.818.760 (Mapastesi) y el de $1.230.593 (Tang Jinping) ya no aparecen entre los pendientes — se destrabaron después de revisarlos ayer."
     },
     {
-      "titulo": "Pedidos eliminados siguen bajos",
-      "detalle": "0,43% de los pedidos de septiembre se eliminaron (26 de 6.036) — se mantiene la mejora vs. el ~1% de julio/agosto."
+      "titulo": "Eliminados siguen bajos",
+      "detalle": "0,43% de los pedidos de septiembre se eliminaron — se mantiene muy por debajo del ~1% de julio/agosto."
     },
     {
-      "titulo": "Buen movimiento en preparación",
-      "detalle": "399 pedidos están activamente en preparación ahora mismo — el depósito está procesando, no solo acumulando pendientes."
+      "titulo": "Buen volumen de despacho",
+      "detalle": "6.281 pedidos despachados en lo que va de septiembre ($801,9M) — sigue creciendo día a día al mismo ritmo."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los mismos 2 pedidos grandes siguen sin moverse",
-      "detalle": "El de $3.818.760 (código de vendedor 18) y el de $1.230.593 (código 054) ya llevan más de 9 días sin tocarse — son los mismos de ayer, todavía sin resolver."
+      "titulo": "Los pendientes se triplicaron de un día para el otro",
+      "detalle": "183 ayer → 492 hoy. La mayor parte (419) son de menos de un día, así que es en gran parte volumen normal del día — pero conviene confirmar que no se esté acumulando trabajo sin asignar."
     },
     {
-      "titulo": "Los pedidos de más de una semana subieron de 7 a 8",
-      "detalle": "La cola de pendientes viejos no se achica, solo cambia de quién los tiene."
+      "titulo": "Código de vendedor 051 sigue siendo el que más pendientes acumula",
+      "detalle": "Subió de 45 a 69 pendientes — es, por lejos, el mayor cuello de botella de toda la cartera."
     },
     {
-      "titulo": "7.853 unidades vencen en los próximos 15 días",
-      "detalle": "20 lotes distintos — misma urgencia que ayer, conviene priorizar su salida."
+      "titulo": "1.891 unidades de stock ya vencidas, sin dar de baja",
+      "detalle": "14 lotes — subió un poco desde ayer (1.802u). Se sigue sumando \"Queso Cremoso Horma Ilolay\" como nuevo caso (36 unidades, vencido hace 3 días)."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Código de vendedor 051 concentra 45 pedidos pendientes",
-      "detalle": "Es, por lejos, el que más pendientes acumula hoy — antes no aparecía entre los primeros puestos."
+      "titulo": "18.266 unidades vencen en más de 30 días",
+      "detalle": "41 lotes — sigue creciendo día a día (15.170 → 18.266), vale la pena revisar la rotación de esos productos antes de que se conviertan en el problema de vencidos de dentro de un mes."
     },
     {
-      "titulo": "11.848 unidades vencen entre 16 y 30 días",
-      "detalle": "28 lotes — todavía hay margen de reacción."
+      "titulo": "3 pedidos distintos del código de vendedor 29 llevan casi una semana sin moverse",
+      "detalle": "$14.655, $58.443 y $47.701 — es un patrón nuevo, antes este código no aparecía entre los más atrasados."
     },
     {
-      "titulo": "15.170 unidades vencen en más de 30 días",
-      "detalle": "38 lotes — subió respecto de ayer (8.284), vale la pena tenerlo en el radar para no repetir el problema de vencidos."
+      "titulo": "10.648 unidades vencen entre 16 y 30 días",
+      "detalle": "28 lotes — estable respecto de ayer."
     }
   ],
   "numeros": {
-    "pendientesTotal": 183,
-    "pendientesImporte": 19494637.05,
-    "pendientesAntiguedad": { "masDe7dias": 8, "de3a7dias": 9, "de1a3dias": 32, "menosDe1dia": 134 },
-    "vencidoUnidades": 1802,
-    "proximoVencerUnidades": { "0a15dias": 7853, "16a30dias": 11848, "masDe30dias": 15170 },
+    "pendientesTotal": 492,
+    "pendientesImporte": 46479663.40,
+    "pendientesAntiguedad": { "masDe7dias": 7, "de3a7dias": 11, "de1a3dias": 55, "menosDe1dia": 419 },
+    "vencidoUnidades": 1891,
+    "proximoVencerUnidades": { "0a15dias": 6124, "16a30dias": 10648, "masDe30dias": 18266 },
     "eliminadosPctSeptiembre": 0.43,
     "eliminadosPctAgosto": 1.0
   }
