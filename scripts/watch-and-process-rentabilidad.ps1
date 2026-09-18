@@ -68,9 +68,22 @@ try {
         Write-Log "No hay cambios para commitear (el data.json ya estaba igual)."
     } else {
         git commit -m "Actualiza Pizarra de Rentabilidad desde $($elegido.Name)"
-        git fetch origin
-        git merge origin/main -X ours -m "Merge automatico, favorece datos del CSV"
-        git push origin main
+        # git escribe su progreso normal de fetch/push por stderr -- con
+        # $ErrorActionPreference=Stop eso se interpreta como un error terminante
+        # aunque el comando haya salido bien (exit 0). Bajamos la preferencia
+        # solo para estos 3 comandos y confiamos en $LASTEXITCODE.
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            git fetch origin 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git fetch origin fallo (exit $LASTEXITCODE)" }
+            git merge origin/main -X ours -m "Merge automatico, favorece datos del CSV" 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git merge fallo (exit $LASTEXITCODE)" }
+            git push origin main 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git push fallo (exit $LASTEXITCODE)" }
+        } finally {
+            $ErrorActionPreference = $prevEAP
+        }
         Write-Log "Listo, subido a GitHub."
     }
 } finally {
