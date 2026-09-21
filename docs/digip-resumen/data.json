@@ -1,55 +1,55 @@
 {
-  "generadoEn": "2026-09-18T13:35:00-03:00",
+  "generadoEn": "2026-09-21T12:10:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Los 2 pedidos grandes que estaban trabados se resolvieron",
-      "detalle": "El de $3.818.760 (Mapastesi) y el de $1.230.593 (Tang Jinping) ya no aparecen entre los pendientes — se destrabaron después de revisarlos ayer."
+      "titulo": "El cuello de botella del código 051 se destrabó",
+      "detalle": "Tenía 69 pendientes el viernes — hoy solo 15. Fue, por lejos, el que más se movió del fin de semana a hoy."
     },
     {
       "titulo": "Eliminados siguen bajos",
-      "detalle": "0,43% de los pedidos de septiembre se eliminaron — se mantiene muy por debajo del ~1% de julio/agosto."
+      "detalle": "0,46% de los pedidos de septiembre se eliminaron — se mantiene muy por debajo del ~1% de julio/agosto, incluso con más volumen acumulado."
     },
     {
-      "titulo": "Buen volumen de despacho",
-      "detalle": "6.281 pedidos despachados en lo que va de septiembre ($801,9M) — sigue creciendo día a día al mismo ritmo."
+      "titulo": "El despacho no para de crecer",
+      "detalle": "6.725 pedidos despachados en lo que va de septiembre ($850,0M) — sigue sumando todos los días hábiles."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los pendientes se triplicaron de un día para el otro",
-      "detalle": "183 ayer → 492 hoy. La mayor parte (419) son de menos de un día, así que es en gran parte volumen normal del día — pero conviene confirmar que no se esté acumulando trabajo sin asignar."
+      "titulo": "Los pedidos de más de una semana se duplicaron",
+      "detalle": "7-8 pendientes el jueves/viernes pasado → 14 hoy. El más viejo ya lleva casi 14 días sin tocarse (vendedor código 4, aunque es de monto chico)."
     },
     {
-      "titulo": "Código de vendedor 051 sigue siendo el que más pendientes acumula",
-      "detalle": "Subió de 45 a 69 pendientes — es, por lejos, el mayor cuello de botella de toda la cartera."
+      "titulo": "El núcleo de pendientes viejos sigue siendo el mismo desde hace más de una semana",
+      "detalle": "Los pedidos de los códigos 2, 3, 30, 073, 074 y 29 (x3) llevan entre 10 y 14 días sin moverse — no son casos nuevos, son los mismos que vengo señalando desde el 17/09 sin resolver."
     },
     {
-      "titulo": "1.891 unidades de stock ya vencidas, sin dar de baja",
-      "detalle": "14 lotes — subió un poco desde ayer (1.802u). Se sigue sumando \"Queso Cremoso Horma Ilolay\" como nuevo caso (36 unidades, vencido hace 3 días)."
+      "titulo": "Los vencimientos no paran de crecer",
+      "detalle": "1.891 unidades el viernes → 2.257 hoy (15 lotes). Desde el 17/09 solo hubo una limpieza real; desde entonces la lista únicamente suma casos nuevos, nunca resta."
     }
   ],
   "vigilar": [
     {
-      "titulo": "18.266 unidades vencen en más de 30 días",
-      "detalle": "41 lotes — sigue creciendo día a día (15.170 → 18.266), vale la pena revisar la rotación de esos productos antes de que se conviertan en el problema de vencidos de dentro de un mes."
+      "titulo": "Nueva concentración: código de vendedor 075 pasó a ser el peor",
+      "detalle": "41 pendientes hoy — no estaba entre los primeros puestos la semana pasada."
     },
     {
-      "titulo": "3 pedidos distintos del código de vendedor 29 llevan casi una semana sin moverse",
-      "detalle": "$14.655, $58.443 y $47.701 — es un patrón nuevo, antes este código no aparecía entre los más atrasados."
+      "titulo": "15.426 unidades vencen en más de 30 días",
+      "detalle": "40 lotes — sigue en aumento constante (15.170 → 18.266 → 15.426), vale la pena revisar la rotación antes de que se conviertan en el próximo lote de vencidos."
     },
     {
-      "titulo": "10.648 unidades vencen entre 16 y 30 días",
-      "detalle": "28 lotes — estable respecto de ayer."
+      "titulo": "Nuevo producto sumado a vencidos: Azúcar Ledesma Stevia",
+      "detalle": "366 unidades, vencidas hace 3 días — la familia de azúcares Ledesma ya suma 4 lotes distintos vencidos entre Sucralosa y Stevia."
     }
   ],
   "numeros": {
-    "pendientesTotal": 492,
-    "pendientesImporte": 46479663.40,
-    "pendientesAntiguedad": { "masDe7dias": 7, "de3a7dias": 11, "de1a3dias": 55, "menosDe1dia": 419 },
-    "vencidoUnidades": 1891,
-    "proximoVencerUnidades": { "0a15dias": 6124, "16a30dias": 10648, "masDe30dias": 18266 },
-    "eliminadosPctSeptiembre": 0.43,
+    "pendientesTotal": 410,
+    "pendientesImporte": 50140033.84,
+    "pendientesAntiguedad": { "masDe7dias": 14, "de3a7dias": 41, "de1a3dias": 138, "menosDe1dia": 217 },
+    "vencidoUnidades": 2257,
+    "proximoVencerUnidades": { "0a15dias": 7295, "16a30dias": 9584, "masDe30dias": 15426 },
+    "eliminadosPctSeptiembre": 0.46,
     "eliminadosPctAgosto": 1.0
   }
 }
