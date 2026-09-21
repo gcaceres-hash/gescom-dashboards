@@ -1,59 +1,59 @@
 {
-  "generadoEn": "2026-09-18T13:40:00-03:00",
+  "generadoEn": "2026-09-21T12:20:00-03:00",
   "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos",
   "bien": [
     {
-      "titulo": "El potencial sin comprar sigue bajando, ya 3 días seguidos",
-      "detalle": "$321M → $302,6M → $276,6M. Se está recuperando terreno real en los clientes de alto valor que estaban sin comprar este mes."
+      "titulo": "El margen sigue mejorando",
+      "detalle": "13,22% → 13,39% → 13,52% en los últimos 3 días de medición. Ya casi alcanza a agosto (13,46%), después de 3 meses cayendo."
     },
     {
-      "titulo": "El margen se mantiene estable",
-      "detalle": "13,39% dos días seguidos — dejó de caer después de 3 meses de baja consecutiva."
+      "titulo": "El potencial sin comprar sigue en baja sostenida",
+      "detalle": "$321M → $302,6M → $276,6M → $261,7M. Cuarto día seguido de mejora — se está recuperando terreno real."
     },
     {
-      "titulo": "Mejor cobertura de cartera",
-      "detalle": "Romina Báez (73,6% de cobertura) sigue mejorando día a día, muy por encima del promedio general."
+      "titulo": "Deuda de Di Giorno bajando",
+      "detalle": "De $21,9M (jueves) a $12,4M hoy — buena gestión de cobranza en esa cartera puntual."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los rechazos empeoran hace 3 días seguidos",
-      "detalle": "0,79% (agosto) → 3,78% → 3,85% → 4,19% hoy ($26,9M en 920 casos). No es un pico aislado, es una tendencia sostenida al alza. El motivo principal sigue siendo \"no quiere el cliente\" ($9,5M / 204 casos)."
+      "titulo": "Los rechazos siguen altos, sin mejora real",
+      "detalle": "4,19% → 4,14% — prácticamente sin cambio, y sigue siendo ~5 veces el nivel de agosto (0,79%). $28,0M en 975 casos este mes. El motivo principal sigue siendo \"no quiere el cliente\" ($10,0M / 216 casos)."
     },
     {
-      "titulo": "El vendedor \"VACANTE\" sigue sin resolverse",
-      "detalle": "78,6% de esos 145 clientes sin compra — prácticamente sin cambio en 3 días (80,1% → 79,3% → 78,6%)."
+      "titulo": "El vendedor \"VACANTE\" lleva más de una semana exactamente igual",
+      "detalle": "78,6% de esos 145 clientes sin compra — el mismo número que el jueves pasado, sin ningún movimiento."
     },
     {
-      "titulo": "$11,3M en cuenta corriente de más de 90 días, sin moverse",
-      "detalle": "Tercer día seguido en el mismo nivel — es la única franja de deuda que no se mueve mientras el resto de la cuenta corriente sí rota."
+      "titulo": "$11,3M en cuenta corriente de más de 90 días, completamente estancados",
+      "detalle": "Idéntico desde hace más de una semana — mientras el resto de la cuenta corriente rota con normalidad, esta franja no se mueve nada."
     }
   ],
   "vigilar": [
     {
-      "titulo": "La cuenta corriente total volvió a subir",
-      "detalle": "Había bajado a $146,6M ayer (desde $193,4M) pero hoy subió a $155,3M — normal que fluctúe con la facturación del día, pero vale la pena confirmar que la mejora de ayer no se esté revirtiendo."
+      "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
+      "detalle": "$30,4M en potencial (vendedor 038) — sin ningún cambio desde que se detectó la semana pasada. Es el cliente individual más grande de la lista de riesgo."
     },
     {
-      "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
-      "detalle": "$30,4M en potencial (vendedor 038), sin cambios en 3 días — es el cliente individual más grande de toda la lista de potenciales en riesgo."
+      "titulo": "La cuenta corriente total sigue subiendo de a poco",
+      "detalle": "$146,6M → $155,3M → $162,9M en 4 días. No es alarmante todavía, pero conviene ver si es estacional o una tendencia."
     },
     {
       "titulo": "Línea Dorada S.A. con margen casi del 100%",
-      "detalle": "Mismo dato raro de los últimos 3 días — sigue sin cargarse el costo real de sus ventas de septiembre."
+      "detalle": "Mismo dato raro de toda la semana — sigue sin cargarse el costo real de sus ventas de septiembre."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 656561975.43,
-    "ventaNetaSepProyectada": 1031740247.1,
+    "ventaNetaSepActual": 690765662.63,
+    "ventaNetaSepProyectada": 1013122971.86,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1339,
+    "margenSepProyectado": 0.1352,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0419,
-    "rechazosMontoSep": 26870594.82,
-    "cuentaCorrienteTotal": 155278330.73,
-    "cuentaCorrienteD90mas": 11329707.09,
-    "potencialesEnRiesgo": 276574824.06
+    "rechazosPctSep": 0.0414,
+    "rechazosMontoSep": 28011877.01,
+    "cuentaCorrienteTotal": 162931870.22,
+    "cuentaCorrienteD90mas": 11329950.91,
+    "potencialesEnRiesgo": 261703642.3
   }
 }
