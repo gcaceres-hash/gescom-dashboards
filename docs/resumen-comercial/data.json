@@ -1,42 +1,42 @@
 {
-  "generadoEn": "2026-09-21T12:20:00-03:00",
+  "generadoEn": "2026-09-22T14:05:00-03:00",
   "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos",
   "bien": [
     {
-      "titulo": "El margen sigue mejorando",
-      "detalle": "13,22% → 13,39% → 13,52% en los últimos 3 días de medición. Ya casi alcanza a agosto (13,46%), después de 3 meses cayendo."
+      "titulo": "El potencial sin comprar sigue en baja, quinto día seguido",
+      "detalle": "$321M → $303M → $277M → $262M → $236M. Se recuperó casi un tercio del total original en una semana."
     },
     {
-      "titulo": "El potencial sin comprar sigue en baja sostenida",
-      "detalle": "$321M → $302,6M → $276,6M → $261,7M. Cuarto día seguido de mejora — se está recuperando terreno real."
+      "titulo": "Los rechazos bajaron un poco",
+      "detalle": "4,14% → 4,04% — primera mejora real después de varios días subiendo, aunque sigue siendo ~5 veces el nivel de agosto."
     },
     {
-      "titulo": "Deuda de Di Giorno bajando",
-      "detalle": "De $21,9M (jueves) a $12,4M hoy — buena gestión de cobranza en esa cartera puntual."
+      "titulo": "Buen ritmo de venta en septiembre",
+      "detalle": "$740,2M actual a 16 de 22 días hábiles — sigue proyectando cerrar por encima de agosto."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los rechazos siguen altos, sin mejora real",
-      "detalle": "4,19% → 4,14% — prácticamente sin cambio, y sigue siendo ~5 veces el nivel de agosto (0,79%). $28,0M en 975 casos este mes. El motivo principal sigue siendo \"no quiere el cliente\" ($10,0M / 216 casos)."
-    },
-    {
       "titulo": "El vendedor \"VACANTE\" lleva más de una semana exactamente igual",
-      "detalle": "78,6% de esos 145 clientes sin compra — el mismo número que el jueves pasado, sin ningún movimiento."
+      "detalle": "78,6% de esos 145 clientes sin compra — el mismo número desde hace más de una semana, sin ningún movimiento. Nadie tomó esa cartera."
     },
     {
-      "titulo": "$11,3M en cuenta corriente de más de 90 días, completamente estancados",
-      "detalle": "Idéntico desde hace más de una semana — mientras el resto de la cuenta corriente rota con normalidad, esta franja no se mueve nada."
+      "titulo": "$11,3M en cuenta corriente de más de 90 días, sin moverse",
+      "detalle": "Completamente estancado desde hace más de una semana, mientras el resto de la cuenta corriente rota con normalidad."
+    },
+    {
+      "titulo": "El margen volvió a bajar un poco",
+      "detalle": "13,52% → 13,43% — corta la racha de mejora de los últimos días, aunque sigue cerca de agosto (13,46%)."
     }
   ],
   "vigilar": [
     {
       "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
-      "detalle": "$30,4M en potencial (vendedor 038) — sin ningún cambio desde que se detectó la semana pasada. Es el cliente individual más grande de la lista de riesgo."
+      "detalle": "$30,4M en potencial (vendedor 038) — más de una semana sin ningún cambio. Sigue siendo el cliente individual más grande de la lista de riesgo."
     },
     {
-      "titulo": "La cuenta corriente total sigue subiendo de a poco",
-      "detalle": "$146,6M → $155,3M → $162,9M en 4 días. No es alarmante todavía, pero conviene ver si es estacional o una tendencia."
+      "titulo": "La cuenta corriente total sigue en aumento",
+      "detalle": "$146,6M → $155,3M → $162,9M → $169,1M en 5 días — ya es una tendencia sostenida, no una fluctuación puntual."
     },
     {
       "titulo": "Línea Dorada S.A. con margen casi del 100%",
@@ -44,16 +44,16 @@
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 690765662.63,
-    "ventaNetaSepProyectada": 1013122971.86,
+    "ventaNetaSepActual": 740206657.67,
+    "ventaNetaSepProyectada": 1017784154.3,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1352,
+    "margenSepProyectado": 0.1343,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0414,
-    "rechazosMontoSep": 28011877.01,
-    "cuentaCorrienteTotal": 162931870.22,
-    "cuentaCorrienteD90mas": 11329950.91,
-    "potencialesEnRiesgo": 261703642.3
+    "rechazosPctSep": 0.0404,
+    "rechazosMontoSep": 29364803.52,
+    "cuentaCorrienteTotal": 169109852.51,
+    "cuentaCorrienteD90mas": 11332244.7,
+    "potencialesEnRiesgo": 235994989.79
   }
 }
