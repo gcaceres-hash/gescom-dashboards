@@ -29,16 +29,18 @@ Reglas de negocio:
     para devoluciones/notas de credito, no hay que invertirlo)
   - items sin proveedor asignado: se agrupan en "_SIN_PROVEEDOR_" (no se excluyen)
   - CMV = PrecioCosto tal cual viene (en este archivo es el costo total de
-    la linea, no hay que multiplicarlo por CantBase) EXCEPTO para RIOSMA:
+    la linea, no hay que multiplicarlo por CantBase) EXCEPTO para los
+    proveedores de $PROVEEDORES_PESABLES_POR_GRAMO (RIOSMA, LINEA DORADA S.A):
     ahi los articulos son pesables, PrecioCosto viene por GRAMO pero
     escalado por CantBase (no es el costo total de la linea ni un puro
-    costo por gramo) -- para RIOSMA con PesoKgReal<>0:
+    costo por gramo) -- para esos proveedores, con PesoKgReal<>0:
       CMV = (PrecioCosto / CantBase) x PesoKgReal x 1000
-    (verificado fila por fila contra el archivo: con esta formula el
-    margen de RIOSMA da ~14% de forma consistente, sea CantBase=1 o mayor;
-    otros proveedores tambien completan PesoKg/PesoKgReal para logistica
-    (ej. ILOLAY con leche por litro) pero ahi PrecioCosto SI es el costo
-    total ya calculado, por eso el ajuste NO se generaliza a todos)
+    (verificado fila por fila: con esta formula el margen de RIOSMA da ~14%
+    de forma consistente y el de LINEA DORADA (quesos) pasa de ~100% -- CMV
+    casi cero, mismo bug -- a ~12%; otros proveedores tambien completan
+    PesoKg/PesoKgReal para logistica (ej. ILOLAY con leche por litro) pero
+    ahi PrecioCosto SI es el costo total ya calculado, por eso el ajuste NO
+    se generaliza a todos, solo a los que se confirmen caso por caso)
   - descuentos = valorDescuento, solo para filas de tipo "Venta" (no devoluciones)
   - agrupa por proveedor y por proveedor+familia
   - el mes que arma queda determinado por el mes de las fechas del archivo
@@ -86,6 +88,13 @@ function Read-AllLinesCompartido($path, $encoding) {
 
 $EXCLUDED_VENDEDOR = @("1176","43")
 
+# Proveedores cuyos articulos son pesables y vienen con el mismo problema que
+# RIOSMA: PrecioCosto viene por GRAMO pero escalado por CantBase (no es el
+# costo total de la linea) -- confirmado con LINEA DORADA (quesos, el mismo
+# patron que RIOSMA) el 22/09: sin este ajuste el margen daba ~100% (CMV casi
+# cero), con el ajuste da ~12%, en linea con el resto de los proveedores.
+$PROVEEDORES_PESABLES_POR_GRAMO = @("RIOSMA","LINEA DORADA S.A")
+
 Write-Log "Leyendo $CsvPath ..."
 $enc = [System.Text.Encoding]::GetEncoding(1252)
 $lines = Read-AllLinesCompartido $CsvPath $enc
@@ -125,8 +134,8 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
     $conImp = ToNum $f[$col['ImporteItem']]
     $pesoKgReal = ToNum $f[$col['PesoKgReal']]
     $cantidad = ToNum $f[$col['CantBase']]
-    $esRiosma = $prov -eq "RIOSMA"
-    $cmvItem = if ($esRiosma -and $pesoKgReal -ne 0 -and $cantidad -ne 0) { ($precioCosto / $cantidad) * $pesoKgReal * 1000 } else { $precioCosto }
+    $esPesablePorGramo = $PROVEEDORES_PESABLES_POR_GRAMO -contains $prov
+    $cmvItem = if ($esPesablePorGramo -and $pesoKgReal -ne 0 -and $cantidad -ne 0) { ($precioCosto / $cantidad) * $pesoKgReal * 1000 } else { $precioCosto }
     $esVenta = $f[$col['TipoDeVenta']] -eq "Venta"
     $desc = if ($esVenta) { ToNum $f[$col['valorDescuento']] } else { 0.0 }
 
