@@ -25,8 +25,8 @@
       "detalle": "Completamente estancado desde hace más de una semana, mientras el resto de la cuenta corriente rota con normalidad."
     },
     {
-      "titulo": "El margen volvió a bajar un poco",
-      "detalle": "13,52% → 13,43% — corta la racha de mejora de los últimos días, aunque sigue cerca de agosto (13,46%)."
+      "titulo": "El margen real es un poco más bajo de lo que parecía",
+      "detalle": "13,33% (antes se mostraba 13,43%, inflado por un bug de costeo en Línea Dorada ya corregido) — sigue cerca de agosto (13,46%)."
     }
   ],
   "vigilar": [
@@ -39,8 +39,8 @@
       "detalle": "$146,6M → $155,3M → $162,9M → $169,1M en 5 días — ya es una tendencia sostenida, no una fluctuación puntual."
     },
     {
-      "titulo": "Línea Dorada S.A. con margen casi del 100%",
-      "detalle": "Mismo dato raro de toda la semana — sigue sin cargarse el costo real de sus ventas de septiembre."
+      "titulo": "Se corrigió el bug de costeo de Línea Dorada",
+      "detalle": "Gisela detectó que tenía el mismo problema que Riosma (costo por gramo mal escalado). El margen pasó de ~100% (dato falso) a ~12% real, en línea con el resto de los proveedores."
     }
   ],
   "numeros": {
@@ -48,7 +48,7 @@
     "ventaNetaSepProyectada": 1017784154.3,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1343,
+    "margenSepProyectado": 0.1333,
     "rechazosPctAgo": 0.0079,
     "rechazosPctSep": 0.0404,
     "rechazosMontoSep": 29364803.52,
