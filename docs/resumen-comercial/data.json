@@ -1,59 +1,51 @@
 {
-  "generadoEn": "2026-09-22T14:05:00-03:00",
+  "generadoEn": "2026-09-23T12:45:00-03:00",
   "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos",
   "bien": [
     {
-      "titulo": "El potencial sin comprar sigue en baja, quinto día seguido",
-      "detalle": "$321M → $303M → $277M → $262M → $236M. Se recuperó casi un tercio del total original en una semana."
+      "titulo": "El potencial sin comprar sigue en baja, sexto día seguido",
+      "detalle": "$321M → ... → $236M → $220M. Ya se recuperó más de un tercio del total original desde que se detectó."
     },
     {
-      "titulo": "Los rechazos bajaron un poco",
-      "detalle": "4,14% → 4,04% — primera mejora real después de varios días subiendo, aunque sigue siendo ~5 veces el nivel de agosto."
+      "titulo": "La cuenta corriente bajó fuerte",
+      "detalle": "$169,1M → $157,4M — corta la tendencia de 5 días al alza."
     },
     {
-      "titulo": "Buen ritmo de venta en septiembre",
-      "detalle": "$740,2M actual a 16 de 22 días hábiles — sigue proyectando cerrar por encima de agosto."
+      "titulo": "El vendedor \"VACANTE\" empezó a moverse",
+      "detalle": "Su cartera bajó de 145 a 124 clientes — alguien empezó a reasignar cuentas. Todavía queda 76,6% sin compra, pero es el primer movimiento real en más de una semana."
     }
   ],
   "atencion": [
     {
-      "titulo": "El vendedor \"VACANTE\" lleva más de una semana exactamente igual",
-      "detalle": "78,6% de esos 145 clientes sin compra — el mismo número desde hace más de una semana, sin ningún movimiento. Nadie tomó esa cartera."
-    },
-    {
       "titulo": "$11,3M en cuenta corriente de más de 90 días, sin moverse",
-      "detalle": "Completamente estancado desde hace más de una semana, mientras el resto de la cuenta corriente rota con normalidad."
+      "detalle": "Sigue exactamente igual desde hace más de una semana, mientras el resto de la cuenta corriente sí bajó fuerte hoy."
     },
     {
-      "titulo": "El margen real es un poco más bajo de lo que parecía",
-      "detalle": "13,33% (antes se mostraba 13,43%, inflado por un bug de costeo en Línea Dorada ya corregido) — sigue cerca de agosto (13,46%)."
+      "titulo": "Los rechazos no ceden",
+      "detalle": "4,04% → 4,12% — vuelve a subir después de la mejora de ayer. $31,7M en 1.105 casos este mes."
     }
   ],
   "vigilar": [
     {
       "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
-      "detalle": "$30,4M en potencial (vendedor 038) — más de una semana sin ningún cambio. Sigue siendo el cliente individual más grande de la lista de riesgo."
+      "detalle": "$30,4M en potencial (vendedor 038) — ya más de una semana sin ningún cambio."
     },
     {
-      "titulo": "La cuenta corriente total sigue en aumento",
-      "detalle": "$146,6M → $155,3M → $162,9M → $169,1M en 5 días — ya es una tendencia sostenida, no una fluctuación puntual."
-    },
-    {
-      "titulo": "Se corrigió el bug de costeo de Línea Dorada",
-      "detalle": "Gisela detectó que tenía el mismo problema que Riosma (costo por gramo mal escalado). El margen pasó de ~100% (dato falso) a ~12% real, en línea con el resto de los proveedores."
+      "titulo": "El margen real (ya sin el bug de Línea Dorada) quedó en 13,52%",
+      "detalle": "Prácticamente igual a agosto (13,46%) — buena señal de que la venta de septiembre no está sacrificando rentabilidad."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 740206657.67,
-    "ventaNetaSepProyectada": 1017784154.3,
+    "ventaNetaSepActual": 779545447.29,
+    "ventaNetaSepProyectada": 1008823520.02,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1333,
+    "margenSepProyectado": 0.1352,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0404,
-    "rechazosMontoSep": 29364803.52,
-    "cuentaCorrienteTotal": 169109852.51,
-    "cuentaCorrienteD90mas": 11332244.7,
-    "potencialesEnRiesgo": 235994989.79
+    "rechazosPctSep": 0.0412,
+    "rechazosMontoSep": 31662410.37,
+    "cuentaCorrienteTotal": 157412804.28,
+    "cuentaCorrienteD90mas": 11332431.27,
+    "potencialesEnRiesgo": 219733119.88
   }
 }
