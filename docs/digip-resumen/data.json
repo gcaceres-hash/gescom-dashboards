@@ -1,55 +1,55 @@
 {
-  "generadoEn": "2026-09-22T14:15:00-03:00",
+  "generadoEn": "2026-09-23T12:35:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Primera limpieza real de vencimientos desde el 17/09",
-      "detalle": "2.257 → 2.100 unidades (de 15 a 10 lotes). Se resolvieron Namur Turrón de Maní (116u), Oleomargarina (1u) y los 2 lotes de Queso Cremoso/Azul Ilolay (40u)."
+      "titulo": "Se limpió por completo el backlog crónico de pendientes viejos",
+      "detalle": "0 pedidos con más de 3 días de antigüedad, cuando ayer había 18 con más de una semana. Los mismos casos de los códigos 2, 3, 4, 29, 30, 073 y 074 que venía señalando desde el 17/09 ya no están — el más viejo hoy tiene apenas 2 días."
     },
     {
-      "titulo": "Eliminados siguen bajos",
-      "detalle": "0,43% de los pedidos de septiembre se eliminaron — se mantiene estable, muy por debajo del ~1% de julio/agosto pese al mayor volumen."
+      "titulo": "Despacho en nuevo máximo del mes",
+      "detalle": "7.818 pedidos despachados en lo que va de septiembre ($963,9M)."
     },
     {
-      "titulo": "Despacho en máximos del mes",
-      "detalle": "7.243 pedidos despachados en lo que va de septiembre ($912,2M) — el ritmo más alto medido hasta ahora."
+      "titulo": "5 pedidos activamente en preparación",
+      "detalle": "Señal de que el flujo de trabajo se está moviendo con normalidad, no solo acumulando."
     }
   ],
   "atencion": [
     {
-      "titulo": "El núcleo de pendientes viejos ya lleva más de 2 semanas sin resolverse",
-      "detalle": "Los mismos pedidos de los códigos 2, 3, 4, 29 (x3), 30, 073 y 074 que vengo señalando desde el 17/09 siguen ahí — el más viejo ya tiene casi 15 días."
+      "titulo": "Los eliminados subieron de golpe",
+      "detalle": "32 → 62 pedidos eliminados en lo que va de septiembre, de un día para el otro (+30). Sigue por debajo del ritmo de agosto (0,77% vs 1,0%), pero es el salto más grande medido hasta ahora — vale la pena confirmar que no sea un efecto de la limpieza de pendientes (pedidos viejos eliminados en masa en vez de despachados)."
     },
     {
-      "titulo": "Los pendientes de más de una semana subieron a 18",
-      "detalle": "7 → 8 → 14 → 18 en los últimos días. La cola de pendientes viejos no para de crecer, aunque el volumen total de pendientes también creció (410 → 613), así que en parte es proporcional."
+      "titulo": "El núcleo duro de vencidos sigue exactamente igual",
+      "detalle": "Los mismos 10 lotes de siempre (Azúcar Ledesma, Mantecol, Botadero Pascua) sin ningún cambio — la limpieza de hoy fue de pendientes, no de vencimientos."
     },
     {
-      "titulo": "El código de vendedor 074 es ahora el peor en pendientes",
-      "detalle": "62 pendientes — no estaba entre los primeros puestos hace unos días; ahora es, por lejos, el mayor cuello de botella."
+      "titulo": "Botadero Pascua ya lleva 161 días vencido",
+      "detalle": "4 unidades nada más, pero es el caso más viejo de toda la lista — no tiene sentido que seguir ocupando espacio hace más de 5 meses."
     }
   ],
   "vigilar": [
     {
-      "titulo": "18.551 unidades vencen en más de 30 días",
-      "detalle": "47 lotes — sigue subiendo semana a semana (15.170 → 18.266 → 15.426 → 18.551), vale la pena revisar la rotación antes de que se conviertan en el próximo lote de vencidos."
+      "titulo": "17.869 unidades vencen en más de 30 días",
+      "detalle": "49 lotes — sigue en aumento semana a semana, vale la pena revisar la rotación antes de que se conviertan en el próximo lote de vencidos."
     },
     {
-      "titulo": "El núcleo duro de vencidos no se mueve",
-      "detalle": "Azúcar Ledesma (1.040u en 3 lotes), Mantecol Café/Coco (591u) y Botadero Pascua (160 días) siguen exactamente iguales — la limpieza de hoy fue de casos nuevos, no de los viejos crónicos."
+      "titulo": "Nueva concentración: código de vendedor 056",
+      "detalle": "50 pendientes hoy — pasó a ser el mayor cuello de botella tras la limpieza general."
     },
     {
-      "titulo": "9.599 unidades vencen en los próximos 15 días",
-      "detalle": "24 lotes — estable respecto de días anteriores."
+      "titulo": "9.702 unidades vencen en los próximos 15 días",
+      "detalle": "26 lotes — estable respecto de días anteriores."
     }
   ],
   "numeros": {
-    "pendientesTotal": 613,
-    "pendientesImporte": 46619175.35,
-    "pendientesAntiguedad": { "masDe7dias": 18, "de3a7dias": 32, "de1a3dias": 49, "menosDe1dia": 514 },
+    "pendientesTotal": 343,
+    "pendientesImporte": 28924365.65,
+    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 0, "de1a3dias": 46, "menosDe1dia": 297 },
     "vencidoUnidades": 2100,
-    "proximoVencerUnidades": { "0a15dias": 9599, "16a30dias": 12575, "masDe30dias": 18551 },
-    "eliminadosPctSeptiembre": 0.43,
+    "proximoVencerUnidades": { "0a15dias": 9702, "16a30dias": 10802, "masDe30dias": 17869 },
+    "eliminadosPctSeptiembre": 0.77,
     "eliminadosPctAgosto": 1.0
   }
 }
