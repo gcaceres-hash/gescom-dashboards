@@ -1,54 +1,54 @@
 {
-  "generadoEn": "2026-09-23T12:35:00-03:00",
+  "generadoEn": "2026-09-24T12:45:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Se limpió por completo el backlog crónico de pendientes viejos",
-      "detalle": "0 pedidos con más de 3 días de antigüedad, cuando ayer había 18 con más de una semana. Los mismos casos de los códigos 2, 3, 4, 29, 30, 073 y 074 que venía señalando desde el 17/09 ya no están — el más viejo hoy tiene apenas 2 días."
+      "titulo": "Sigue en 0 el backlog de pendientes viejos",
+      "detalle": "Segundo día seguido sin ningún pedido de más de 3 días — la limpieza de ayer se sostuvo, no fue algo puntual."
+    },
+    {
+      "titulo": "Gran volumen de completados hoy",
+      "detalle": "417 pedidos pasaron a \"Completo\" (vs. 9-19 en días anteriores) — el depósito procesó un lote grande de una sola vez."
     },
     {
       "titulo": "Despacho en nuevo máximo del mes",
-      "detalle": "7.818 pedidos despachados en lo que va de septiembre ($963,9M)."
-    },
-    {
-      "titulo": "5 pedidos activamente en preparación",
-      "detalle": "Señal de que el flujo de trabajo se está moviendo con normalidad, no solo acumulando."
+      "detalle": "8.879 pedidos despachados en lo que va de septiembre ($1.055,5M)."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los eliminados subieron de golpe",
-      "detalle": "32 → 62 pedidos eliminados en lo que va de septiembre, de un día para el otro (+30). Sigue por debajo del ritmo de agosto (0,77% vs 1,0%), pero es el salto más grande medido hasta ahora — vale la pena confirmar que no sea un efecto de la limpieza de pendientes (pedidos viejos eliminados en masa en vez de despachados)."
+      "titulo": "Vencimientos casi se duplicaron de un día para el otro",
+      "detalle": "2.100 → 3.642 unidades. La causa es un solo lote nuevo y grande: 1.542 unidades de Yogur Firme Entero Frutilla Ilolay que vence justo hoy."
     },
     {
       "titulo": "El núcleo duro de vencidos sigue exactamente igual",
-      "detalle": "Los mismos 10 lotes de siempre (Azúcar Ledesma, Mantecol, Botadero Pascua) sin ningún cambio — la limpieza de hoy fue de pendientes, no de vencimientos."
+      "detalle": "Azúcar Ledesma (1.040u), Mantecol (591u) y Botadero Pascua (162 días) sin ningún cambio — nadie los está tocando."
     },
     {
-      "titulo": "Botadero Pascua ya lleva 161 días vencido",
-      "detalle": "4 unidades nada más, pero es el caso más viejo de toda la lista — no tiene sentido que seguir ocupando espacio hace más de 5 meses."
+      "titulo": "Los eliminados siguen en alza",
+      "detalle": "62 → 69 pedidos eliminados en lo que va de septiembre — tercer día consecutivo de subida."
     }
   ],
   "vigilar": [
     {
-      "titulo": "17.869 unidades vencen en más de 30 días",
-      "detalle": "49 lotes — sigue en aumento semana a semana, vale la pena revisar la rotación antes de que se conviertan en el próximo lote de vencidos."
+      "titulo": "Código de vendedor 074 es el que más pendientes acumula",
+      "detalle": "52 pendientes — se mantiene como el mayor cuello de botella desde ayer."
     },
     {
-      "titulo": "Nueva concentración: código de vendedor 056",
-      "detalle": "50 pendientes hoy — pasó a ser el mayor cuello de botella tras la limpieza general."
+      "titulo": "15.654 unidades vencen en más de 30 días",
+      "detalle": "47 lotes — bajó un poco desde ayer (17.869) pero sigue siendo el bloque más grande de todo el próximo-a-vencer."
     },
     {
-      "titulo": "9.702 unidades vencen en los próximos 15 días",
-      "detalle": "26 lotes — estable respecto de días anteriores."
+      "titulo": "7.757 unidades vencen entre 16 y 30 días",
+      "detalle": "23 lotes — estable respecto de ayer."
     }
   ],
   "numeros": {
-    "pendientesTotal": 343,
-    "pendientesImporte": 28924365.65,
-    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 0, "de1a3dias": 46, "menosDe1dia": 297 },
-    "vencidoUnidades": 2100,
-    "proximoVencerUnidades": { "0a15dias": 9702, "16a30dias": 10802, "masDe30dias": 17869 },
+    "pendientesTotal": 447,
+    "pendientesImporte": 53796184.73,
+    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 0, "de1a3dias": 3, "menosDe1dia": 444 },
+    "vencidoUnidades": 3642,
+    "proximoVencerUnidades": { "0a15dias": 6276, "16a30dias": 7757, "masDe30dias": 15654 },
     "eliminadosPctSeptiembre": 0.77,
     "eliminadosPctAgosto": 1.0
   }
