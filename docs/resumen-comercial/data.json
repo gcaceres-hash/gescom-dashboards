@@ -1,51 +1,51 @@
 {
-  "generadoEn": "2026-09-23T12:45:00-03:00",
+  "generadoEn": "2026-09-24T12:55:00-03:00",
   "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos",
   "bien": [
     {
-      "titulo": "El potencial sin comprar sigue en baja, sexto día seguido",
-      "detalle": "$321M → ... → $236M → $220M. Ya se recuperó más de un tercio del total original desde que se detectó."
+      "titulo": "El margen ya superó a agosto",
+      "detalle": "13,77% vs. 13,46% de agosto — la recuperación de los últimos días se consolidó y ya está por encima del mes anterior."
     },
     {
-      "titulo": "La cuenta corriente bajó fuerte",
-      "detalle": "$169,1M → $157,4M — corta la tendencia de 5 días al alza."
+      "titulo": "El potencial sin comprar sigue en baja, séptimo día seguido",
+      "detalle": "$321M → ... → $220M → $210M. Se recupera de forma sostenida desde que se detectó."
     },
     {
-      "titulo": "El vendedor \"VACANTE\" empezó a moverse",
-      "detalle": "Su cartera bajó de 145 a 124 clientes — alguien empezó a reasignar cuentas. Todavía queda 76,6% sin compra, pero es el primer movimiento real en más de una semana."
+      "titulo": "La cuenta corriente se mantuvo estable",
+      "detalle": "$157,4M → $155,5M — se frenó la suba de días anteriores."
     }
   ],
   "atencion": [
     {
       "titulo": "$11,3M en cuenta corriente de más de 90 días, sin moverse",
-      "detalle": "Sigue exactamente igual desde hace más de una semana, mientras el resto de la cuenta corriente sí bajó fuerte hoy."
+      "detalle": "Ya lleva más de una semana exactamente igual, mientras el resto de la cuenta corriente sí rota con normalidad."
     },
     {
-      "titulo": "Los rechazos no ceden",
-      "detalle": "4,04% → 4,12% — vuelve a subir después de la mejora de ayer. $31,7M en 1.105 casos este mes."
+      "titulo": "Los rechazos siguen sin ceder",
+      "detalle": "4,12% → 4,21% — $34,0M en 1.197 casos este mes, el nivel más alto medido hasta ahora."
     }
   ],
   "vigilar": [
     {
       "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
-      "detalle": "$30,4M en potencial (vendedor 038) — ya más de una semana sin ningún cambio."
+      "detalle": "$30,4M en potencial (vendedor 038) — más de una semana sin ningún cambio."
     },
     {
-      "titulo": "El margen real (ya sin el bug de Línea Dorada) quedó en 13,52%",
-      "detalle": "Prácticamente igual a agosto (13,46%) — buena señal de que la venta de septiembre no está sacrificando rentabilidad."
+      "titulo": "El vendedor \"VACANTE\" prácticamente sin cambios",
+      "detalle": "76,4% de su cartera (123 clientes) sin compra — se estabilizó después del movimiento del lunes, sin mejoras nuevas."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 779545447.29,
-    "ventaNetaSepProyectada": 1008823520.02,
+    "ventaNetaSepActual": 817332631.18,
+    "ventaNetaSepProyectada": 998962104.78,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1352,
+    "margenSepProyectado": 0.1377,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0412,
-    "rechazosMontoSep": 31662410.37,
-    "cuentaCorrienteTotal": 157412804.28,
-    "cuentaCorrienteD90mas": 11332431.27,
-    "potencialesEnRiesgo": 219733119.88
+    "rechazosPctSep": 0.0421,
+    "rechazosMontoSep": 34036977.15,
+    "cuentaCorrienteTotal": 155548439.77,
+    "cuentaCorrienteD90mas": 11332837.98,
+    "potencialesEnRiesgo": 209569443.8
   }
 }
