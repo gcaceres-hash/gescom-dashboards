@@ -1,0 +1,40 @@
+name: Compras por Proveedor
+
+on:
+  schedule:
+    - cron: "20 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escribir config.json desde el secret
+        shell: bash
+        run: echo '${{ secrets.GESCOM_CONFIG }}' > scripts/config.json
+
+      - name: Correr pull-compras.ps1
+        shell: pwsh
+        run: ./scripts/pull-compras.ps1
+
+      - name: Publicar cambios (commit + push a docs/compras)
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/compras
+          git diff --cached --quiet || git commit -m "Actualiza Compras por Proveedor"
+          for i in 1 2 3 4 5; do
+            if git push; then
+              break
+            fi
+            echo "Push rechazado (el repo avanzo mientras corria) -- reintentando ($i)..."
+            git fetch origin
+            git merge origin/main -X ours -m "Merge automatico" --no-edit
+            sleep 5
+          done

@@ -33,6 +33,10 @@
     {
       "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
       "detalle": "$30,4M en potencial (vendedor 038) — ya casi 2 semanas sin ningún cambio."
+    },
+    {
+      "titulo": "Softys concentra más de la mitad de toda la compra de mercadería",
+      "detalle": "56,4% de $882,8M en septiembre — la dependencia de un solo proveedor es alta; los siguientes 2 (Ilolay, Grupo Ayudín) apenas suman 25% entre los dos."
     }
   ],
   "numeros": {
@@ -46,6 +50,8 @@
     "rechazosMontoSep": 37461929.76,
     "cuentaCorrienteTotal": 151677099.49,
     "cuentaCorrienteD90mas": 11337863.67,
-    "potencialesEnRiesgo": 200492767.62
+    "potencialesEnRiesgo": 200492767.62,
+    "compraSinImpuestoSep": 882796199.93,
+    "compraPctMayorProveedor": 56.4
   }
 }
