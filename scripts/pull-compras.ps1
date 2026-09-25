@@ -23,6 +23,13 @@ Reglas de negocio:
     rango mas ancho del pedido, mismo comportamiento que ya se documento en
     la API de ventas) -- se pide con margen y se filtra despues por
     fechaComprobante real, client-side.
+  - Solo se muestran proveedores de MERCADERIA (a pedido explicito de la
+    usuaria): el mismo endpoint de compras mezcla proveedores reales de
+    producto con proveedores de servicios/gastos (seguridad, telefonia,
+    seguros, fleteros individuales, Mercado Libre, el propio proveedor de
+    Digip, etc.) -- se excluyen los que no tienen NINGUN articulo cargado
+    a su nombre en el catalogo de inventario (get-articulos), que es la
+    señal objetiva de que no venden mercaderia que se revenda.
   - agrupa por proveedor; calcula % del total que representa cada proveedor.
 
 Uso:
@@ -66,10 +73,21 @@ function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
 Write-Log "Autenticando..."
 $script:token = Get-GescomToken
 
-Write-Log "Descargando catalogo de proveedores..."
+Write-Log "Descargando catalogo de proveedores y articulos..."
 $proveedores = Invoke-GescomApi -Path "/data/cmd/compras/api/v1/get-proveedores"
 $provNombre = @{}
 foreach ($p in $proveedores) { $provNombre[[string]$p.codigo] = $p.nombre }
+
+# Solo interesan los proveedores de MERCADERIA (a la usuaria le pidio
+# explicitamente excluir servicios/gastos -- ej. Prosegur, Telecentro,
+# Mercado Libre, seguros, fleteros individuales -- que tambien pasan por
+# este mismo endpoint de comprobantes de compra). Un proveedor de mercaderia
+# real tiene al menos 1 articulo cargado a su nombre en el catalogo de
+# inventario; si no tiene ninguno, se excluye del dashboard.
+$articulos = Invoke-GescomApi -Path "/data/cmd/inventario/api/v2/get-articulos"
+$provsMercaderia = @{}
+foreach ($a in $articulos) { if ($a.codigoProveedor) { $provsMercaderia[[string]$a.codigoProveedor] = $true } }
+Write-Log "Proveedores con articulos en el catalogo (mercaderia real): $($provsMercaderia.Count)"
 
 if ($MesDesde -ne "") {
     $inicioMes = Get-Date $MesDesde
@@ -135,6 +153,7 @@ Write-Log "Facturas de compra (union de $PASADAS_UNION pasadas): $($union.Count)
 $porProveedor = @{}
 foreach ($comp in $union.Values) {
     $prov = [string]$comp.codigoProveedor
+    if (-not $provsMercaderia.ContainsKey($prov)) { continue }
     if (-not $porProveedor.ContainsKey($prov)) { $porProveedor[$prov] = @{ importe = 0.0; comprobantes = 0 } }
     $importeComp = 0.0
     foreach ($it in $comp.items) { $importeComp += [double]$it.importeTotal }
