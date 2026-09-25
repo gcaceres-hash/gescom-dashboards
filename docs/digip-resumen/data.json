@@ -1,55 +1,51 @@
 {
-  "generadoEn": "2026-09-24T12:45:00-03:00",
+  "generadoEn": "2026-09-25T12:00:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Sigue en 0 el backlog de pendientes viejos",
-      "detalle": "Segundo día seguido sin ningún pedido de más de 3 días — la limpieza de ayer se sostuvo, no fue algo puntual."
+      "titulo": "Tercer día seguido sin backlog de pendientes viejos",
+      "detalle": "0 pedidos con más de 3 días de antigüedad — la limpieza del lunes sigue sosteniéndose."
     },
     {
-      "titulo": "Gran volumen de completados hoy",
-      "detalle": "417 pedidos pasaron a \"Completo\" (vs. 9-19 en días anteriores) — el depósito procesó un lote grande de una sola vez."
+      "titulo": "El lote grande de yogur que iba a vencer se resolvió",
+      "detalle": "Las 1.542 unidades de Yog. Firme Ilolay que vencían ayer ya no están en la lista — vencimientos volvió a 2.100 unidades (10 lotes), el mismo nivel de hace 2 días."
     },
     {
       "titulo": "Despacho en nuevo máximo del mes",
-      "detalle": "8.879 pedidos despachados en lo que va de septiembre ($1.055,5M)."
+      "detalle": "9.395 pedidos despachados en lo que va de septiembre ($1.119,6M)."
     }
   ],
   "atencion": [
     {
-      "titulo": "Vencimientos casi se duplicaron de un día para el otro",
-      "detalle": "2.100 → 3.642 unidades. La causa es un solo lote nuevo y grande: 1.542 unidades de Yogur Firme Entero Frutilla Ilolay que vence justo hoy."
-    },
-    {
       "titulo": "El núcleo duro de vencidos sigue exactamente igual",
-      "detalle": "Azúcar Ledesma (1.040u), Mantecol (591u) y Botadero Pascua (162 días) sin ningún cambio — nadie los está tocando."
+      "detalle": "Los mismos 10 lotes de siempre (Azúcar Ledesma, Mantecol, Botadero Pascua ya con 163 días) sin ningún cambio en más de una semana."
     },
     {
-      "titulo": "Los eliminados siguen en alza",
-      "detalle": "62 → 69 pedidos eliminados en lo que va de septiembre — tercer día consecutivo de subida."
+      "titulo": "Las unidades que vencen en más de 30 días casi se duplicaron",
+      "detalle": "17.869 → 33.725 unidades (58 lotes) — el salto más grande medido hasta ahora en ese bucket, vale la pena revisar qué entró nuevo."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Código de vendedor 074 es el que más pendientes acumula",
-      "detalle": "52 pendientes — se mantiene como el mayor cuello de botella desde ayer."
+      "titulo": "Código de vendedor 051 volvió a liderar los pendientes",
+      "detalle": "35 pendientes — vuelve a ser el mayor cuello de botella después de que 074 lo fuera los últimos 2 días."
     },
     {
-      "titulo": "15.654 unidades vencen en más de 30 días",
-      "detalle": "47 lotes — bajó un poco desde ayer (17.869) pero sigue siendo el bloque más grande de todo el próximo-a-vencer."
+      "titulo": "10.150 unidades vencen entre 16 y 30 días",
+      "detalle": "26 lotes — subió un poco desde ayer (7.757)."
     },
     {
-      "titulo": "7.757 unidades vencen entre 16 y 30 días",
-      "detalle": "23 lotes — estable respecto de ayer."
+      "titulo": "Los eliminados se mantienen estables",
+      "detalle": "0,74% de los pedidos de septiembre — similar a los últimos 2 días, sin seguir subiendo."
     }
   ],
   "numeros": {
-    "pendientesTotal": 447,
-    "pendientesImporte": 53796184.73,
-    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 0, "de1a3dias": 3, "menosDe1dia": 444 },
-    "vencidoUnidades": 3642,
-    "proximoVencerUnidades": { "0a15dias": 6276, "16a30dias": 7757, "masDe30dias": 15654 },
-    "eliminadosPctSeptiembre": 0.77,
+    "pendientesTotal": 308,
+    "pendientesImporte": 30737716.76,
+    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 0, "de1a3dias": 3, "menosDe1dia": 305 },
+    "vencidoUnidades": 2100,
+    "proximoVencerUnidades": { "0a15dias": 2259, "16a30dias": 10150, "masDe30dias": 33725 },
+    "eliminadosPctSeptiembre": 0.74,
     "eliminadosPctAgosto": 1.0
   }
 }
