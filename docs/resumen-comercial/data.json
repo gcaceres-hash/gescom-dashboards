@@ -1,57 +1,57 @@
 {
-  "generadoEn": "2026-09-25T12:05:00-03:00",
-  "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos",
+  "generadoEn": "2026-09-28T12:25:00-03:00",
+  "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos, Compras",
   "bien": [
     {
-      "titulo": "El potencial sin comprar sigue en baja, octavo día seguido",
-      "detalle": "$321M → ... → $210M → $200M. Ya bajó más del 37% desde que se detectó."
+      "titulo": "El margen se mantiene sólido",
+      "detalle": "13,79% vs. 13,46% de agosto — ya lleva más de una semana por encima del mes anterior."
     },
     {
-      "titulo": "El margen se mantiene por encima de agosto",
-      "detalle": "13,76% vs. 13,46% de agosto — se sostiene la mejora de ayer."
+      "titulo": "El potencial sin comprar sigue bajando",
+      "detalle": "$321M → $200M → $193M. Se recuperó casi el 40% del total original desde que se detectó."
     },
     {
-      "titulo": "La deuda de Di Giorno bajó de nuevo",
-      "detalle": "$29,7M → $19,3M — buena gestión de cobranza sostenida en esa cartera."
+      "titulo": "Buen ritmo de venta",
+      "detalle": "$920,7M actual a 20 de 22 días hábiles — septiembre va camino a superar cómodamente a agosto ($851,8M)."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los rechazos alcanzaron un nuevo máximo",
-      "detalle": "4,21% → 4,36% — $37,5M en 1.273 casos este mes, el nivel más alto medido hasta ahora."
+      "titulo": "La cuenta corriente subió fuerte",
+      "detalle": "$151,7M → $190,0M — el salto más grande medido hasta ahora en un solo día, principalmente en el tramo \"vigente\" (recién facturado, todavía no vencido)."
     },
     {
-      "titulo": "$11,3M en cuenta corriente de más de 90 días, sin moverse",
-      "detalle": "Ya lleva más de una semana exactamente igual, mientras el resto de la cuenta corriente sí rota."
+      "titulo": "Los rechazos siguen clavados en su máximo",
+      "detalle": "4,32% — prácticamente igual al pico anterior (4,36%), $39,5M en 1.350 casos este mes."
+    },
+    {
+      "titulo": "El vendedor \"VACANTE\" lleva más de una semana exactamente igual",
+      "detalle": "94 de 123 clientes sin compra — ningún movimiento desde la reasignación parcial de hace más de una semana."
     }
   ],
   "vigilar": [
     {
-      "titulo": "El vendedor \"VACANTE\" quedó completamente estancado",
-      "detalle": "76,4% sin compra, idéntico a ayer — segundo día sin ningún movimiento después de la reasignación del lunes."
-    },
-    {
       "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
-      "detalle": "$30,4M en potencial (vendedor 038) — ya casi 2 semanas sin ningún cambio."
+      "detalle": "$30,4M en potencial (vendedor 038) — ya más de 2 semanas sin ningún cambio."
     },
     {
-      "titulo": "Softys concentra más de la mitad de toda la compra de mercadería",
-      "detalle": "56,4% de $882,8M en septiembre — la dependencia de un solo proveedor es alta; los siguientes 2 (Ilolay, Grupo Ayudín) apenas suman 25% entre los dos."
+      "titulo": "Softys sigue concentrando más de la mitad de la compra de mercadería",
+      "detalle": "54,92% de $885,3M en septiembre — bajó apenas desde el 56,4% inicial, la dependencia de un solo proveedor sigue siendo alta."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 866679784.42,
-    "ventaNetaSepProyectada": 1003523960.91,
+    "ventaNetaSepActual": 920667794.59,
+    "ventaNetaSepProyectada": 1012734574.05,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1376,
+    "margenSepProyectado": 0.1379,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0436,
-    "rechazosMontoSep": 37461929.76,
-    "cuentaCorrienteTotal": 151677099.49,
-    "cuentaCorrienteD90mas": 11337863.67,
-    "potencialesEnRiesgo": 200492767.62,
-    "compraSinImpuestoSep": 882796199.93,
-    "compraPctMayorProveedor": 56.4
+    "rechazosPctSep": 0.0432,
+    "rechazosMontoSep": 39496940.64,
+    "cuentaCorrienteTotal": 189982664.87,
+    "cuentaCorrienteD90mas": 11388058.34,
+    "potencialesEnRiesgo": 193125176.92,
+    "compraSinImpuestoSep": 885333912.19,
+    "compraPctMayorProveedor": 54.92
   }
 }
