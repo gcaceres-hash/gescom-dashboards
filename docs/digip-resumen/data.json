@@ -1,51 +1,51 @@
 {
-  "generadoEn": "2026-09-25T12:00:00-03:00",
+  "generadoEn": "2026-09-28T12:10:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Tercer día seguido sin backlog de pendientes viejos",
-      "detalle": "0 pedidos con más de 3 días de antigüedad — la limpieza del lunes sigue sosteniéndose."
-    },
-    {
-      "titulo": "El lote grande de yogur que iba a vencer se resolvió",
-      "detalle": "Las 1.542 unidades de Yog. Firme Ilolay que vencían ayer ya no están en la lista — vencimientos volvió a 2.100 unidades (10 lotes), el mismo nivel de hace 2 días."
+      "titulo": "Los pendientes viejos siguen bajo control",
+      "detalle": "0 pedidos con más de 7 días y solo 3 entre 3-7 días — se mantiene sano después de la limpieza de la semana pasada."
     },
     {
       "titulo": "Despacho en nuevo máximo del mes",
-      "detalle": "9.395 pedidos despachados en lo que va de septiembre ($1.119,6M)."
+      "detalle": "9.908 pedidos despachados en lo que va de septiembre ($1.187,7M), ya se llegó a los 10.000 pedidos totales procesados en el mes."
+    },
+    {
+      "titulo": "Eliminados estables",
+      "detalle": "0,72% de los pedidos de septiembre se eliminaron — se mantiene en el mismo rango de los últimos días."
     }
   ],
   "atencion": [
     {
-      "titulo": "El núcleo duro de vencidos sigue exactamente igual",
-      "detalle": "Los mismos 10 lotes de siempre (Azúcar Ledesma, Mantecol, Botadero Pascua ya con 163 días) sin ningún cambio en más de una semana."
+      "titulo": "Los vencimientos volvieron a subir",
+      "detalle": "2.100 → 2.688 unidades (10 → 13 lotes). Se sumaron 2 lotes de Flynn Paff XXL Limo-Berry (153 unidades entre los dos, recién vencidos) y uno de Maní con Chocolate (435 unidades)."
     },
     {
-      "titulo": "Las unidades que vencen en más de 30 días casi se duplicaron",
-      "detalle": "17.869 → 33.725 unidades (58 lotes) — el salto más grande medido hasta ahora en ese bucket, vale la pena revisar qué entró nuevo."
+      "titulo": "El núcleo duro de siempre sigue sin resolverse",
+      "detalle": "Azúcar Ledesma (1.036u en 3 lotes), Mantecol (591u) y Botadero Pascua (ya 166 días) — llevan más de 2 semanas exactamente iguales."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Código de vendedor 051 volvió a liderar los pendientes",
-      "detalle": "35 pendientes — vuelve a ser el mayor cuello de botella después de que 074 lo fuera los últimos 2 días."
+      "titulo": "Las unidades que vencen en más de 30 días siguen creciendo",
+      "detalle": "24.151 unidades (43 lotes) — viene en aumento sostenido semana a semana desde que se empezó a medir."
     },
     {
-      "titulo": "10.150 unidades vencen entre 16 y 30 días",
-      "detalle": "26 lotes — subió un poco desde ayer (7.757)."
+      "titulo": "Nueva concentración: código de vendedor 6",
+      "detalle": "42 pendientes — es, por lejos, el mayor cuello de botella hoy, no estaba entre los primeros puestos antes."
     },
     {
-      "titulo": "Los eliminados se mantienen estables",
-      "detalle": "0,74% de los pedidos de septiembre — similar a los últimos 2 días, sin seguir subiendo."
+      "titulo": "13.950 unidades vencen entre 16 y 30 días",
+      "detalle": "40 lotes — subió bastante desde días anteriores, vale la pena vigilar de cerca esta franja."
     }
   ],
   "numeros": {
-    "pendientesTotal": 308,
-    "pendientesImporte": 30737716.76,
-    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 0, "de1a3dias": 3, "menosDe1dia": 305 },
-    "vencidoUnidades": 2100,
-    "proximoVencerUnidades": { "0a15dias": 2259, "16a30dias": 10150, "masDe30dias": 33725 },
-    "eliminadosPctSeptiembre": 0.74,
+    "pendientesTotal": 284,
+    "pendientesImporte": 34425369.03,
+    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 3, "de1a3dias": 78, "menosDe1dia": 203 },
+    "vencidoUnidades": 2688,
+    "proximoVencerUnidades": { "0a15dias": 834, "16a30dias": 13950, "masDe30dias": 24151 },
+    "eliminadosPctSeptiembre": 0.72,
     "eliminadosPctAgosto": 1.0
   }
 }
