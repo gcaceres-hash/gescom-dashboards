@@ -113,6 +113,10 @@ $totalCalifican = 0
 for ($i = 1; $i -lt $lines.Count; $i++) {
     $f = $lines[$i] -split ';'
     $totalFilas++
+    if ($f.Count -ne $header.Count) {
+        Write-Log "Aviso: fila $i tiene $($f.Count) campos (se esperaban $($header.Count)), se omite por formato invalido."
+        continue
+    }
     if ($EXCLUDED_VENDEDOR -contains $f[$col['CodVendedor']]) { continue }
     $precioCosto = ToNum $f[$col['PrecioCosto']]
     if ($precioCosto -eq 1.0) { continue }
