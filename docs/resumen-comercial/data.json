@@ -1,57 +1,49 @@
 {
-  "generadoEn": "2026-09-28T12:25:00-03:00",
-  "fuente": "Gescom - Rentabilidad, Cobertura, Potenciales, Di Giorno, Cuentas Corrientes, Rechazos, Compras",
+  "generadoEn": "2026-09-30T19:00:00-03:00",
+  "fuente": "Base compartida de Lucas (Rentabilidad via CSV, Cobertura, Potenciales, Di Giorno, Rechazos, Compras) - Cuentas Corrientes bloqueado",
   "bien": [
     {
       "titulo": "El margen se mantiene sólido",
-      "detalle": "13,79% vs. 13,46% de agosto — ya lleva más de una semana por encima del mes anterior."
-    },
-    {
-      "titulo": "El potencial sin comprar sigue bajando",
-      "detalle": "$321M → $200M → $193M. Se recuperó casi el 40% del total original desde que se detectó."
+      "detalle": "13,80% proyectado vs. 13,46% de agosto — sigue por encima del mes anterior."
     },
     {
       "titulo": "Buen ritmo de venta",
-      "detalle": "$920,7M actual a 20 de 22 días hábiles — septiembre va camino a superar cómodamente a agosto ($851,8M)."
+      "detalle": "$955,7M actual a 21 de 22 días hábiles — proyectado $1.001,2M, supera cómodamente a agosto ($851,8M)."
+    },
+    {
+      "titulo": "Softys baja levemente su concentración en compras",
+      "detalle": "54,68% de $866,3M en septiembre — bajó apenas desde el 54,92% anterior."
     }
   ],
   "atencion": [
     {
-      "titulo": "La cuenta corriente subió fuerte",
-      "detalle": "$151,7M → $190,0M — el salto más grande medido hasta ahora en un solo día, principalmente en el tramo \"vigente\" (recién facturado, todavía no vencido)."
+      "titulo": "Rechazos suben tras migrar la fuente de datos",
+      "detalle": "6,04% ($64,8M) vs. 4,32% anterior. OJO: la fuente y el criterio de fecha cambiaron hoy (30/9, migración de la API de Gescom a la base compartida) — no es 100% comparable con cifras previas, a confirmar en los próximos días si es el nivel real."
     },
     {
-      "titulo": "Los rechazos siguen clavados en su máximo",
-      "detalle": "4,32% — prácticamente igual al pico anterior (4,36%), $39,5M en 1.350 casos este mes."
-    },
-    {
-      "titulo": "El vendedor \"VACANTE\" lleva más de una semana exactamente igual",
-      "detalle": "94 de 123 clientes sin compra — ningún movimiento desde la reasignación parcial de hace más de una semana."
+      "titulo": "Cuentas Corrientes sin actualizar",
+      "detalle": "Bloqueado desde hoy: la base nueva no tiene cuenta corriente de clientes. Los números de abajo son los últimos conocidos (28/9), pendiente que Lucas sume esa tabla."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Distribuidora Sourigues SRL sigue sin comprar",
-      "detalle": "$30,4M en potencial (vendedor 038) — ya más de 2 semanas sin ningún cambio."
-    },
-    {
-      "titulo": "Softys sigue concentrando más de la mitad de la compra de mercadería",
-      "detalle": "54,92% de $885,3M en septiembre — bajó apenas desde el 56,4% inicial, la dependencia de un solo proveedor sigue siendo alta."
+      "titulo": "Potenciales en riesgo cambia de metodología",
+      "detalle": "$193,1M → $72,9M, pero en gran parte por el cambio de fuente: el ranking de 3 meses hoy solo tiene ~2 meses de historia real (la base arranca el 1/8). No tomar como mejora real todavía, revisar cuando haya 3 meses completos de datos."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 920667794.59,
-    "ventaNetaSepProyectada": 1012734574.05,
+    "ventaNetaSepActual": 955705948.63,
+    "ventaNetaSepProyectada": 1001215755.71,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1379,
+    "margenSepProyectado": 0.138,
     "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0432,
-    "rechazosMontoSep": 39496940.64,
+    "rechazosPctSep": 0.0604,
+    "rechazosMontoSep": 64808746.27,
     "cuentaCorrienteTotal": 189982664.87,
     "cuentaCorrienteD90mas": 11388058.34,
-    "potencialesEnRiesgo": 193125176.92,
-    "compraSinImpuestoSep": 885333912.19,
-    "compraPctMayorProveedor": 54.92
+    "potencialesEnRiesgo": 72948601.3,
+    "compraSinImpuestoSep": 866330822.18,
+    "compraPctMayorProveedor": 54.68
   }
 }

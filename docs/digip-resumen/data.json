@@ -1,51 +1,51 @@
 {
-  "generadoEn": "2026-09-28T12:10:00-03:00",
+  "generadoEn": "2026-09-30T18:45:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Los pendientes viejos siguen bajo control",
-      "detalle": "0 pedidos con más de 7 días y solo 3 entre 3-7 días — se mantiene sano después de la limpieza de la semana pasada."
+      "titulo": "Los pendientes bajaron fuerte",
+      "detalle": "284 → 196 pedidos pendientes desde el relevo del 28/9 (-88), la mejor marca del mes."
     },
     {
-      "titulo": "Despacho en nuevo máximo del mes",
-      "detalle": "9.908 pedidos despachados en lo que va de septiembre ($1.187,7M), ya se llegó a los 10.000 pedidos totales procesados en el mes."
+      "titulo": "Se resolvió Botadero Pascua",
+      "detalle": "El lote que llevaba más de 166 días vencido sin moverse ya no aparece en la lista de vencidos — se dio de baja o se reubicó."
     },
     {
-      "titulo": "Eliminados estables",
-      "detalle": "0,72% de los pedidos de septiembre se eliminaron — se mantiene en el mismo rango de los últimos días."
+      "titulo": "Despacho en nuevo máximo y eliminados estables",
+      "detalle": "10.868 pedidos despachados en lo que va de septiembre ($1.317,3M). Eliminados: 0,68% del mes (77 de 11.368) — leve mejora respecto al 0,72% del 28/9."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los vencimientos volvieron a subir",
-      "detalle": "2.100 → 2.688 unidades (10 → 13 lotes). Se sumaron 2 lotes de Flynn Paff XXL Limo-Berry (153 unidades entre los dos, recién vencidos) y uno de Maní con Chocolate (435 unidades)."
+      "titulo": "El núcleo duro de siempre sigue sin resolverse",
+      "detalle": "Azúcar Ledesma (3 lotes, 1.106u) y Mantecol Café/Coco (591u) siguen prácticamente iguales que hace 2 semanas."
     },
     {
-      "titulo": "El núcleo duro de siempre sigue sin resolverse",
-      "detalle": "Azúcar Ledesma (1.036u en 3 lotes), Mantecol (591u) y Botadero Pascua (ya 166 días) — llevan más de 2 semanas exactamente iguales."
+      "titulo": "Los vencimientos casi no bajaron",
+      "detalle": "2.688 → 2.618 unidades, se mantiene en 13 lotes. Flynn Paff XXL Limo-Berry (45u) y Maní con Chocolate (435u), flagueados como 'recién vencidos' el 28/9, siguen sin resolverse 2 días después."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Las unidades que vencen en más de 30 días siguen creciendo",
-      "detalle": "24.151 unidades (43 lotes) — viene en aumento sostenido semana a semana desde que se empezó a medir."
+      "titulo": "Cambio de cuello de botella: código de vendedor 74",
+      "detalle": "45 pendientes, nuevo máximo — el código 6 (antes el mayor problema con 42) bajó a solo 1."
     },
     {
-      "titulo": "Nueva concentración: código de vendedor 6",
-      "detalle": "42 pendientes — es, por lejos, el mayor cuello de botella hoy, no estaba entre los primeros puestos antes."
+      "titulo": "Las unidades que vencen en 16-30 días siguen creciendo",
+      "detalle": "13.950 → 16.838 unidades (40 lotes) — sube de nuevo, vale la pena vigilar de cerca esta franja."
     },
     {
-      "titulo": "13.950 unidades vencen entre 16 y 30 días",
-      "detalle": "40 lotes — subió bastante desde días anteriores, vale la pena vigilar de cerca esta franja."
+      "titulo": "Más de 30 días bajó, a confirmar si es real o recalculo",
+      "detalle": "24.151 → 19.796 unidades — es la primera baja desde que se empezó a medir esta franja; conviene confirmar en el próximo relevo si se sostiene."
     }
   ],
   "numeros": {
-    "pendientesTotal": 284,
-    "pendientesImporte": 34425369.03,
-    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 3, "de1a3dias": 78, "menosDe1dia": 203 },
-    "vencidoUnidades": 2688,
-    "proximoVencerUnidades": { "0a15dias": 834, "16a30dias": 13950, "masDe30dias": 24151 },
-    "eliminadosPctSeptiembre": 0.72,
+    "pendientesTotal": 196,
+    "pendientesImporte": 16563323.61,
+    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 3, "de1a3dias": 33, "menosDe1dia": 160 },
+    "vencidoUnidades": 2618,
+    "proximoVencerUnidades": { "0a15dias": 866, "16a30dias": 16838, "masDe30dias": 19796 },
+    "eliminadosPctSeptiembre": 0.68,
     "eliminadosPctAgosto": 1.0
   }
 }
