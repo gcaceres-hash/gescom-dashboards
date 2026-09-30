@@ -3,6 +3,17 @@ Descarga la cuenta corriente de clientes de Gescom, resuelve cada comprobante
 pendiente a su vendedor (via ventaId) y arma la estructura:
   Responsable de cobro -> Clientes -> (Comprobantes + apertura por vendedor)
 
+BLOQUEADO desde el 30/9/2026: la base compartida de Lucas
+(datos-gescom.panelempresas.workers.dev) que reemplazo el resto de los pull
+scripts NO tiene cuenta corriente de CLIENTES (solo deuda con proveedores),
+y el acceso directo a la API de Gescom (usuario "lucasapi") esta cortado por
+decision de Lucas (consolido todo en esa base porque IDEA bloqueaba el
+usuario por consumo). Se le pidio a Lucas sumar esa tabla a la base -- hasta
+que eso pase, este script no tiene de donde traer datos. Se deja el intento
+de conexion envuelto en try/catch: si falla (como es de esperar ahora mismo),
+avisa y no toca el data.json existente, para no romper el resto del ciclo
+diario de actualizacion.
+
 Reglas de negocio (confirmadas con el usuario):
   - Vendedores 1176 y 43 (ONCE SETENTA Y SEIS): no son reales, se excluyen SIEMPRE.
   - Vendedor 16 (VENDEDOR DEPOSITO) y 37 (LOGISTICA): se excluyen tambien.
@@ -58,6 +69,12 @@ function Get-Responsable($codigoVendedor) {
     if ($codigoVendedor.Length -eq 3) { return "_BRUNO_" }
     return "_JOHANA_"
 }
+
+# Todo lo que sigue depende de la API de Gescom, que esta bloqueada (ver nota
+# arriba). Envuelto en try/catch para que una falla aca no tumbe el resto del
+# ciclo diario de actualizacion -- si falla, se avisa y no se toca el
+# data.json existente (queda el ultimo dato bueno conocido).
+try {
 
 Write-Log "Autenticando..."
 $script:token = Get-GescomToken
@@ -203,3 +220,7 @@ Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
 Write-Log "Guardado: $OutPath"
 Write-Log "Saldo total (excl. no-reales): $($totales.saldoTotal) | Excluido: $($excluidoTotal)"
 $responsablesOut | ForEach-Object { Write-Log "  $($_.nombre): `$$($_.saldoTotal) ($($_.clientes.Count) clientes)" }
+
+} catch {
+    Write-Log "BLOQUEADO: no se pudo actualizar Cuentas Corrientes ($($_.Exception.Message)). Pendiente que Lucas sume cuenta corriente de clientes a la base compartida, o que se reactive el acceso directo a la API de Gescom. No se modifico el data.json existente."
+}

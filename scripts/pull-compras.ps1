@@ -3,33 +3,27 @@ Dashboard de Compras: cuanto facturaron los proveedores (neto de IVA) y que
 % del total representa cada uno, guardando cada mes por separado (igual que
 la Pizarra de Rentabilidad) para poder navegar meses hacia adelante.
 
+MIGRADO el 30/9/2026 de la API de Gescom a la base compartida de Lucas
+(datos-gescom.panelempresas.workers.dev) -- ver pull-cobertura-general.ps1
+para el detalle de por que.
+
 Reglas de negocio:
-  - Fuente: /data/cmd/compras/api/v1/get (comprobantes de compra de Gescom).
-  - Se cuentan SOLO comprobantes tipo FAC-A y FAC-C (facturas de compra reales).
-    Se descubrio (caso concreto: SOFTYS ARGENTINA S.A, sept 2026) que cada
-    factura de compra aparece DUPLICADA en este endpoint como un "REMI-I"
-    (remito interno) con el MISMO monto y los MISMOS items -- son la misma
-    operacion registrada dos veces con distinta etiqueta. Sumar REMI/REMI-I/
-    REME/REME-I junto con las facturas duplicaria el total al doble. Los
-    REMI simples (sin "-I") ademas suelen venir en $0 (son solo el remito
-    fisico del camion, no la factura).
-  - NO se netean notas de credito (NCR-A/NCR-C) ni notas de debito (NDB-A)
-    todavia: se encontraron con "codigoItem" generico (no un articulo real)
-    y montos que no se pudieron verificar contra la pantalla de Gescom antes
-    de esta primera version -- mejor mostrar "facturado bruto" con esta
-    salvedad explicita que arriesgar un neteo mal hecho. Pendiente confirmar
-    con la usuaria como tratarlas.
-  - El filtro fechaDesde/fechaHasta de la API es poco preciso (devuelve un
-    rango mas ancho del pedido, mismo comportamiento que ya se documento en
-    la API de ventas) -- se pide con margen y se filtra despues por
-    fechaComprobante real, client-side.
+  - Fuente: compras_arca + compra_netos (desglose armado por Lucas para la
+    conciliacion con ARCA), NO la tabla `compras` simple -- esa solo tiene el
+    total CON impuesto. Se decidio con la usuaria (30/9/2026) mantener el
+    mismo criterio historico ("compra sin impuesto") aunque compras_arca
+    cubra ~95% de las facturas del mes (se sincroniza con unos dias de
+    demora respecto a `compras`) en vez de cambiar a un numero con impuesto
+    con cobertura completa.
+  - Se cuentan SOLO comprobantes tipo FAC-A y FAC-C (facturas de compra
+    reales). Los remitos (REMI/REMI-I/REME/REME-I) y notas de credito/debito
+    (NCR-A/NCR-C/NDB-A/NDB-C) quedan afuera -- las notas de credito/debito NO
+    se netean todavia (misma salvedad que la version anterior: pendiente
+    confirmar el tratamiento con la usuaria).
   - Solo se muestran proveedores de MERCADERIA (a pedido explicito de la
-    usuaria): el mismo endpoint de compras mezcla proveedores reales de
-    producto con proveedores de servicios/gastos (seguridad, telefonia,
-    seguros, fleteros individuales, Mercado Libre, el propio proveedor de
-    Digip, etc.) -- se excluyen los que no tienen NINGUN articulo cargado
-    a su nombre en el catalogo de inventario (get-articulos), que es la
-    señal objetiva de que no venden mercaderia que se revenda.
+    usuaria): se excluyen los que no tienen NINGUN articulo cargado a su
+    nombre en el catalogo de inventario (tabla articulos), señal objetiva de
+    que no venden mercaderia que se revenda.
   - agrupa por proveedor; calcula % del total que representa cada proveedor.
 
 Uso:
@@ -37,7 +31,7 @@ Uso:
   powershell -File pull-compras.ps1 -MesDesde 2026-07-01  # un mes especifico
 #>
 param(
-    [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
+    [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/compras"),
     [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "compras-template.html"),
@@ -47,118 +41,50 @@ $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
 $TIPOS_FACTURA = @("FAC-A", "FAC-C")
 
-function Get-GescomToken {
-    $tokenUrl = "$($config.authUrl)/realms/$($config.realm)/protocol/openid-connect/token"
-    $body = @{ client_id = $config.clientId; username = $config.usuario; password = $config.clave; grant_type = "password" }
-    (Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $body -ContentType "application/x-www-form-urlencoded").access_token
-}
-function Invoke-GescomApi {
-    param([string]$Path, [hashtable]$Query = @{})
-    $qs = ($Query.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString([string]$_.Value))" }) -join "&"
-    $url = "$($config.baseUrl)$Path"
-    if ($qs) { $url += "?$qs" }
-    for ($intento = 1; $intento -le 4; $intento++) {
-        try {
-            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
-        } catch {
-            $esAuthError = ($_.ErrorDetails.Message -match "Acceso denegado") -or ($_.Exception.Response.StatusCode.value__ -in 401, 403)
-            if ($esAuthError) { $script:token = Get-GescomToken }
-            if ($intento -eq 4) { throw }
-            if (-not $esAuthError) { Start-Sleep -Seconds ($intento * 5) }
-        }
-    }
-}
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
-
-Write-Log "Autenticando..."
-$script:token = Get-GescomToken
+function Invoke-PanelSql([string]$Sql) {
+    $uri = "$($config.baseUrl)/consulta?sql=" + [uri]::EscapeDataString($Sql)
+    $headers = @{ Authorization = "Bearer $($config.clave)" }
+    $r = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+    if ($r.truncado) { Write-Log "AVISO: la consulta vino truncada (mas de 20000 filas) -- revisar y acotar." }
+    return $r.filas
+}
 
 Write-Log "Descargando catalogo de proveedores y articulos..."
-$proveedores = Invoke-GescomApi -Path "/data/cmd/compras/api/v1/get-proveedores"
+$proveedores = Invoke-PanelSql "SELECT codigo, nombre FROM proveedores"
 $provNombre = @{}
 foreach ($p in $proveedores) { $provNombre[[string]$p.codigo] = $p.nombre }
-
-# Solo interesan los proveedores de MERCADERIA (a la usuaria le pidio
-# explicitamente excluir servicios/gastos -- ej. Prosegur, Telecentro,
-# Mercado Libre, seguros, fleteros individuales -- que tambien pasan por
-# este mismo endpoint de comprobantes de compra). Un proveedor de mercaderia
-# real tiene al menos 1 articulo cargado a su nombre en el catalogo de
-# inventario; si no tiene ninguno, se excluye del dashboard.
-$articulos = Invoke-GescomApi -Path "/data/cmd/inventario/api/v2/get-articulos"
+$articulos = Invoke-PanelSql "SELECT DISTINCT proveedor FROM articulos WHERE proveedor IS NOT NULL AND proveedor <> ''"
 $provsMercaderia = @{}
-foreach ($a in $articulos) { if ($a.codigoProveedor) { $provsMercaderia[[string]$a.codigoProveedor] = $true } }
+foreach ($a in $articulos) { $provsMercaderia[[string]$a.proveedor] = $true }
 Write-Log "Proveedores con articulos en el catalogo (mercaderia real): $($provsMercaderia.Count)"
 
-if ($MesDesde -ne "") {
-    $inicioMes = Get-Date $MesDesde
-} else {
-    $inicioMes = Get-Date -Day 1
-}
+if ($MesDesde -ne "") { $inicioMes = Get-Date $MesDesde } else { $inicioMes = Get-Date -Day 1 }
 $inicioMes = Get-Date -Year $inicioMes.Year -Month $inicioMes.Month -Day 1 -Hour 0 -Minute 0 -Second 0
 $finMesCompleto = $inicioMes.AddMonths(1)
 $hoy = (Get-Date).Date
 $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Month)
 $mesKey = $inicioMes.ToString("yyyy-MM")
+$fechaDesde = $inicioMes.ToString("yyyy-MM-dd")
+$fechaHasta = $finMesCompleto.ToString("yyyy-MM-dd")
+Write-Log "Procesando mes $mesKey ($fechaDesde a $fechaHasta)..."
 
-$BUFFER_DIAS = 20
-$fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
-$fechaHastaQuery = $finMesCompleto.AddDays($BUFFER_DIAS).ToString("yyyy-MM-dd")
-Write-Log "Procesando mes $mesKey (comprobantes con fecha entre $($inicioMes.ToString('yyyy-MM-dd')) y $($finMesCompleto.AddDays(-1).ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery hasta $fechaHastaQuery)..."
-
-# 2 pasadas independientes, union por (proveedor+tipo+numero) -- mismo motivo
-# que en pull-venta-rentabilidad.ps1: esta familia de API de Gescom ya
-# demostro perder comprobantes reales de forma inconsistente entre corridas.
-function Get-ComprobantesCalificados {
-    param([int]$Intento)
-    $script:token = Get-GescomToken
-    $vistos = @{}
-    # OJO: el parametro "page" NO pagina de verdad en este endpoint (page=1 y
-    # page=2 devuelven exactamente lo mismo) -- el que si funciona es
-    # "pagestoskip" (mismo nombre que la API de ventas). Sin este loop, una
-    # ventana con mas de 500 comprobantes se trunca en silencio (se
-    # confirmo perdiendo 64 facturas reales de septiembre con el buffer de
-    # +/-20 dias antes de este fix).
-    $pagestoskip = 0
-    $totalLocal = 0
-    while ($true) {
-        if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
-        $page = Invoke-GescomApi -Path "/data/cmd/compras/api/v1/get" -Query @{
-            fechaDesde = $fechaDesdeQuery; fechaHasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
-        }
-        if (-not $page -or $page.Count -eq 0) { break }
-        $totalLocal += $page.Count
-        foreach ($comp in $page) {
-            if ($TIPOS_FACTURA -notcontains $comp.codigoTipoDeComprobante) { continue }
-            if (-not $comp.fechaComprobante) { continue }
-            $fecha = ([datetime]$comp.fechaComprobante).Date
-            if ($fecha -lt $inicioMes -or $fecha -ge $finMesCompleto) { continue }
-            $idUnico = "$($comp.codigoProveedor)|$($comp.codigoTipoDeComprobante)|$($comp.codigoPuntoVenta)|$($comp.numeroComprobante)"
-            $vistos[$idUnico] = $comp
-        }
-        if ($page.Count -lt 500) { break }
-        $pagestoskip++
-    }
-    Write-Log "  [intento $Intento] comprobantes recibidos: $totalLocal | facturas del mes: $($vistos.Count)"
-    return $vistos
-}
-
-$PASADAS_UNION = 2
-$union = @{}
-for ($intento = 1; $intento -le $PASADAS_UNION; $intento++) {
-    $vistos = Get-ComprobantesCalificados -Intento $intento
-    foreach ($id in $vistos.Keys) { $union[$id] = $vistos[$id] }
-}
-Write-Log "Facturas de compra (union de $PASADAS_UNION pasadas): $($union.Count)"
+$tiposIn = ($TIPOS_FACTURA | ForEach-Object { "'$_'" }) -join ","
+$sql = @"
+SELECT ca.proveedor AS proveedor, COUNT(DISTINCT ca.id) AS facturas, ROUND(SUM(cn.neto),2) AS neto
+FROM compras_arca ca
+JOIN compra_netos cn ON cn.compra_id = ca.id
+WHERE ca.tipo IN ($tiposIn) AND ca.fecha >= '$fechaDesde' AND ca.fecha < '$fechaHasta'
+GROUP BY ca.proveedor
+"@
+$filas = Invoke-PanelSql $sql
+Write-Log "Proveedores con factura de compra (antes del filtro de mercaderia): $($filas.Count)"
 
 $porProveedor = @{}
-foreach ($comp in $union.Values) {
-    $prov = [string]$comp.codigoProveedor
+foreach ($f in $filas) {
+    $prov = [string]$f.proveedor
     if (-not $provsMercaderia.ContainsKey($prov)) { continue }
-    if (-not $porProveedor.ContainsKey($prov)) { $porProveedor[$prov] = @{ importe = 0.0; comprobantes = 0 } }
-    $importeComp = 0.0
-    foreach ($it in $comp.items) { $importeComp += [double]$it.importeTotal }
-    $porProveedor[$prov].importe += $importeComp
-    $porProveedor[$prov].comprobantes += 1
+    $porProveedor[$prov] = @{ importe = [double]$f.neto; comprobantes = [int]$f.facturas }
 }
 
 $totalGeneral = 0.0

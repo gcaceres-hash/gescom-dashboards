@@ -3,16 +3,24 @@ Mismo dashboard que Cobertura General, pero el "universo" de cada vendedor se
 recorta a sus clientes "potenciales": los que concentran el 80% de lo que ese
 vendedor vendio en los ultimos 3 meses (curva de Pareto por vendedor).
 
+MIGRADO el 30/9/2026 de la API de Gescom a la base compartida de Lucas
+(datos-gescom.panelempresas.workers.dev) -- ver pull-cobertura-general.ps1
+para el detalle de por que y el cambio de criterio de fecha (fechaPedido en
+vez de fechaComprobante, ya que la base no guarda la fecha de comprobante).
+
 Reglas:
   - Se excluyen los vendedores 1176, 43, 16, 37 (no son vendedores reales).
+    1176 y 43 ya vienen excluidos de la tabla `ventas` de origen.
   - Ranking (quien es "potencial"): venta neta por cliente en los ultimos 3
-    meses (ventana movil hasta hoy), ordenado de mayor a menor, se toman los
-    clientes hasta llegar al 80% acumulado de la venta de ese vendedor.
-  - "Compro" (para el indicador de cobertura) = venta cerrada (facturada), no nota de
-    credito, en el MES EN CURSO -- igual criterio que Cobertura General.
+    meses (ventana movil hasta hoy), solo tipo VEN/DEB (las notas de credito
+    NO se suman ni se restan, se ignoran igual que en la version anterior),
+    ordenado de mayor a menor, se toman los clientes hasta llegar al 80%
+    acumulado de la venta de ese vendedor.
+  - "Compro" (para el indicador de cobertura) = venta VEN/DEB en el MES EN
+    CURSO -- igual criterio que Cobertura General.
 #>
 param(
-    [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
+    [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/potenciales"),
     [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "potenciales-template.html"),
@@ -21,59 +29,33 @@ param(
 $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
 $EXCLUDED = @("43","1176","16","37")
-$DIAS_SEMANA = @("lunes","martes","miercoles","jueves","viernes","sabado","domingo")
+$DIA_LETRA = @{ "L"="lunes"; "M"="martes"; "X"="miercoles"; "J"="jueves"; "V"="viernes"; "S"="sabado"; "D"="domingo" }
 
-function Get-GescomToken {
-    $tokenUrl = "$($config.authUrl)/realms/$($config.realm)/protocol/openid-connect/token"
-    $body = @{ client_id = $config.clientId; username = $config.usuario; password = $config.clave; grant_type = "password" }
-    (Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $body -ContentType "application/x-www-form-urlencoded").access_token
-}
-function Invoke-GescomApi {
-    param([string]$Path, [hashtable]$Query = @{})
-    $qs = ($Query.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString([string]$_.Value))" }) -join "&"
-    $url = "$($config.baseUrl)$Path"
-    if ($qs) { $url += "?$qs" }
-    for ($intento = 1; $intento -le 4; $intento++) {
-        try {
-            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
-        } catch {
-            # El token de Gescom (Keycloak) puede vencer a mitad de un pull largo --
-            # si el error es de autenticacion, pedimos uno nuevo antes de reintentar
-            # en vez de repetir la misma llamada con el token vencido.
-            $esAuthError = ($_.ErrorDetails.Message -match "Acceso denegado") -or ($_.Exception.Response.StatusCode.value__ -in 401, 403)
-            if ($esAuthError) { $script:token = Get-GescomToken }
-            if ($intento -eq 4) { throw }
-            if (-not $esAuthError) { Start-Sleep -Seconds ($intento * 5) }
-        }
-    }
-}
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
+function Invoke-PanelSql([string]$Sql) {
+    $uri = "$($config.baseUrl)/consulta?sql=" + [uri]::EscapeDataString($Sql)
+    $headers = @{ Authorization = "Bearer $($config.clave)" }
+    $r = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+    if ($r.truncado) { Write-Log "AVISO: la consulta vino truncada (mas de 20000 filas) -- revisar y acotar." }
+    return $r.filas
+}
 
-Write-Log "Autenticando..."
-$script:token = Get-GescomToken
+Write-Log "Descargando clientes con cartera asignada..."
+$clientesRaw = Invoke-PanelSql "SELECT codigo, nombre, localidad, vendedor, rutas FROM clientes WHERE activo = 1 AND vendedor IS NOT NULL AND vendedor <> ''"
 
-Write-Log "Descargando catalogos (clientes, vendedores, proveedores, articulos)..."
-$clientesRaw = Invoke-GescomApi -Path "/data/cmd/ventas/api/v1/get-clientes"
-$vendedoresRaw = Invoke-GescomApi -Path "/data/cmd/ventas/api/v1/get-vendedores"
-$proveedoresRaw = Invoke-GescomApi -Path "/data/cmd/compras/api/v1/get-proveedores"
-$articulos = Invoke-GescomApi -Path "/data/cmd/inventario/api/v2/get-articulos"
-
-$provNombre = @{}
-foreach ($p in $proveedoresRaw) { $provNombre[[string]$p.codigo] = $p.nombre }
-$vendNombre = @{}
-foreach ($v in $vendedoresRaw) { $vendNombre[[string]$v.codigo] = $v.nombre }
-$artProv = @{}
-foreach ($a in $articulos) { $artProv[[string]$a.codigo] = [string]$a.codigoProveedor }
-
-# --- cliente -> {vendedor, dias} a partir de la primera ruta de preventa ---
 $clienteInfo = @{}
 $vendedoresConCartera = New-Object System.Collections.Generic.HashSet[string]
 foreach ($c in $clientesRaw) {
-    $ruta = $c.rutasPreventa | Select-Object -First 1
-    if (-not $ruta) { continue }
-    $vcod = [string]$ruta.codigoVendedor
-    if (-not $vcod -or $EXCLUDED -contains $vcod) { continue }
-    $dias = @($DIAS_SEMANA | Where-Object { $ruta.$_ -eq $true })
+    $vcod = [string]$c.vendedor
+    if ($EXCLUDED -contains $vcod) { continue }
+    $dias = @()
+    try {
+        $rutas = $c.rutas | ConvertFrom-Json
+        if ($rutas -and $rutas.Count -gt 0) {
+            $letra = [string]$rutas[0].dias
+            $dias = @($letra.ToCharArray() | ForEach-Object { if ($DIA_LETRA.ContainsKey([string]$_)) { $DIA_LETRA[[string]$_] } })
+        }
+    } catch {}
     $clienteInfo[[string]$c.codigo] = [pscustomobject]@{
         codigo = [string]$c.codigo; nombre = $c.nombre; localidad = $c.localidad
         codigoVendedor = $vcod; dias = $dias
@@ -83,53 +65,54 @@ foreach ($c in $clientesRaw) {
 }
 Write-Log "Clientes con cartera asignada (vendedor real): $($clienteInfo.Count) | vendedores distintos: $($vendedoresConCartera.Count)"
 
-# --- ventana de 3 meses moviles (ranking) + mes en curso (indicador de compra), en una sola pasada ---
 $hoy = (Get-Date).Date
 $rankingDesde = $hoy.AddMonths(-3)
 $inicioMesActual = Get-Date -Year $hoy.Year -Month $hoy.Month -Day 1
 $fechaDesde = $rankingDesde.ToString("yyyy-MM-dd")
-# se consulta hasta fin del mes en curso (no se recorta en "hoy") para no
-# perder registros por cualquier desfasaje de reloj/zona horaria con el
-# servidor de Gescom -- filtrar por fecha real ya lo hace el resto del script
-$fechaHasta = (Get-Date -Year $hoy.Year -Month $hoy.Month -Day 1).AddMonths(1).ToString("yyyy-MM-dd")
-Write-Log "Revisando ventas ($fechaDesde a $fechaHasta) -- ranking 3 meses + mes en curso desde $($inicioMesActual.ToString('yyyy-MM-dd'))..."
+$fechaHasta = $inicioMesActual.AddMonths(1).ToString("yyyy-MM-dd")
+$fechaDesdeMesActual = $inicioMesActual.ToString("yyyy-MM-dd")
+Write-Log "Ranking 3 meses ($fechaDesde a $fechaHasta) + mes en curso desde $fechaDesdeMesActual..."
 
-$script:token = Get-GescomToken
-$pagestoskip = 0
-$total = 0
-while ($true) {
-    if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
-    $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
-        fechadesde = $fechaDesde; fechahasta = $fechaHasta; pagesize = 500; pagestoskip = $pagestoskip
-    }
-    if (-not $page -or $page.Count -eq 0) { break }
-    $total += $page.Count
-    foreach ($venta in $page) {
-        if ($venta.cerrada -ne $true) { continue }
-        if ($venta.esCredito -eq $true) { continue }
-        $codCli = [string]$venta.codigoCliente
-        if (-not $clienteInfo.ContainsKey($codCli)) { continue }
-        $ci = $clienteInfo[$codCli]
-        $ci.ventaNeta3m += [double]$venta.importeNeto
-        # "compro este mes" se define por fecha de COMPROBANTE (factura) --
-        # ya no se exige que coincida con la fecha de entrega (se confirmo
-        # contra la tabla dinamica nativa de Gescom que esa igualdad
-        # descartaba compras reales cuya entrega se registra dias despues).
-        # El ranking de 3 meses ya cubre de sobra el buffer hacia atras
-        # necesario para capturar ventas creadas antes.
-        $tieneComprobante = $venta.comprobantePrincipal -and $venta.comprobantePrincipal.fechaComprobante
-        if ($tieneComprobante -and ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date -ge $inicioMesActual) {
-            $ci.compro = $true
-            foreach ($item in $venta.items) {
-                $prov = $artProv[[string]$item.codigoItem]
-                if ($prov) { [void]$ci.proveedoresComprados.Add($prov) }
-            }
-        }
-    }
-    if ($page.Count -lt 500) { break }
-    $pagestoskip++
+Write-Log "Descargando venta neta por cliente (ultimos 3 meses)..."
+$sqlRanking = @"
+SELECT cliente, SUM(neto) AS ventaNeta
+FROM ventas
+WHERE fecha >= '$fechaDesde' AND fecha < '$fechaHasta' AND tipo IN ('VEN','DEB')
+GROUP BY cliente
+"@
+$ranking = Invoke-PanelSql $sqlRanking
+foreach ($r in $ranking) {
+    $codCli = [string]$r.cliente
+    if (-not $clienteInfo.ContainsKey($codCli)) { continue }
+    $clienteInfo[$codCli].ventaNeta3m = [double]$r.ventaNeta
 }
-Write-Log "Ventas revisadas: $total"
+
+Write-Log "Descargando ventas del mes en curso (cliente x proveedor)..."
+$sqlPares = @"
+SELECT v.cliente AS cliente, a.proveedor AS proveedor
+FROM ventas v
+JOIN venta_items i ON i.venta_id = v.id
+LEFT JOIN articulos a ON a.codigo = i.articulo
+WHERE v.fecha >= '$fechaDesdeMesActual' AND v.fecha < '$fechaHasta'
+  AND v.tipo IN ('VEN','DEB')
+GROUP BY v.cliente, a.proveedor
+"@
+$pares = Invoke-PanelSql $sqlPares
+foreach ($p in $pares) {
+    $codCli = [string]$p.cliente
+    if (-not $clienteInfo.ContainsKey($codCli)) { continue }
+    $ci = $clienteInfo[$codCli]
+    $ci.compro = $true
+    if ($p.proveedor) { [void]$ci.proveedoresComprados.Add([string]$p.proveedor) }
+}
+
+Write-Log "Descargando nombres de vendedores y proveedores..."
+$vendedoresRaw = Invoke-PanelSql "SELECT codigo, nombre FROM vendedores"
+$vendNombre = @{}
+foreach ($v in $vendedoresRaw) { $vendNombre[[string]$v.codigo] = $v.nombre }
+$proveedoresRaw = Invoke-PanelSql "SELECT codigo, nombre FROM proveedores"
+$provNombre = @{}
+foreach ($p in $proveedoresRaw) { $provNombre[[string]$p.codigo] = $p.nombre }
 
 # --- curva de Pareto por vendedor: marcar "potencial" hasta llegar al corte acumulado ---
 $porVendedor = @{}
@@ -162,7 +145,6 @@ $clientesOut = foreach ($cod in $clienteInfo.Keys) {
     }
 }
 
-# solo vendedores que tengan al menos 1 cliente potencial (evita entradas vacias en el selector)
 $vendedoresConPotenciales = New-Object System.Collections.Generic.HashSet[string]
 foreach ($c in $clientesOut) { [void]$vendedoresConPotenciales.Add($c.codigoVendedor) }
 $vendedoresOut = @($vendedoresConPotenciales | ForEach-Object {

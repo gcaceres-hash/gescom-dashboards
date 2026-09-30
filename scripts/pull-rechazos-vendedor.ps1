@@ -3,23 +3,26 @@ Arma el dashboard de Rechazos / Devoluciones por vendedor: cuanto peso tienen
 los rechazos sobre la venta real de cada vendedor, y cuales son los
 proveedores y motivos de rechazo mas preponderantes del mes.
 
+MIGRADO el 30/9/2026 de la API de Gescom a la base compartida de Lucas
+(datos-gescom.panelempresas.workers.dev) -- ver pull-cobertura-general.ps1
+para el detalle de por que.
+
 Reglas de negocio (mismas que el resto de los dashboards):
   - excluye vendedores 1176, 43, 16, 37 (no son vendedores reales -- esto
-    es un reporte agrupado POR VENDEDOR, a diferencia de Rentabilidad)
-  - "venta real" del vendedor = venta cerrada, no rechazo, con fecha de
-    COMPROBANTE (factura) dentro del mes -- ya no se exige que coincida
-    con la fecha de entrega (se confirmo contra la tabla dinamica nativa
-    de Gescom que esa igualdad descartaba ventas reales)
+    es un reporte agrupado POR VENDEDOR, a diferencia de Rentabilidad). 1176
+    y 43 ya vienen excluidos de la tabla `ventas` de origen.
+  - "venta real" del vendedor = tipo VEN/DEB, con `fecha` (fechaPedido, ver
+    nota de migracion en pull-cobertura-general.ps1) dentro del mes.
   - "rechazo" = comprobantes de tipo DEV-RE (rechazo en la entrega) o DEV-CA
-    (devolucion por canje), mismo criterio que Seguimiento Di Giorno
-  - pct = monto de rechazos / venta real del vendedor en el mes
+    (devolucion por canje), mismo criterio que Seguimiento Di Giorno.
+  - pct = monto de rechazos / venta real del vendedor en el mes.
 
 Uso:
   powershell -File pull-rechazos-vendedor.ps1                        # mes actual
   powershell -File pull-rechazos-vendedor.ps1 -MesDesde 2026-08-01   # un mes especifico
 #>
 param(
-    [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
+    [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/rechazos"),
     [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "rechazos-vendedor-template.html"),
@@ -29,136 +32,113 @@ $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
 $EXCLUDED = @("43","1176","16","37")
 
-function Get-GescomToken {
-    $tokenUrl = "$($config.authUrl)/realms/$($config.realm)/protocol/openid-connect/token"
-    $body = @{ client_id = $config.clientId; username = $config.usuario; password = $config.clave; grant_type = "password" }
-    (Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $body -ContentType "application/x-www-form-urlencoded").access_token
-}
-function Invoke-GescomApi {
-    param([string]$Path, [hashtable]$Query = @{})
-    $qs = ($Query.GetEnumerator() | ForEach-Object { "$($_.Key)=$([uri]::EscapeDataString([string]$_.Value))" }) -join "&"
-    $url = "$($config.baseUrl)$Path"
-    if ($qs) { $url += "?$qs" }
-    for ($intento = 1; $intento -le 4; $intento++) {
-        try {
-            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
-        } catch {
-            # El token de Gescom (Keycloak) puede vencer a mitad de un pull largo --
-            # si el error es de autenticacion, pedimos uno nuevo antes de reintentar
-            # en vez de repetir la misma llamada con el token vencido.
-            $esAuthError = ($_.ErrorDetails.Message -match "Acceso denegado") -or ($_.Exception.Response.StatusCode.value__ -in 401, 403)
-            if ($esAuthError) { $script:token = Get-GescomToken }
-            if ($intento -eq 4) { throw }
-            if (-not $esAuthError) { Start-Sleep -Seconds ($intento * 5) }
-        }
-    }
-}
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
+function Invoke-PanelSql([string]$Sql) {
+    $uri = "$($config.baseUrl)/consulta?sql=" + [uri]::EscapeDataString($Sql)
+    $headers = @{ Authorization = "Bearer $($config.clave)" }
+    $r = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+    if ($r.truncado) { Write-Log "AVISO: la consulta vino truncada (mas de 20000 filas) -- revisar y acotar." }
+    return $r.filas
+}
 
-Write-Log "Autenticando..."
-$script:token = Get-GescomToken
-
-Write-Log "Descargando catalogos (proveedores, articulos, vendedores)..."
-$proveedores = Invoke-GescomApi -Path "/data/cmd/compras/api/v1/get-proveedores"
-$articulos = Invoke-GescomApi -Path "/data/cmd/inventario/api/v2/get-articulos"
-$vendedoresRaw = Invoke-GescomApi -Path "/data/cmd/ventas/api/v1/get-vendedores"
-$motivosVenta = Invoke-GescomApi -Path "/data/cmd/ventas/api/v1/get-motivos-venta"
-
-$provNombre = @{}
-foreach ($p in $proveedores) { $provNombre[[string]$p.codigo] = $p.nombre }
-$artProv = @{}
-foreach ($a in $articulos) { $artProv[[string]$a.codigo] = [string]$a.codigoProveedor }
-$vendNombre = @{}
-foreach ($v in $vendedoresRaw) { $vendNombre[[string]$v.codigo] = $v.nombre }
-$motivoNombre = @{}
-foreach ($m in $motivosVenta) { $motivoNombre["$($m.codigoTipoVenta)|$($m.codigo)"] = $m.descripcion }
-
-# --- rango del mes a procesar ---
 if ($MesDesde -ne "") { $inicioMes = Get-Date $MesDesde } else { $inicioMes = Get-Date -Day 1 }
 $inicioMes = Get-Date -Year $inicioMes.Year -Month $inicioMes.Month -Day 1 -Hour 0 -Minute 0 -Second 0
 $finMesCompleto = $inicioMes.AddMonths(1)
 $hoy = (Get-Date).Date
 $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Month)
-$fechaHastaReal = $finMesCompleto
-$BUFFER_DIAS = 30
-$fechaDesdeQuery = $inicioMes.AddDays(-$BUFFER_DIAS).ToString("yyyy-MM-dd")
-$fechaHastaQuery = $fechaHastaReal.ToString("yyyy-MM-dd")
+$fechaDesde = $inicioMes.ToString("yyyy-MM-dd")
+$fechaHasta = $finMesCompleto.ToString("yyyy-MM-dd")
 $mesKey = $inicioMes.ToString("yyyy-MM")
-Write-Log "Procesando mes $mesKey (entregas entre $($inicioMes.ToString('yyyy-MM-dd')) y $($fechaHastaReal.ToString('yyyy-MM-dd')), consultando desde $fechaDesdeQuery)..."
+Write-Log "Procesando mes $mesKey ($fechaDesde a $fechaHasta)..."
 
-$script:token = Get-GescomToken
+Write-Log "Descargando nombres de vendedores y proveedores..."
+$vendedoresRaw = Invoke-PanelSql "SELECT codigo, nombre FROM vendedores"
+$vendNombre = @{}
+foreach ($v in $vendedoresRaw) { $vendNombre[[string]$v.codigo] = $v.nombre }
+$proveedoresRaw = Invoke-PanelSql "SELECT codigo, nombre FROM proveedores"
+$provNombre = @{}
+foreach ($p in $proveedoresRaw) { $provNombre[[string]$p.codigo] = $p.nombre }
+
+Write-Log "Descargando venta neta por vendedor (VEN/DEB)..."
+$sqlVenta = @"
+SELECT vendedor, SUM(neto) AS ventaNeta
+FROM ventas
+WHERE fecha >= '$fechaDesde' AND fecha < '$fechaHasta' AND tipo IN ('VEN','DEB')
+GROUP BY vendedor
+"@
+$ventaPorVendedor = Invoke-PanelSql $sqlVenta
+
+Write-Log "Descargando rechazos del mes (DEV-RE/DEV-CA)..."
+$sqlRechazos = @"
+SELECT id, cliente, vendedor, fecha, nro_comprobante, tipo, motivo, motivo_codigo, neto
+FROM ventas
+WHERE fecha >= '$fechaDesde' AND fecha < '$fechaHasta' AND tipo IN ('DEV-RE','DEV-CA')
+"@
+$rechazosRaw = Invoke-PanelSql $sqlRechazos
+
+Write-Log "Descargando proveedores de los items de esos rechazos..."
+$sqlItems = @"
+SELECT i.venta_id AS venta_id, a.proveedor AS proveedor
+FROM ventas v
+JOIN venta_items i ON i.venta_id = v.id
+LEFT JOIN articulos a ON a.codigo = i.articulo
+WHERE v.fecha >= '$fechaDesde' AND v.fecha < '$fechaHasta' AND v.tipo IN ('DEV-RE','DEV-CA')
+GROUP BY i.venta_id, a.proveedor
+"@
+$itemsRaw = Invoke-PanelSql $sqlItems
+$provsPorVenta = @{}
+foreach ($it in $itemsRaw) {
+    $vid = [string]$it.venta_id
+    if (-not $provsPorVenta.ContainsKey($vid)) { $provsPorVenta[$vid] = New-Object System.Collections.Generic.HashSet[string] }
+    [void]$provsPorVenta[$vid].Add($(if ($it.proveedor) { [string]$it.proveedor } else { "_SIN_PROVEEDOR_" }))
+}
+Write-Log "Ventas revisadas: venta neta de $($ventaPorVendedor.Count) vendedores | rechazos: $($rechazosRaw.Count)"
+
 $porVendedor = @{}
+foreach ($v in $ventaPorVendedor) {
+    $cod = [string]$v.vendedor
+    if ($EXCLUDED -contains $cod) { continue }
+    if (-not $porVendedor.ContainsKey($cod)) { $porVendedor[$cod] = @{ ventaNeta = 0.0; rechazosMonto = 0.0; rechazosCantidad = 0 } }
+    $porVendedor[$cod].ventaNeta += [double]$v.ventaNeta
+}
+
 $porProveedorRechazo = @{}
 $porMotivo = @{}
 $eventosPorVendedor = @{}
-$pagestoskip = 0
-$total = 0
-while ($true) {
-    if ($pagestoskip -gt 0 -and $pagestoskip % 5 -eq 0) { $script:token = Get-GescomToken }
-    $page = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query @{
-        fechadesde = $fechaDesdeQuery; fechahasta = $fechaHastaQuery; pagesize = 500; pagestoskip = $pagestoskip
+foreach ($r in $rechazosRaw) {
+    $codVend = [string]$r.vendedor
+    if ($EXCLUDED -contains $codVend) { continue }
+    if (-not $porVendedor.ContainsKey($codVend)) { $porVendedor[$codVend] = @{ ventaNeta = 0.0; rechazosMonto = 0.0; rechazosCantidad = 0 } }
+
+    $monto = [math]::Abs([double]$r.neto)
+    $porVendedor[$codVend].rechazosMonto += $monto
+    $porVendedor[$codVend].rechazosCantidad += 1
+
+    $vid = [string]$r.id
+    $provsVistos = if ($provsPorVenta.ContainsKey($vid)) { $provsPorVenta[$vid] } else { New-Object System.Collections.Generic.HashSet[string] }
+    if ($provsVistos.Count -eq 0) { [void]$provsVistos.Add("_SIN_PROVEEDOR_") }
+    $montoPorProv = $monto / $provsVistos.Count
+    foreach ($p in $provsVistos) {
+        if (-not $porProveedorRechazo.ContainsKey($p)) { $porProveedorRechazo[$p] = @{ monto = 0.0; cantidad = 0 } }
+        $porProveedorRechazo[$p].monto += $montoPorProv
+        $porProveedorRechazo[$p].cantidad += 1
     }
-    if (-not $page -or $page.Count -eq 0) { break }
-    $total += $page.Count
-    foreach ($venta in $page) {
-        if (-not $venta.comprobantePrincipal -or -not $venta.comprobantePrincipal.fechaComprobante) { continue }
-        $fechaComprobante = ([datetime]$venta.comprobantePrincipal.fechaComprobante).Date
-        if ($fechaComprobante -lt $inicioMes -or $fechaComprobante -ge $fechaHastaReal) { continue }
-        $codVend = [string]$venta.codigoVendedor
-        if ($EXCLUDED -contains $codVend) { continue }
 
-        if (-not $porVendedor.ContainsKey($codVend)) {
-            $porVendedor[$codVend] = @{ ventaNeta = 0.0; rechazosMonto = 0.0; rechazosCantidad = 0 }
-        }
+    $motivoDesc = if ($r.motivo) { [string]$r.motivo } else { "Sin motivo especificado" }
+    if (-not $porMotivo.ContainsKey($motivoDesc)) { $porMotivo[$motivoDesc] = @{ monto = 0.0; cantidad = 0 } }
+    $porMotivo[$motivoDesc].monto += $monto
+    $porMotivo[$motivoDesc].cantidad += 1
 
-        $esRechazo = $venta.codigoTipoVenta -in @("DEV-RE", "DEV-CA")
-        $esCredito = $venta.esCredito -eq $true
-        $importeVenta = [double]$venta.importeNeto
-
-        if ($esRechazo) {
-            $monto = [math]::Abs($importeVenta)
-            $porVendedor[$codVend].rechazosMonto += $monto
-            $porVendedor[$codVend].rechazosCantidad += 1
-
-            # proveedor(es) principal(es) de los items de esta venta rechazada
-            $provsVistos = New-Object System.Collections.Generic.HashSet[string]
-            foreach ($item in $venta.items) {
-                $p = $artProv[[string]$item.codigoItem]
-                if (-not $p) { $p = "_SIN_PROVEEDOR_" }
-                [void]$provsVistos.Add($p)
-            }
-            if ($provsVistos.Count -eq 0) { [void]$provsVistos.Add("_SIN_PROVEEDOR_") }
-            $montoPorProv = $monto / $provsVistos.Count
-            foreach ($p in $provsVistos) {
-                if (-not $porProveedorRechazo.ContainsKey($p)) { $porProveedorRechazo[$p] = @{ monto = 0.0; cantidad = 0 } }
-                $porProveedorRechazo[$p].monto += $montoPorProv
-                $porProveedorRechazo[$p].cantidad += 1
-            }
-
-            $motivoKey = "$($venta.codigoTipoVenta)|$($venta.motivo)"
-            $motivoDesc = if ($motivoNombre.ContainsKey($motivoKey)) { $motivoNombre[$motivoKey] } else { [string]$venta.motivo }
-            if (-not $motivoDesc) { $motivoDesc = "Sin motivo especificado" }
-            if (-not $porMotivo.ContainsKey($motivoDesc)) { $porMotivo[$motivoDesc] = @{ monto = 0.0; cantidad = 0 } }
-            $porMotivo[$motivoDesc].monto += $monto
-            $porMotivo[$motivoDesc].cantidad += 1
-
-            if (-not $eventosPorVendedor.ContainsKey($codVend)) { $eventosPorVendedor[$codVend] = @() }
-            $eventosPorVendedor[$codVend] += [pscustomobject]@{
-                codigoCliente = [string]$venta.codigoCliente
-                fecha = $fechaComprobante.ToString("yyyy-MM-dd")
-                comprobante = [string]$venta.numeroComprobante
-                tipo = [string]$venta.codigoTipoVenta
-                motivo = $motivoDesc
-                monto = [math]::Round($monto,2)
-            }
-        } elseif (-not $esCredito) {
-            $porVendedor[$codVend].ventaNeta += $importeVenta
-        }
+    if (-not $eventosPorVendedor.ContainsKey($codVend)) { $eventosPorVendedor[$codVend] = @() }
+    $eventosPorVendedor[$codVend] += [pscustomobject]@{
+        codigoCliente = [string]$r.cliente
+        fecha = [string]$r.fecha
+        comprobante = [string]$r.nro_comprobante
+        tipo = [string]$r.tipo
+        motivo = $motivoDesc
+        monto = [math]::Round($monto,2)
     }
-    if ($page.Count -lt 500) { break }
-    $pagestoskip++
 }
-Write-Log "Ventas revisadas: $total"
 
 $vendedoresOut = foreach ($cod in $porVendedor.Keys) {
     $v = $porVendedor[$cod]
@@ -210,7 +190,6 @@ $mesData = [pscustomobject]@{
     topMotivos = $topMotivos
 }
 
-# --- cargar historico existente y fusionar el mes procesado ---
 $meses = [ordered]@{}
 try {
     if (Test-Path $OutPath) {
