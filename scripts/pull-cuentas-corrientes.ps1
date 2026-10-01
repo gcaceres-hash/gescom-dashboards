@@ -1,67 +1,53 @@
 <#
-Descarga la cuenta corriente de clientes de Gescom, resuelve cada comprobante
-pendiente a su vendedor (via ventaId) y arma la estructura:
+Descarga la cuenta corriente de clientes y arma la estructura:
   Responsable de cobro -> Clientes -> (Comprobantes + apertura por vendedor)
 
-BLOQUEADO desde el 30/9/2026: la base compartida de Lucas
-(datos-gescom.panelempresas.workers.dev) que reemplazo el resto de los pull
-scripts NO tiene cuenta corriente de CLIENTES (solo deuda con proveedores),
-y el acceso directo a la API de Gescom (usuario "lucasapi") esta cortado por
-decision de Lucas (consolido todo en esa base porque IDEA bloqueaba el
-usuario por consumo). Se le pidio a Lucas sumar esa tabla a la base -- hasta
-que eso pase, este script no tiene de donde traer datos. Se deja el intento
-de conexion envuelto en try/catch: si falla (como es de esperar ahora mismo),
-avisa y no toca el data.json existente, para no romper el resto del ciclo
-diario de actualizacion.
+MIGRADO el 1/10/2026 de la API de Gescom a la base compartida de Lucas
+(datos-gescom.panelempresas.workers.dev): agrego las tablas ctacte_clientes
+(detalle, 1 fila por comprobante, YA con vendedor resuelto -- no hace falta
+el batch lento de ventaId->vendedor que causaba los OutOfMemoryException/502
+de la version anterior) y ctacte_saldos (agregado por pagador, usado solo
+para verificar el total). El campo `saldo` ya viene con el signo correcto
+(negativo en las notas de credito) -- no hay que invertirlo a mano.
 
-Reglas de negocio (confirmadas con el usuario):
+OJO -- hallazgo al migrar (1/10/2026): el saldo CRUDO de ctacte_clientes da
+$831,7M, muy por encima de los ~$190M que mostraba el dashboard viejo. Se
+confirmo que $692,6M de eso es vendedor "16" (deposito, YA excluido por la
+regla de negocio de siempre) -- en gran parte facturas internas entre
+empresas del mismo grupo (Lago Puelo, Elebes, Tienda Perfecta, Primeros
+Productos Pehuenia) fechadas en 2024, no deuda real de clientes externos.
+Con las exclusiones de siempre aplicadas, el total real da ~$139M. Vale la
+pena confirmar con Lucas si ese bloque de $692,6M bajo vendedor 16 esconde
+algo real ademas de los saldos entre empresas.
+
+Reglas de negocio (confirmadas con el usuario, sin cambios):
   - Vendedores 1176 y 43 (ONCE SETENTA Y SEIS): no son reales, se excluyen SIEMPRE.
   - Vendedor 16 (VENDEDOR DEPOSITO) y 37 (LOGISTICA): se excluyen tambien.
   - Vendedores 076 (Martin Di Giorno), 038 (Gisela Caceres), 050 (Guillermo
     Zeballos): son mayoristas, se gestionan solos (responsable = ellos mismos).
   - Codigo de vendedor de 3 digitos (ej "063"): responsable = Bruno.
   - Cualquier otro codigo (1-2 digitos, ej "7", "28"): responsable = Johana.
-  - Comprobantes sin ventaId (deuda por otro motivo): responsable = "Sin vendedor asignado".
+  - Comprobantes sin vendedor asignado: responsable = "Sin vendedor asignado".
 #>
 param(
-    [string]$ConfigPath = (Join-Path $PSScriptRoot "config.json"),
+    [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/cobranzas"),
     [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "cuentas-corrientes-template.html")
 )
 $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
-
-function Get-GescomToken {
-    $tokenUrl = "$($config.authUrl)/realms/$($config.realm)/protocol/openid-connect/token"
-    $body = @{ client_id = $config.clientId; username = $config.usuario; password = $config.clave; grant_type = "password" }
-    (Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $body -ContentType "application/x-www-form-urlencoded").access_token
-}
-function Invoke-GescomApi {
-    param([string]$Path, [string]$Query = "")
-    $url = "$($config.baseUrl)$Path"
-    if ($Query) { $url += "?$Query" }
-    for ($intento = 1; $intento -le 4; $intento++) {
-        try {
-            return Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $script:token" } -Method Get
-        } catch {
-            # El token de Gescom (Keycloak) puede vencer a mitad de un pull largo --
-            # si el error es de autenticacion, pedimos uno nuevo antes de reintentar
-            # en vez de repetir la misma llamada con el token vencido. Este script
-            # en particular (resolver ventaId -> vendedor) es el mas largo de todos
-            # y antes no tenia reintento -- de ahi los OutOfMemoryException/502 previos.
-            $esAuthError = ($_.ErrorDetails.Message -match "Acceso denegado") -or ($_.Exception.Response.StatusCode.value__ -in 401, 403)
-            if ($esAuthError) { $script:token = Get-GescomToken }
-            if ($intento -eq 4) { throw }
-            if (-not $esAuthError) { Start-Sleep -Seconds ($intento * 5) }
-        }
-    }
-}
-function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
-
 $EXCLUDED = @("43","1176","16","37")
 $MAYORISTA_SOLO = @{ "076" = "Mart$([char]0xED)n Di Giorno"; "038" = "Gisela Caceres"; "050" = "Guillermo Zeballos" }
 
+function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
+function Invoke-PanelSql([string]$Sql) {
+    $uri = "$($config.baseUrl)/consulta?sql=" + [uri]::EscapeDataString($Sql)
+    $headers = @{ Authorization = "Bearer $($config.clave)" }
+    $r = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+    if ($r.truncado) { Write-Log "AVISO: la consulta vino truncada (mas de 20000 filas) -- revisar y acotar." }
+    return $r.filas
+}
 function Get-Responsable($codigoVendedor) {
     if (-not $codigoVendedor) { return "_SIN_VENDEDOR_" }
     if ($EXCLUDED -contains $codigoVendedor) { return $null }
@@ -69,42 +55,6 @@ function Get-Responsable($codigoVendedor) {
     if ($codigoVendedor.Length -eq 3) { return "_BRUNO_" }
     return "_JOHANA_"
 }
-
-# Todo lo que sigue depende de la API de Gescom, que esta bloqueada (ver nota
-# arriba). Envuelto en try/catch para que una falla aca no tumbe el resto del
-# ciclo diario de actualizacion -- si falla, se avisa y no se toca el
-# data.json existente (queda el ultimo dato bueno conocido).
-try {
-
-Write-Log "Autenticando..."
-$script:token = Get-GescomToken
-
-Write-Log "Descargando clientes, vendedores y cuenta corriente detalle..."
-$clientes = Invoke-GescomApi -Path "/data/cmd/ventas/api/v1/get-clientes"
-$vendedores = Invoke-GescomApi -Path "/data/cmd/ventas/api/v1/get-vendedores"
-$detalle = Invoke-GescomApi -Path "/data/cmd/ctacte/api/v3/get-ctacte-clientes-detalle"
-Write-Log "Clientes: $($clientes.Count) | Vendedores: $($vendedores.Count) | Cuentas corrientes: $($detalle.Count)"
-
-$clienteNombre = @{}
-foreach ($c in $clientes) { $clienteNombre[[string]$c.codigo] = $c.nombre }
-$vendedorNombre = @{}
-foreach ($v in $vendedores) { $vendedorNombre[[string]$v.codigo] = $v.nombre }
-
-Write-Log "Resolviendo ventaId -> vendedor..."
-$ventaIds = New-Object System.Collections.Generic.HashSet[string]
-foreach ($cli in $detalle) { foreach ($c in $cli.comprobantes) { if ($c.ventaId) { [void]$ventaIds.Add([string]$c.ventaId) } } }
-$ventaIdsList = @($ventaIds)
-$ventaVendedor = @{}
-$batchSize = 50
-for ($i = 0; $i -lt $ventaIdsList.Count; $i += $batchSize) {
-    if ($i -gt 0 -and ($i / $batchSize) % 10 -eq 0) { $script:token = Get-GescomToken }
-    $batch = $ventaIdsList[$i..([math]::Min($i+$batchSize-1, $ventaIdsList.Count-1))]
-    $r = Invoke-GescomApi -Path "/data/cmd/ventas/api/v2/get" -Query "ids=$($batch -join ',')&pagesize=50"
-    foreach ($v in $r) { $ventaVendedor[[string]$v.id] = [string]$v.codigoVendedor }
-}
-Write-Log "Ventas resueltas: $($ventaVendedor.Count) / $($ventaIdsList.Count)"
-
-$hoy = (Get-Date).Date
 function Bucket($diasVencido) {
     if ($diasVencido -le 0) { return "vigente" }
     if ($diasVencido -le 30) { return "d1_30" }
@@ -113,42 +63,50 @@ function Bucket($diasVencido) {
     return "d90mas"
 }
 
-# estructura: responsables[respKey] = { clientes[codigoCliente] = { comprobantes=[...] } }
+Write-Log "Descargando clientes, vendedores y cuenta corriente..."
+$clientesRaw = Invoke-PanelSql "SELECT codigo, nombre FROM clientes"
+$clienteNombre = @{}
+foreach ($c in $clientesRaw) { $clienteNombre[[string]$c.codigo] = $c.nombre }
+$vendedoresRaw = Invoke-PanelSql "SELECT codigo, nombre FROM vendedores"
+$vendedorNombre = @{}
+foreach ($v in $vendedoresRaw) { $vendedorNombre[[string]$v.codigo] = $v.nombre }
+$detalle = Invoke-PanelSql "SELECT cliente, vendedor, comprobante, numero, fecha, vence, saldo, empresa FROM ctacte_clientes"
+Write-Log "Comprobantes en cuenta corriente: $($detalle.Count)"
+
+$hoy = (Get-Date).Date
 $responsables = @{}
 $excluidoTotal = 0.0
 $excluidoDetalle = @{}
 
-foreach ($cli in $detalle) {
-    $codCliente = [string]$cli.codigoCliente
-    foreach ($c in $cli.comprobantes) {
-        $vendCod = if ($c.ventaId -and $ventaVendedor.ContainsKey([string]$c.ventaId)) { $ventaVendedor[[string]$c.ventaId] } else { $null }
-        $resp = Get-Responsable $vendCod
-        $esCredito = $null -ne $c.creditoId
-        $saldo = [double]$c.saldo * $(if ($esCredito) { -1 } else { 1 })
-        if (-not $resp) {
-            $excluidoTotal += $saldo
-            if (-not $excluidoDetalle.ContainsKey($vendCod)) { $excluidoDetalle[$vendCod] = 0.0 }
-            $excluidoDetalle[$vendCod] += $saldo
-            continue
-        }
-        $fv = if ($c.fechaVencimiento) { [datetime]$c.fechaVencimiento } else { $hoy }
-        $diasVencido = ($hoy - $fv.Date).Days
-        $bucket = Bucket $diasVencido
+foreach ($c in $detalle) {
+    $codCliente = [string]$c.cliente
+    $vendCod = if ($c.vendedor) { [string]$c.vendedor } else { $null }
+    $resp = Get-Responsable $vendCod
+    $esCredito = [double]$c.saldo -lt 0
+    $saldo = [double]$c.saldo
+    if (-not $resp) {
+        $excluidoTotal += $saldo
+        if (-not $excluidoDetalle.ContainsKey($vendCod)) { $excluidoDetalle[$vendCod] = 0.0 }
+        $excluidoDetalle[$vendCod] += $saldo
+        continue
+    }
+    $fv = if ($c.vence) { [datetime]$c.vence } else { $hoy }
+    $diasVencido = ($hoy - $fv.Date).Days
+    $bucket = Bucket $diasVencido
 
-        if (-not $responsables.ContainsKey($resp)) { $responsables[$resp] = @{} }
-        if (-not $responsables[$resp].ContainsKey($codCliente)) { $responsables[$resp][$codCliente] = @() }
-        $responsables[$resp][$codCliente] += [pscustomobject]@{
-            comprobante = $c.comprobante
-            saldo = [math]::Round($saldo,2)
-            esCredito = $esCredito
-            fechaEmision = if ($c.fechaEmision) { ([datetime]$c.fechaEmision).ToString("yyyy-MM-dd") } else { $null }
-            fechaVencimiento = if ($c.fechaVencimiento) { $fv.ToString("yyyy-MM-dd") } else { $null }
-            diasVencido = $diasVencido
-            bucket = $bucket
-            codigoVendedor = $vendCod
-            nombreVendedor = if ($vendCod) { $vendedorNombre[$vendCod] } else { $null }
-            codigoEmpresa = $c.codigoEmpresa
-        }
+    if (-not $responsables.ContainsKey($resp)) { $responsables[$resp] = @{} }
+    if (-not $responsables[$resp].ContainsKey($codCliente)) { $responsables[$resp][$codCliente] = @() }
+    $responsables[$resp][$codCliente] += [pscustomobject]@{
+        comprobante = "$($c.comprobante) $($c.numero)"
+        saldo = [math]::Round($saldo,2)
+        esCredito = $esCredito
+        fechaEmision = if ($c.fecha) { [string]$c.fecha } else { $null }
+        fechaVencimiento = if ($c.vence) { [string]$c.vence } else { $null }
+        diasVencido = $diasVencido
+        bucket = $bucket
+        codigoVendedor = $vendCod
+        nombreVendedor = if ($vendCod) { $vendedorNombre[$vendCod] } else { $null }
+        codigoEmpresa = [string]$c.empresa
     }
 }
 
@@ -220,7 +178,3 @@ Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
 Write-Log "Guardado: $OutPath"
 Write-Log "Saldo total (excl. no-reales): $($totales.saldoTotal) | Excluido: $($excluidoTotal)"
 $responsablesOut | ForEach-Object { Write-Log "  $($_.nombre): `$$($_.saldoTotal) ($($_.clientes.Count) clientes)" }
-
-} catch {
-    Write-Log "BLOQUEADO: no se pudo actualizar Cuentas Corrientes ($($_.Exception.Message)). Pendiente que Lucas sume cuenta corriente de clientes a la base compartida, o que se reactive el acceso directo a la API de Gescom. No se modifico el data.json existente."
-}

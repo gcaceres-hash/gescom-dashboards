@@ -14,9 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Escribir config.json desde el secret
+      - name: Escribir panel-config.json desde el secret
         shell: bash
-        run: echo '${{ secrets.GESCOM_CONFIG }}' > scripts/config.json
+        run: echo '${{ secrets.PANEL_CONFIG }}' > scripts/panel-config.json
 
       - name: Correr pull-cuentas-corrientes.ps1
         shell: pwsh

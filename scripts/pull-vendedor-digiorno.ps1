@@ -4,17 +4,11 @@ Junta en un solo lugar: venta neta por proveedor, rentabilidad total, cobertura 
 cartera, rechazos/devoluciones y deuda de sus clientes. Guarda cada mes por
 separado (igual que la Pizarra de Rentabilidad) para poder navegar meses.
 
-MIGRADO PARCIALMENTE el 30/9/2026 a la base compartida de Lucas
-(datos-gescom.panelempresas.workers.dev) -- ver pull-cobertura-general.ps1
-para el detalle de por que. Venta, cobertura y rechazos ya leen de esa base.
-
-LA SECCION "DEUDA" QUEDA PENDIENTE: esta base no tiene cuenta corriente de
-CLIENTES (solo tiene deuda con proveedores). Se decidio con la usuaria
-(30/9/2026) pedirle a Lucas que agregue esa tabla en vez de intentar volver
-a pegarle a la API de Gescom (que ademas esta cortada por su propia decision
-de consolidar todo en esta base). Mientras tanto, esta seccion NO se
-actualiza: se conserva tal cual estaba en el ultimo data.json, marcada con
-"desactualizada=true" para que el dashboard pueda avisarlo.
+MIGRADO el 30/9/2026 (venta/cobertura/rechazos) y 1/10/2026 (deuda) a la
+base compartida de Lucas (datos-gescom.panelempresas.workers.dev) -- ver
+pull-cobertura-general.ps1 para el detalle de por que. La seccion Deuda usa
+ctacte_clientes, que Lucas agrego el 1/10/2026 (ya trae vendedor resuelto
+por fila, no hace falta el batch de ventaId->vendedor de la version vieja).
 
 Reglas (confirmadas con el usuario):
   - "Rechazos" = notas DEV-RE / DEV-CA (mercaderia rechazada o devuelta en la
@@ -151,23 +145,48 @@ $rechazos = [pscustomobject]@{
     eventos = @($rechazoEventos | Sort-Object fecha -Descending)
 }
 
-# --- DEUDA: pendiente (ver nota arriba) -- se conserva lo ultimo guardado ---
-$deudaAnterior = $null
-$mesAnteriorData = $null
-try {
-    if (Test-Path $OutPath) {
-        $rawText = [System.IO.File]::ReadAllText($OutPath, [System.Text.Encoding]::UTF8)
-        $prev = $rawText | ConvertFrom-Json
-        if ($prev.deuda) { $deudaAnterior = $prev.deuda }
+# --- DEUDA: cuenta corriente de clientes de este vendedor, via ctacte_clientes ---
+Write-Log "Descargando cuenta corriente de este vendedor..."
+function Bucket($diasVencido) {
+    if ($diasVencido -le 0) { return "vigente" }
+    if ($diasVencido -le 30) { return "d1_30" }
+    if ($diasVencido -le 60) { return "d31_60" }
+    if ($diasVencido -le 90) { return "d61_90" }
+    return "d90mas"
+}
+$sqlDeuda = "SELECT cliente, comprobante, numero, fecha, vence, saldo FROM ctacte_clientes WHERE vendedor = '$CodigoVendedor'"
+$deudaRaw = Invoke-PanelSql $sqlDeuda
+$deudaClientes = @{}
+foreach ($c in $deudaRaw) {
+    $codCliente = [string]$c.cliente
+    $saldo = [double]$c.saldo
+    $fv = if ($c.vence) { [datetime]$c.vence } else { $hoy }
+    $diasVencido = ($hoy - $fv.Date).Days
+    if (-not $deudaClientes.ContainsKey($codCliente)) { $deudaClientes[$codCliente] = @() }
+    $deudaClientes[$codCliente] += [pscustomobject]@{
+        comprobante = "$($c.comprobante) $($c.numero)"; saldo = [math]::Round($saldo,2); esCredito = $saldo -lt 0
+        fechaVencimiento = if ($c.vence) { [string]$c.vence } else { $null }
+        diasVencido = $diasVencido; bucket = Bucket $diasVencido
     }
-} catch {}
-if ($deudaAnterior) {
-    $deudaAnterior | Add-Member -NotePropertyName desactualizada -NotePropertyValue $true -Force
-    $deuda = $deudaAnterior
-    Write-Log "AVISO: seccion Deuda no se actualizo (pendiente que Lucas sume cuenta corriente de clientes a la base) -- se conserva el ultimo dato guardado."
-} else {
-    $deuda = [pscustomobject]@{ saldoTotal = 0; vigente = 0; d1_30 = 0; d31_60 = 0; d61_90 = 0; d90mas = 0; clientes = @(); desactualizada = $true }
-    Write-Log "AVISO: seccion Deuda sin dato previo y sin fuente disponible -- queda en cero, marcada como desactualizada."
+}
+$deudaClientesOut = foreach ($cod in $deudaClientes.Keys) {
+    $comps = $deudaClientes[$cod]
+    [pscustomobject]@{
+        codigo = $cod
+        nombre = if ($clienteNombre.ContainsKey($cod)) { $clienteNombre[$cod] } else { "Cliente $cod" }
+        saldoTotal = [math]::Round((($comps | Measure-Object saldo -Sum).Sum),2)
+        peorDiasVencido = ($comps | Measure-Object diasVencido -Maximum).Maximum
+        comprobantes = @($comps | Sort-Object fechaVencimiento)
+    }
+}
+$deudaClientesOut = @($deudaClientesOut | Sort-Object saldoTotal -Descending)
+$deudaBuckets = [ordered]@{ vigente=0.0; d1_30=0.0; d31_60=0.0; d61_90=0.0; d90mas=0.0 }
+foreach ($cli in $deudaClientesOut) { foreach ($cp in $cli.comprobantes) { $deudaBuckets[$cp.bucket] += $cp.saldo } }
+$deuda = [pscustomobject]@{
+    saldoTotal = [math]::Round((($deudaClientesOut | Measure-Object saldoTotal -Sum).Sum),2)
+    vigente = [math]::Round($deudaBuckets.vigente,2); d1_30 = [math]::Round($deudaBuckets.d1_30,2)
+    d31_60 = [math]::Round($deudaBuckets.d31_60,2); d61_90 = [math]::Round($deudaBuckets.d61_90,2); d90mas = [math]::Round($deudaBuckets.d90mas,2)
+    clientes = $deudaClientesOut
 }
 
 $mesData = [pscustomobject]@{
@@ -209,4 +228,4 @@ $jsonText = $out | ConvertTo-Json -Depth 12 -Compress
 [System.IO.File]::WriteAllText($OutPath, $jsonText, (New-Object System.Text.UTF8Encoding $false))
 Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
 Write-Log "Guardado: $OutPath"
-Write-Log "Mes $mesKey -> Venta neta: $($ventaTotales.ventaNeta) | CMV: $($ventaTotales.cmv) | Cobertura: $($cobertura.clientesActivos)/$($cobertura.carteraTotal) | Rechazos: $($rechazos.cantidad) ($($rechazos.monto)) | Deuda: SIN ACTUALIZAR (pendiente)"
+Write-Log "Mes $mesKey -> Venta neta: $($ventaTotales.ventaNeta) | CMV: $($ventaTotales.cmv) | Cobertura: $($cobertura.clientesActivos)/$($cobertura.carteraTotal) | Rechazos: $($rechazos.cantidad) ($($rechazos.monto)) | Deuda: $($deuda.saldoTotal)"

@@ -1,50 +1,42 @@
 {
-  "generadoEn": "2026-09-30T18:45:00-03:00",
+  "generadoEn": "2026-10-01T15:40:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Los pendientes bajaron fuerte",
-      "detalle": "284 → 196 pedidos pendientes desde el relevo del 28/9 (-88), la mejor marca del mes."
+      "titulo": "Arranca octubre con pendientes bajo control",
+      "detalle": "185 pedidos pendientes (venía de 196 el 30/9) — se mantiene la buena racha de la semana pasada."
     },
     {
-      "titulo": "Se resolvió Botadero Pascua",
-      "detalle": "El lote que llevaba más de 166 días vencido sin moverse ya no aparece en la lista de vencidos — se dio de baja o se reubicó."
-    },
-    {
-      "titulo": "Despacho en nuevo máximo y eliminados estables",
-      "detalle": "10.868 pedidos despachados en lo que va de septiembre ($1.317,3M). Eliminados: 0,68% del mes (77 de 11.368) — leve mejora respecto al 0,72% del 28/9."
+      "titulo": "Se resolvió la concentración en código de vendedor 74",
+      "detalle": "Bajó de 45 a 12 pendientes — ya no es el cuello de botella. Ahora lideran el 64 (24) y el 75 (23), sin concentración extrema."
     }
   ],
   "atencion": [
     {
-      "titulo": "El núcleo duro de siempre sigue sin resolverse",
-      "detalle": "Azúcar Ledesma (3 lotes, 1.106u) y Mantecol Café/Coco (591u) siguen prácticamente iguales que hace 2 semanas."
+      "titulo": "Los vencimientos volvieron a subir",
+      "detalle": "2.618 → 3.092 unidades (13 → 14 lotes). Se suma Ring Pop Twisted (17u, venció hoy) y Maní con Chocolate creció de 435 a 495u — sigue sin resolverse."
     },
     {
-      "titulo": "Los vencimientos casi no bajaron",
-      "detalle": "2.688 → 2.618 unidades, se mantiene en 13 lotes. Flynn Paff XXL Limo-Berry (45u) y Maní con Chocolate (435u), flagueados como 'recién vencidos' el 28/9, siguen sin resolverse 2 días después."
+      "titulo": "Aparecieron 3 pendientes de más de 7 días",
+      "detalle": "Ayer no había ninguno — es un número chico pero es la primera vez en dos semanas que vuelve a aparecer esta franja, vale la pena revisarlos puntualmente."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Cambio de cuello de botella: código de vendedor 74",
-      "detalle": "45 pendientes, nuevo máximo — el código 6 (antes el mayor problema con 42) bajó a solo 1."
+      "titulo": "Las unidades por vencer en 0-15 días se dispararon",
+      "detalle": "866 → 2.000 unidades — el salto más grande medido hasta ahora en esta franja, revisar qué lotes son."
     },
     {
-      "titulo": "Las unidades que vencen en 16-30 días siguen creciendo",
-      "detalle": "13.950 → 16.838 unidades (40 lotes) — sube de nuevo, vale la pena vigilar de cerca esta franja."
-    },
-    {
-      "titulo": "Más de 30 días bajó, a confirmar si es real o recalculo",
-      "detalle": "24.151 → 19.796 unidades — es la primera baja desde que se empezó a medir esta franja; conviene confirmar en el próximo relevo si se sostiene."
+      "titulo": "El núcleo duro de siempre sigue exactamente igual",
+      "detalle": "Azúcar Ledesma (3 lotes) y Mantecol Café/Coco (591u) — ya van más de dos semanas sin ningún movimiento."
     }
   ],
   "numeros": {
-    "pendientesTotal": 196,
-    "pendientesImporte": 16563323.61,
-    "pendientesAntiguedad": { "masDe7dias": 0, "de3a7dias": 3, "de1a3dias": 33, "menosDe1dia": 160 },
-    "vencidoUnidades": 2618,
-    "proximoVencerUnidades": { "0a15dias": 866, "16a30dias": 16838, "masDe30dias": 19796 },
+    "pendientesTotal": 185,
+    "pendientesImporte": 14122190.57,
+    "pendientesAntiguedad": { "masDe7dias": 3, "de3a7dias": 8, "de1a3dias": 25, "menosDe1dia": 149 },
+    "vencidoUnidades": 3092,
+    "proximoVencerUnidades": { "0a15dias": 2000, "16a30dias": 16324, "masDe30dias": 19987 },
     "eliminadosPctSeptiembre": 0.68,
     "eliminadosPctAgosto": 1.0
   }
