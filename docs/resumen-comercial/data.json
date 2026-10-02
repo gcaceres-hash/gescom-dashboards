@@ -18,7 +18,11 @@
   "atencion": [
     {
       "titulo": "Octubre arranca con rechazos altos",
-      "detalle": "14,04% ($9,5M sobre $67,9M de venta) en los primeros 2 días. Con tan poca venta un par de casos grandes distorsionan (ej. un rechazo de $4,5M en la cartera de Di Giorno), pero conviene vigilarlo: septiembre cerró en 6,04%."
+      "detalle": "13,1% ($8,9M sobre $67,9M de venta) en los primeros 2 días. Con tan poca venta un par de casos grandes distorsionan (ej. un rechazo de $4,5M en la cartera de Di Giorno), pero conviene vigilarlo: septiembre cerró en 5,35% y agosto en 5,65%."
+    },
+    {
+      "titulo": "Rechazos corregidos: los cambios de Ilolay ya no cuentan como rechazo",
+      "detalle": "Los canjes por fecha de vencimiento (DEV-CA, casi todos Ilolay) se separaron: $7,5M en septiembre (0,7% de la venta), con su propia sección en el tablero. Con la misma base para los 3 meses, agosto da 5,65% (antes figuraba 0,79%, de la fuente vieja) y septiembre 5,35%: el nivel de rechazos es estable, no hubo un salto."
     },
     {
       "titulo": "Pendiente de confirmar con Lucas: $694M bajo vendedor \"16\"",
@@ -41,9 +45,11 @@
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
     "margenSepProyectado": 0.1375,
-    "rechazosPctAgo": 0.0079,
-    "rechazosPctSep": 0.0604,
-    "rechazosMontoSep": 64808746.27,
+    "rechazosPctAgo": 0.0565,
+    "rechazosPctSep": 0.0535,
+    "rechazosMontoSep": 57328216.28,
+    "cambiosMontoSep": 7474723.9,
+    "cambiosPctSep": 0.007,
     "cuentaCorrienteTotal": 121813454.64,
     "cuentaCorrienteD90mas": 8429791.21,
     "potencialesEnRiesgo": 72948601.3,

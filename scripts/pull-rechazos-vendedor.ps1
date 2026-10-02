@@ -1,7 +1,8 @@
 <#
 Arma el dashboard de Rechazos / Devoluciones por vendedor: cuanto peso tienen
 los rechazos sobre la venta real de cada vendedor, y cuales son los
-proveedores y motivos de rechazo mas preponderantes del mes.
+proveedores y motivos de rechazo mas preponderantes del mes. Los CAMBIOS de
+producto (canjes) van aparte, en su propia seccion.
 
 MIGRADO el 30/9/2026 de la API de Gescom a la base compartida de Lucas
 (datos-gescom.panelempresas.workers.dev) -- ver pull-cobertura-general.ps1
@@ -13,9 +14,15 @@ Reglas de negocio (mismas que el resto de los dashboards):
     y 43 ya vienen excluidos de la tabla `ventas` de origen.
   - "venta real" del vendedor = tipo VEN/DEB, con `fecha` (fechaPedido, ver
     nota de migracion en pull-cobertura-general.ps1) dentro del mes.
-  - "rechazo" = comprobantes de tipo DEV-RE (rechazo en la entrega) o DEV-CA
-    (devolucion por canje), mismo criterio que Seguimiento Di Giorno.
-  - pct = monto de rechazos / venta real del vendedor en el mes.
+  - "rechazo" = SOLO comprobantes DEV-RE (rechazo en la entrega).
+  - "cambio" = comprobantes DEV-CA (devolucion por canje). Se separaron de los
+    rechazos el 2/10/2026 a pedido de la usuaria: en la practica son cambios
+    de producto de ILOLAY por fecha de vencimiento (todos los DEV-CA sin
+    motivo tienen items Ilolay), no mercaderia rechazada por el cliente. Dentro
+    de DEV-CA tambien hay unos pocos de motivo DESCUENTO y DEVOLUCION: se
+    muestran en la seccion de cambios, desglosados por motivo.
+  - pct = monto de rechazos (DEV-RE) / venta real del vendedor en el mes.
+    cambiosPct = monto de cambios (DEV-CA) / venta real total del mes.
 
 Uso:
   powershell -File pull-rechazos-vendedor.ps1                        # mes actual
@@ -68,7 +75,7 @@ GROUP BY vendedor
 "@
 $ventaPorVendedor = Invoke-PanelSql $sqlVenta
 
-Write-Log "Descargando rechazos del mes (DEV-RE/DEV-CA)..."
+Write-Log "Descargando rechazos (DEV-RE) y cambios (DEV-CA) del mes..."
 $sqlRechazos = @"
 SELECT id, cliente, vendedor, fecha, nro_comprobante, tipo, motivo, motivo_codigo, neto
 FROM ventas
@@ -76,7 +83,7 @@ WHERE fecha >= '$fechaDesde' AND fecha < '$fechaHasta' AND tipo IN ('DEV-RE','DE
 "@
 $rechazosRaw = Invoke-PanelSql $sqlRechazos
 
-Write-Log "Descargando proveedores de los items de esos rechazos..."
+Write-Log "Descargando proveedores de los items de esos comprobantes..."
 $sqlItems = @"
 SELECT i.venta_id AS venta_id, a.proveedor AS proveedor
 FROM ventas v
@@ -92,32 +99,54 @@ foreach ($it in $itemsRaw) {
     if (-not $provsPorVenta.ContainsKey($vid)) { $provsPorVenta[$vid] = New-Object System.Collections.Generic.HashSet[string] }
     [void]$provsPorVenta[$vid].Add($(if ($it.proveedor) { [string]$it.proveedor } else { "_SIN_PROVEEDOR_" }))
 }
-Write-Log "Ventas revisadas: venta neta de $($ventaPorVendedor.Count) vendedores | rechazos: $($rechazosRaw.Count)"
+Write-Log "Ventas revisadas: venta neta de $($ventaPorVendedor.Count) vendedores | comprobantes DEV-RE/DEV-CA: $($rechazosRaw.Count)"
 
 $porVendedor = @{}
+function Nuevo-Vend { @{ ventaNeta = 0.0; rechazosMonto = 0.0; rechazosCantidad = 0; cambiosMonto = 0.0; cambiosCantidad = 0 } }
 foreach ($v in $ventaPorVendedor) {
     $cod = [string]$v.vendedor
     if ($EXCLUDED -contains $cod) { continue }
-    if (-not $porVendedor.ContainsKey($cod)) { $porVendedor[$cod] = @{ ventaNeta = 0.0; rechazosMonto = 0.0; rechazosCantidad = 0 } }
+    if (-not $porVendedor.ContainsKey($cod)) { $porVendedor[$cod] = Nuevo-Vend }
     $porVendedor[$cod].ventaNeta += [double]$v.ventaNeta
 }
 
 $porProveedorRechazo = @{}
 $porMotivo = @{}
 $eventosPorVendedor = @{}
+$cambiosProveedor = @{}
+$cambiosMotivo = @{}
+$cambiosMonto = 0.0
+$cambiosCantidad = 0
 foreach ($r in $rechazosRaw) {
     $codVend = [string]$r.vendedor
     if ($EXCLUDED -contains $codVend) { continue }
-    if (-not $porVendedor.ContainsKey($codVend)) { $porVendedor[$codVend] = @{ ventaNeta = 0.0; rechazosMonto = 0.0; rechazosCantidad = 0 } }
+    if (-not $porVendedor.ContainsKey($codVend)) { $porVendedor[$codVend] = Nuevo-Vend }
 
     $monto = [math]::Abs([double]$r.neto)
-    $porVendedor[$codVend].rechazosMonto += $monto
-    $porVendedor[$codVend].rechazosCantidad += 1
-
     $vid = [string]$r.id
     $provsVistos = if ($provsPorVenta.ContainsKey($vid)) { $provsPorVenta[$vid] } else { New-Object System.Collections.Generic.HashSet[string] }
     if ($provsVistos.Count -eq 0) { [void]$provsVistos.Add("_SIN_PROVEEDOR_") }
     $montoPorProv = $monto / $provsVistos.Count
+
+    if ([string]$r.tipo -eq "DEV-CA") {
+        $porVendedor[$codVend].cambiosMonto += $monto
+        $porVendedor[$codVend].cambiosCantidad += 1
+        $cambiosMonto += $monto
+        $cambiosCantidad += 1
+        foreach ($p in $provsVistos) {
+            if (-not $cambiosProveedor.ContainsKey($p)) { $cambiosProveedor[$p] = @{ monto = 0.0; cantidad = 0 } }
+            $cambiosProveedor[$p].monto += $montoPorProv
+            $cambiosProveedor[$p].cantidad += 1
+        }
+        $motivoCambio = if ($r.motivo) { [string]$r.motivo } else { "Sin motivo cargado" }
+        if (-not $cambiosMotivo.ContainsKey($motivoCambio)) { $cambiosMotivo[$motivoCambio] = @{ monto = 0.0; cantidad = 0 } }
+        $cambiosMotivo[$motivoCambio].monto += $monto
+        $cambiosMotivo[$motivoCambio].cantidad += 1
+        continue
+    }
+
+    $porVendedor[$codVend].rechazosMonto += $monto
+    $porVendedor[$codVend].rechazosCantidad += 1
     foreach ($p in $provsVistos) {
         if (-not $porProveedorRechazo.ContainsKey($p)) { $porProveedorRechazo[$p] = @{ monto = 0.0; cantidad = 0 } }
         $porProveedorRechazo[$p].monto += $montoPorProv
@@ -143,13 +172,15 @@ foreach ($r in $rechazosRaw) {
 $vendedoresOut = foreach ($cod in $porVendedor.Keys) {
     $v = $porVendedor[$cod]
     $pct = if ($v.ventaNeta -gt 0) { $v.rechazosMonto / $v.ventaNeta } else { 0.0 }
-    if ($v.ventaNeta -eq 0 -and $v.rechazosMonto -eq 0) { continue }
+    if ($v.ventaNeta -eq 0 -and $v.rechazosMonto -eq 0 -and $v.cambiosMonto -eq 0) { continue }
     [pscustomobject]@{
         codigo = $cod
         nombre = if ($vendNombre.ContainsKey($cod)) { $vendNombre[$cod] } else { "Vendedor $cod" }
         ventaNeta = [math]::Round($v.ventaNeta,2)
         rechazosMonto = [math]::Round($v.rechazosMonto,2)
         rechazosCantidad = $v.rechazosCantidad
+        cambiosMonto = [math]::Round($v.cambiosMonto,2)
+        cambiosCantidad = $v.cambiosCantidad
         pct = [math]::Round($pct,4)
         eventos = @(if ($eventosPorVendedor.ContainsKey($cod)) { $eventosPorVendedor[$cod] | Sort-Object fecha -Descending } else { @() })
     }
@@ -180,6 +211,32 @@ $totales = [pscustomobject]@{
 }
 $totales | Add-Member -NotePropertyName pct -NotePropertyValue $(if ($totales.ventaNeta -gt 0) { [math]::Round($totales.rechazosMonto / $totales.ventaNeta,4) } else { 0.0 })
 
+# --- cambios (DEV-CA): seccion aparte ---
+$cambiosProveedoresOut = @(foreach ($cod in $cambiosProveedor.Keys) {
+    $p = $cambiosProveedor[$cod]
+    [pscustomobject]@{
+        codigo = $cod
+        nombre = if ($cod -eq "_SIN_PROVEEDOR_") { "Sin proveedor asignado" } else { $provNombre[$cod] }
+        monto = [math]::Round($p.monto,2)
+        cantidad = $p.cantidad
+    }
+}) | Sort-Object monto -Descending
+$cambiosMotivosOut = @(foreach ($mot in $cambiosMotivo.Keys) {
+    $m = $cambiosMotivo[$mot]
+    [pscustomobject]@{ motivo = $mot; monto = [math]::Round($m.monto,2); cantidad = $m.cantidad }
+}) | Sort-Object monto -Descending
+$cambiosVendedoresOut = @($vendedoresOut | Where-Object { $_.cambiosMonto -gt 0 } | ForEach-Object {
+    [pscustomobject]@{ codigo = $_.codigo; nombre = $_.nombre; monto = $_.cambiosMonto; cantidad = $_.cambiosCantidad }
+}) | Sort-Object monto -Descending
+$cambios = [pscustomobject]@{
+    monto = [math]::Round($cambiosMonto,2)
+    cantidad = $cambiosCantidad
+    pct = if ($totales.ventaNeta -gt 0) { [math]::Round($cambiosMonto / $totales.ventaNeta,4) } else { 0.0 }
+    topProveedores = @($cambiosProveedoresOut)
+    topMotivos = @($cambiosMotivosOut)
+    topVendedores = @($cambiosVendedoresOut)
+}
+
 $mesData = [pscustomobject]@{
     periodoDesde = $inicioMes.ToString("yyyy-MM-dd")
     periodoHasta = $(if ($esMesActual) { $hoy.ToString("yyyy-MM-dd") } else { $finMesCompleto.AddDays(-1).ToString("yyyy-MM-dd") })
@@ -188,6 +245,7 @@ $mesData = [pscustomobject]@{
     vendedores = $vendedoresOut
     topProveedores = $topProveedores
     topMotivos = $topMotivos
+    cambios = $cambios
 }
 
 $meses = [ordered]@{}
@@ -220,4 +278,4 @@ $jsonText = $out | ConvertTo-Json -Depth 10 -Compress
 [System.IO.File]::WriteAllText($OutPath, $jsonText, (New-Object System.Text.UTF8Encoding $false))
 Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
 Write-Log "Guardado: $OutPath"
-Write-Log "Mes $mesKey -> Venta neta: $($totales.ventaNeta) | Rechazos: $($totales.rechazosMonto) ($($totales.rechazosCantidad)) | Peso: $([math]::Round($totales.pct*100,2))% | Vendedores: $($vendedoresOut.Count)"
+Write-Log "Mes $mesKey -> Venta neta: $($totales.ventaNeta) | Rechazos DEV-RE: $($totales.rechazosMonto) ($($totales.rechazosCantidad)) | Peso: $([math]::Round($totales.pct*100,2))% | Cambios DEV-CA: $($cambios.monto) ($($cambios.cantidad)) = $([math]::Round($cambios.pct*100,2))% | Vendedores: $($vendedoresOut.Count)"

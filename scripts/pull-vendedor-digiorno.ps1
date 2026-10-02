@@ -125,8 +125,10 @@ Write-Log "Descargando rechazos de este vendedor..."
 $sqlRechazos = @"
 SELECT cliente, entrega, fecha, nro_comprobante, tipo, motivo, neto
 FROM ventas
-WHERE vendedor = '$CodigoVendedor' AND fecha >= '$fechaDesde' AND fecha < '$fechaHasta' AND tipo IN ('DEV-RE','DEV-CA')
+WHERE vendedor = '$CodigoVendedor' AND fecha >= '$fechaDesde' AND fecha < '$fechaHasta' AND tipo = 'DEV-RE'
 "@
+# Solo DEV-RE: los DEV-CA (canjes/cambios de Ilolay por vencimiento) no son rechazos
+# (ver pull-rechazos-vendedor.ps1). Siguen restando de la venta neta del vendedor.
 $rechazosRaw = Invoke-PanelSql $sqlRechazos
 $rechazoEventos = foreach ($r in $rechazosRaw) {
     [pscustomobject]@{

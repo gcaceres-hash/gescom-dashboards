@@ -182,9 +182,40 @@
     </section>
   </div>
 
+  <section id="cambiosSection">
+    <div class="sec-head">
+      <h2>Cambios de producto (canjes)</h2>
+      <div class="n">comprobantes DEV-CA — no cuentan como rechazo</div>
+    </div>
+    <div class="board" id="cambiosKpi"></div>
+    <div class="two-col">
+      <section>
+        <div class="sec-head">
+          <h2>Cambios por proveedor</h2>
+          <div class="n">por monto</div>
+        </div>
+        <div class="bar-list" id="cambProvList"></div>
+      </section>
+      <section>
+        <div class="sec-head">
+          <h2>Cambios por motivo</h2>
+          <div class="n">por monto</div>
+        </div>
+        <div class="bar-list" id="cambMotivoList"></div>
+      </section>
+    </div>
+    <section>
+      <div class="sec-head">
+        <h2>Cambios por vendedor</h2>
+        <div class="n">por monto</div>
+      </div>
+      <div class="bar-list" id="cambVendList"></div>
+    </section>
+  </section>
+
   <footer>
-    <div><b>Metodología:</b> "venta real" del vendedor = ventas cerradas (no rechazo, no nota de crédito) con fecha de entrega = fecha de comprobante, dentro del mes. "Rechazo" = comprobantes DEV-RE (rechazo en la entrega) o DEV-CA (devolución por canje). Peso s/ venta = monto de rechazos ÷ venta real del vendedor en el mes. Se excluyen los vendedores 1176, 43, 16 y 37 (no son vendedores reales).</div>
-    <div style="margin-top:6px">Fuente: API Gescom. Foto fija — pedile a Claude que la actualice, o se actualiza sola si configuraste la rutina automática.</div>
+    <div><b>Metodología:</b> "venta real" del vendedor = ventas VEN/DEB del mes (por fecha de carga del pedido). "Rechazo" = solo comprobantes DEV-RE (rechazo en la entrega). Peso s/ venta = monto de rechazos ÷ venta real del vendedor en el mes. Los <b>cambios</b> (DEV-CA, devolución por canje) se muestran aparte y no suman al peso de rechazos: en la práctica son cambios de producto de Ilolay por fecha de vencimiento; los de motivo "Descuento" o "Devolución" figuran desglosados en la sección de cambios. Se excluyen los vendedores 1176, 43, 16 y 37 (no son vendedores reales).</div>
+    <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom). Foto fija — se actualiza sola todos los días, o pedile a Claude que la actualice.</div>
   </footer>
 </div>
 
@@ -236,7 +267,7 @@ function renderKPIs(){
   const cells = [
     { label:'Venta neta', value: fmtMoneyCompact(t.ventaNeta), foot: fmtMoney(t.ventaNeta) },
     { label:'Rechazos', value: fmtMoneyCompact(t.rechazosMonto), foot: fmtMoney(t.rechazosMonto), rose:true },
-    { label:'Eventos de rechazo', value: t.rechazosCantidad.toLocaleString('es-AR'), foot: 'devoluciones y rechazos' },
+    { label:'Eventos de rechazo', value: t.rechazosCantidad.toLocaleString('es-AR'), foot: 'rechazos en la entrega (DEV-RE)' },
     { label:'Peso sobre la venta', value: fmtPct(t.pct), foot: 'rechazos ÷ venta neta total' }
   ];
   document.getElementById('kpiRow').innerHTML = cells.map(c => `
@@ -259,7 +290,7 @@ function sortRows(rows){
 function renderExpand(row){
   if (!row.eventos || !row.eventos.length) return `<div class="expand-inner"><div class="empty-note">sin rechazos de este vendedor en el período</div></div>`;
   return `<div class="expand-inner">
-    <h3>rechazos y devoluciones</h3>
+    <h3>rechazos en la entrega</h3>
     <table class="data-table"><thead><tr>
       <th>Cliente</th><th>Fecha</th><th>Comprobante</th><th>Motivo</th><th class="num">Monto</th>
     </tr></thead><tbody>
@@ -336,6 +367,25 @@ document.querySelectorAll('.ticker-head span[data-key]').forEach(s => {
 });
 document.getElementById('searchBox').addEventListener('input', (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
 
+function renderCambios(m){
+  const c = m.cambios;
+  const sec = document.getElementById('cambiosSection');
+  if (!c) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  const top = (c.topProveedores && c.topProveedores[0]) || null;
+  const cells = [
+    { label:'Cambios (canje)', value: fmtMoneyCompact(c.monto), foot: fmtMoney(c.monto) },
+    { label:'Comprobantes de cambio', value: c.cantidad.toLocaleString('es-AR'), foot: 'DEV-CA en el mes' },
+    { label:'Peso sobre la venta', value: fmtPct(c.pct), foot: 'cambios ÷ venta neta total' },
+    { label:'Proveedor principal', value: top ? top.nombre : '—', foot: top && c.monto ? fmtPct(top.monto / c.monto) + ' del monto de cambios' : '' }
+  ];
+  document.getElementById('cambiosKpi').innerHTML = cells.map(x => `
+    <div class="cell"><div class="label">${x.label}</div><div class="value mono" style="${x.label==='Proveedor principal'?'font-size:17px;line-height:1.3':''}">${x.value}</div><div class="foot">${x.foot}</div></div>`).join('');
+  renderBarList('cambProvList', c.topProveedores || [], 'nombre');
+  renderBarList('cambMotivoList', c.topMotivos || [], 'motivo');
+  renderBarList('cambVendList', c.topVendedores || [], 'nombre');
+}
+
 function renderAll(){
   const m = mesData();
   document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
@@ -344,6 +394,7 @@ function renderAll(){
   renderList();
   renderBarList('provList', m.topProveedores, 'nombre');
   renderBarList('motivoList', m.topMotivos, 'motivo');
+  renderCambios(m);
 }
 
 fetch('./data.json?t=' + Date.now())
