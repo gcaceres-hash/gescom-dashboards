@@ -1,47 +1,51 @@
 {
-  "generadoEn": "2026-10-01T15:45:00-03:00",
+  "generadoEn": "2026-10-02T14:00:00-03:00",
   "fuente": "Base compartida de Lucas (Rentabilidad via CSV, Cobertura, Potenciales, Di Giorno, Rechazos, Compras, Cuentas Corrientes)",
   "bien": [
     {
-      "titulo": "Cuentas Corrientes vuelve a estar online",
-      "detalle": "Lucas sumó la tabla de cuenta corriente de clientes a la base (1/10). Saldo real: $139,2M (excluyendo depósito/logística, igual criterio de siempre) — en línea con lo que veíamos antes de la migración."
+      "titulo": "La cuenta corriente bajó $17,4M en un día",
+      "detalle": "$139,2M → $121,8M de saldo real (sin depósito/logística). Lo vencido a más de 90 días se mantiene en $8,4M."
     },
     {
-      "titulo": "Septiembre cerró con buen margen y buena venta",
-      "detalle": "Venta neta final: $1.006,6M (vs. $851,8M de agosto). Margen final: 13,76% vs. 13,46% de agosto."
+      "titulo": "Septiembre quedó cerrado con buena venta y margen",
+      "detalle": "Venta neta final: $1.007,1M (vs. $851,8M de agosto). Margen: 13,75% vs. 13,46% de agosto."
     },
     {
-      "titulo": "Softys baja levemente su concentración en compras",
-      "detalle": "54,68% de $866,3M en septiembre (cerrado) — bajó apenas desde el 54,92% anterior."
+      "titulo": "Softys sigue bajando levemente su peso en compras",
+      "detalle": "54,68% de $866,3M en septiembre (cerrado), vs. 54,92% en el relevo anterior."
     }
   ],
   "atencion": [
     {
-      "titulo": "Hallazgo en Cuentas Corrientes: revisar con Lucas",
-      "detalle": "El saldo CRUDO de la base nueva da $831,7M, pero $692,6M de eso queda bajo vendedor \"16\" (depósito, ya excluido del cálculo de siempre). Buena parte son saldos entre empresas del mismo grupo (Lago Puelo, Elebes, Tienda Perfecta, PPP) de 2024 — vale la pena confirmar con Lucas que no esconde deuda real de clientes mal codificada."
+      "titulo": "Octubre arranca con rechazos altos",
+      "detalle": "14,04% ($9,5M sobre $67,9M de venta) en los primeros 2 días. Con tan poca venta un par de casos grandes distorsionan (ej. un rechazo de $4,5M en la cartera de Di Giorno), pero conviene vigilarlo: septiembre cerró en 6,04%."
     },
     {
-      "titulo": "Rechazos de septiembre cerraron en 6,04%",
-      "detalle": "$64,8M en el mes cerrado — se mantiene en el nivel alto visto en los últimos días de septiembre, no fue un efecto pasajero de la migración."
+      "titulo": "Pendiente de confirmar con Lucas: $694M bajo vendedor \"16\"",
+      "detalle": "Del saldo crudo de cuenta corriente, $694,0M queda bajo depósito (código 16, excluido del cálculo de siempre). Buena parte son saldos entre empresas del grupo de 2024, pero falta confirmar que no haya deuda real de clientes mal codificada."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Octubre recién arranca (1 día de datos)",
-      "detalle": "Los números de 'mes en curso' de Cobertura, Potenciales y Compras todavía no son representativos — un solo día no alcanza para sacar conclusiones. Vuelvo a mirarlos en un par de días."
+      "titulo": "Octubre lleva solo 2 días de datos",
+      "detalle": "Venta $66,9M y margen 17,8% en lo que va del mes; la proyección de cierre ($736M) todavía no es confiable. Cobertura, Potenciales y Compras del mes en curso tampoco son representativos aún — los reviso en unos días."
+    },
+    {
+      "titulo": "Potenciales en riesgo: se mantiene el último dato de septiembre",
+      "detalle": "$72,9M. Al inicio de mes casi todos los potenciales figuran 'sin comprar' solo porque todavía no tuvieron chance, así que no actualizo ese número hasta tener más días de octubre."
     }
   ],
   "numeros": {
-    "ventaNetaSepActual": 1006559599.13,
-    "ventaNetaSepProyectada": 1006559599.13,
+    "ventaNetaSepActual": 1007093729.52,
+    "ventaNetaSepProyectada": 1007093729.52,
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
-    "margenSepProyectado": 0.1376,
+    "margenSepProyectado": 0.1375,
     "rechazosPctAgo": 0.0079,
     "rechazosPctSep": 0.0604,
     "rechazosMontoSep": 64808746.27,
-    "cuentaCorrienteTotal": 139156420.18,
-    "cuentaCorrienteD90mas": 8507911.1,
+    "cuentaCorrienteTotal": 121813454.64,
+    "cuentaCorrienteD90mas": 8429791.21,
     "potencialesEnRiesgo": 72948601.3,
     "compraSinImpuestoSep": 866330822.18,
     "compraPctMayorProveedor": 54.68

@@ -1,42 +1,46 @@
 {
-  "generadoEn": "2026-10-01T15:40:00-03:00",
+  "generadoEn": "2026-10-02T13:50:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Arranca octubre con pendientes bajo control",
-      "detalle": "185 pedidos pendientes (venía de 196 el 30/9) — se mantiene la buena racha de la semana pasada."
+      "titulo": "Los vencidos bajaron",
+      "detalle": "3.092 → 2.732 unidades (se mantienen 14 lotes). Salió el lote de Yogur Firme Ilolay de 403u que figuraba ayer."
     },
     {
-      "titulo": "Se resolvió la concentración en código de vendedor 74",
-      "detalle": "Bajó de 45 a 12 pendientes — ya no es el cuello de botella. Ahora lideran el 64 (24) y el 75 (23), sin concentración extrema."
+      "titulo": "Se vació la cola de preparación",
+      "detalle": "Los 415 pedidos que estaban en preparación ayer ya figuran despachados: 429 pedidos despachados en octubre ($28,3M), sin eliminados ni rechazos."
+    },
+    {
+      "titulo": "Menos unidades por vencer en 0-15 días",
+      "detalle": "2.000 → 1.530 unidades — bajó después del salto de ayer."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los vencimientos volvieron a subir",
-      "detalle": "2.618 → 3.092 unidades (13 → 14 lotes). Se suma Ring Pop Twisted (17u, venció hoy) y Maní con Chocolate creció de 435 a 495u — sigue sin resolverse."
+      "titulo": "Los 185 pendientes no se movieron en 24 horas",
+      "detalle": "Misma cantidad (185) y mismo importe ($14,12M) que ayer: ninguno se despachó ni entró uno nuevo, solo envejecen. Ya hay 3 con más de 7 días y 9 entre 3 y 7 días."
     },
     {
-      "titulo": "Aparecieron 3 pendientes de más de 7 días",
-      "detalle": "Ayer no había ninguno — es un número chico pero es la primera vez en dos semanas que vuelve a aparecer esta franja, vale la pena revisarlos puntualmente."
+      "titulo": "El núcleo duro de vencidos sigue igual",
+      "detalle": "Azúcar Ledesma (4 lotes, 1.406u), Mantecol Café/Coco (591u) y Maní con Chocolate (495u, vencido el 27/9) sin ningún movimiento. Se suma Lenguetazo Frambuesa (43u, vencido el 18/9)."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Las unidades por vencer en 0-15 días se dispararon",
-      "detalle": "866 → 2.000 unidades — el salto más grande medido hasta ahora en esta franja, revisar qué lotes son."
+      "titulo": "Casi la mitad de los pendientes está en 4 códigos de vendedor",
+      "detalle": "064 (24), 075 (23), 5 (19) y 7 (18) suman 84 de los 185 — sin cambios respecto a ayer."
     },
     {
-      "titulo": "El núcleo duro de siempre sigue exactamente igual",
-      "detalle": "Azúcar Ledesma (3 lotes) y Mantecol Café/Coco (591u) — ya van más de dos semanas sin ningún movimiento."
+      "titulo": "Unidades por vencer entre 16 y 30 días siguen altas",
+      "detalle": "16.549 unidades (vs. 16.324 ayer) — franja estable en un nivel alto, a seguir de cerca."
     }
   ],
   "numeros": {
     "pendientesTotal": 185,
     "pendientesImporte": 14122190.57,
-    "pendientesAntiguedad": { "masDe7dias": 3, "de3a7dias": 8, "de1a3dias": 25, "menosDe1dia": 149 },
-    "vencidoUnidades": 3092,
-    "proximoVencerUnidades": { "0a15dias": 2000, "16a30dias": 16324, "masDe30dias": 19987 },
+    "pendientesAntiguedad": { "masDe7dias": 3, "de3a7dias": 9, "de1a3dias": 72, "menosDe1dia": 101 },
+    "vencidoUnidades": 2732,
+    "proximoVencerUnidades": { "0a15dias": 1530, "16a30dias": 16549, "masDe30dias": 19653 },
     "eliminadosPctSeptiembre": 0.68,
     "eliminadosPctAgosto": 1.0
   }

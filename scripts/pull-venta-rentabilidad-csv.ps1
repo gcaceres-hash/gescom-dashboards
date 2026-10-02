@@ -53,7 +53,8 @@ param(
     [Parameter(Mandatory=$true)][string]$CsvPath,
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs/rentabilidad"),
     [string]$OutPath = (Join-Path $DocsDir "data.json"),
-    [string]$TemplatePath = (Join-Path $PSScriptRoot "venta-rentabilidad-template.html")
+    [string]$TemplatePath = (Join-Path $PSScriptRoot "venta-rentabilidad-template.html"),
+    [switch]$SobrescribirMesesCerrados
 )
 $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
@@ -174,6 +175,14 @@ foreach ($mesKey in $porMes.Keys) {
     $m = $porMes[$mesKey]
     $inicioMes = $m.inicioMes
     $esMesActual = ($inicioMes.Year -eq $hoy.Year -and $inicioMes.Month -eq $hoy.Month)
+    # Un export puede traer renglones sueltos de un mes ya cerrado (ej. el export
+    # del 2/10 traia unos pocos comprobantes del 30/9 por la fecha de entrega) y
+    # pisarian el cierre completo con un parcial (se vio: sept $1.007M -> $3,7M).
+    # Un mes cerrado que ya esta en el historico solo se reemplaza a pedido.
+    if (-not $esMesActual -and $meses.Contains($mesKey) -and -not $SobrescribirMesesCerrados) {
+        Write-Log "Aviso: el archivo trae $($m.maxFecha.ToString('yyyy-MM-dd')) y anteriores de $mesKey, mes ya cerrado en el historico -- se conserva tal cual (usar -SobrescribirMesesCerrados para reemplazarlo)."
+        continue
+    }
 
     $porProveedor = @{}
     foreach ($k in $m.agg.Keys) {

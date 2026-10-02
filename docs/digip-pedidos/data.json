@@ -1,18 +1,18 @@
 {
-  "generadoEn": "2026-10-01T15:40:00-03:00",
+  "generadoEn": "2026-10-02T13:50:00-03:00",
   "fuente": "Digip WMS - Preparacion/Pedido (export CSV, sesion de Gisela)",
-  "periodoDespachados": { "desde": "2026-10-01", "hasta": "2026-10-01" },
+  "periodoDespachados": { "desde": "2026-10-01", "hasta": "2026-10-02" },
   "kpis": {
     "pendientes": { "count": 185, "importe": 14122190.57 },
-    "despachadosMes": { "count": 14, "importe": 1195559.19 },
+    "despachadosMes": { "count": 429, "importe": 28335866.32 },
     "incidencias": { "count": 0, "importe": 0 }
   },
   "detalle": {
     "pendiente": { "count": 185, "importe": 14122190.5731 },
-    "enPreparacion": { "count": 415, "importe": 27140307.14 },
+    "enPreparacion": { "count": 0, "importe": 0 },
     "completo": { "count": 0, "importe": 0 },
     "remitido": { "count": 0, "importe": 0 },
-    "remitidoExterno": { "count": 14, "importe": 1195559.185 },
+    "remitidoExterno": { "count": 429, "importe": 28335866.325 },
     "eliminado": { "count": 0, "importe": 0 },
     "remisionRechazada": { "count": 0, "importe": 0 }
   },
