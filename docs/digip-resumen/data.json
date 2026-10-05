@@ -1,46 +1,53 @@
 {
-  "generadoEn": "2026-10-02T13:50:00-03:00",
+  "generadoEn": "2026-10-05T10:30:00-03:00",
   "fuente": "Digip WMS (Pedidos, Stock, Vencimientos) - sesion de Gisela",
   "bien": [
     {
-      "titulo": "Los vencidos bajaron",
-      "detalle": "3.092 → 2.732 unidades (se mantienen 14 lotes). Salió el lote de Yogur Firme Ilolay de 403u que figuraba ayer."
+      "titulo": "Se despacharon 514 pedidos más desde el viernes",
+      "detalle": "943 pedidos despachados en octubre ($68,8M), contra 429 ($28,3M) del viernes. Sin pedidos eliminados ni rechazos."
     },
     {
-      "titulo": "Se vació la cola de preparación",
-      "detalle": "Los 415 pedidos que estaban en preparación ayer ya figuran despachados: 429 pedidos despachados en octubre ($28,3M), sin eliminados ni rechazos."
+      "titulo": "Los pedidos pendientes de más de 7 días siguen siendo solo 3",
+      "detalle": "De los 261 pendientes, 87 tienen menos de un día y 123 entre 1 y 3 días: el grueso es pedido reciente."
     },
     {
-      "titulo": "Menos unidades por vencer en 0-15 días",
-      "detalle": "2.000 → 1.530 unidades — bajó después del salto de ayer."
+      "titulo": "Los vencidos casi no crecieron",
+      "detalle": "2.732 → 2.798 unidades (+66), de 14 a 16 lotes. El núcleo duro (Azúcar Ledesma, Mantecol Café/Coco, Maní con Chocolate) sigue sin cambios, pero tampoco salió."
     }
   ],
   "atencion": [
     {
-      "titulo": "Los 185 pendientes no se movieron en 24 horas",
-      "detalle": "Misma cantidad (185) y mismo importe ($14,12M) que ayer: ninguno se despachó ni entró uno nuevo, solo envejecen. Ya hay 3 con más de 7 días y 9 entre 3 y 7 días."
+      "titulo": "Casi se triplicó lo que vence en los próximos 15 días: 1.530 → 4.953 unidades",
+      "detalle": "El 89% es Ilolay: yogur con cereal 165 g (1.983u, vence el 28/10), yogur firme vainilla 190 g (939u, 27/10), yogur firme 120 g (685u, 23/10), crema simple 350 ml (450u, 20/10) y postre vainilla/ddl 120 g (267u, 21/10). Conviene empujar venta o coordinar el cambio con Ilolay esta semana, antes de que pasen a vencidos."
     },
     {
-      "titulo": "El núcleo duro de vencidos sigue igual",
-      "detalle": "Azúcar Ledesma (4 lotes, 1.406u), Mantecol Café/Coco (591u) y Maní con Chocolate (495u, vencido el 27/9) sin ningún movimiento. Se suma Lenguetazo Frambuesa (43u, vencido el 18/9)."
+      "titulo": "Los pedidos pendientes subieron de 185 a 261 ($14,1M → $17,0M)",
+      "detalle": "Hay 48 entre 3 y 7 días (el viernes eran 9): son pedidos de la semana pasada que todavía no salieron. Conviene revisar cuáles siguen trabados."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Casi la mitad de los pendientes está en 4 códigos de vendedor",
-      "detalle": "064 (24), 075 (23), 5 (19) y 7 (18) suman 84 de los 185 — sin cambios respecto a ayer."
+      "titulo": "Más de un tercio de los pendientes está en 2 códigos de vendedor",
+      "detalle": "056 (49) y 075 (46) suman 95 de los 261. El viernes los más cargados eran 064 (24) y 075 (23)."
     },
     {
-      "titulo": "Unidades por vencer entre 16 y 30 días siguen altas",
-      "detalle": "16.549 unidades (vs. 16.324 ayer) — franja estable en un nivel alto, a seguir de cerca."
+      "titulo": "5 pedidos en preparación por $12,6M",
+      "detalle": "Unos $2,5M por pedido, muy por encima del promedio de un pedido despachado ($73K). Probablemente sean cargas grandes; verificar que no estén detenidos."
+    },
+    {
+      "titulo": "El stock de Ilolay bajó 15% en 3 días",
+      "detalle": "43.036 → 36.713 unidades. El stock total pasó de 365.823 a 346.570 unidades (-5%). Antes de reponer lácteos, tener en cuenta los lotes que vencen en octubre."
     }
   ],
   "numeros": {
-    "pendientesTotal": 185,
-    "pendientesImporte": 14122190.57,
-    "pendientesAntiguedad": { "masDe7dias": 3, "de3a7dias": 9, "de1a3dias": 72, "menosDe1dia": 101 },
-    "vencidoUnidades": 2732,
-    "proximoVencerUnidades": { "0a15dias": 1530, "16a30dias": 16549, "masDe30dias": 19653 },
+    "pendientesTotal": 261,
+    "pendientesImporte": 17022819.53,
+    "pendientesAntiguedad": { "masDe7dias": 3, "de3a7dias": 48, "de1a3dias": 123, "menosDe1dia": 87 },
+    "enPreparacion": { "count": 5, "importe": 12566878.54 },
+    "despachadosMes": { "count": 943, "importe": 68834570.39 },
+    "vencidoUnidades": 2798,
+    "vencidoLotes": 16,
+    "proximoVencerUnidades": { "0a15dias": 4953, "16a30dias": 13313, "masDe30dias": 23087 },
     "eliminadosPctSeptiembre": 0.68,
     "eliminadosPctAgosto": 1.0
   }
