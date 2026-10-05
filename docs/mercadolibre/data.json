@@ -1,0 +1,477 @@
+{
+    "generadoEn":  "2026-10-05T15:37:34-03:00",
+    "fuente":  "Reporte de ventas de Mercado Libre (Excel, descarga manual) + costo e IVA de Gescom",
+    "mesActual":  "2026-10",
+    "supuestos":  {
+                      "ivaPorDefecto":  0.21,
+                      "skusSinCosto":  [
+                                           "74210",
+                                           "6295"
+                                       ]
+                  },
+    "meses":  {
+                  "2026-09":  {
+                                  "cerrado":  true,
+                                  "periodoDesde":  "2026-09-14",
+                                  "periodoHasta":  "2026-09-30",
+                                  "totales":  {
+                                                  "ventas":  33,
+                                                  "unidades":  50,
+                                                  "ingresos":  1176307.34,
+                                                  "ventaNeta":  972154.83,
+                                                  "cobrado":  956614.88,
+                                                  "cargosML":  272727.77,
+                                                  "envioNeto":  23306,
+                                                  "retenciones":  30932.69,
+                                                  "bonificaciones":  107274,
+                                                  "costo":  858340.42,
+                                                  "ventaNetaConCosto":  785749.87,
+                                                  "resultado":  -248412.68,
+                                                  "margenPct":  -0.3161,
+                                                  "coberturaCostoPct":  0.8083,
+                                                  "ticketPromedio":  35645.68,
+                                                  "cancelaciones":  {
+                                                                        "cantidad":  1,
+                                                                        "monto":  70775
+                                                                    }
+                                              },
+                                  "dias":  [
+                                               {
+                                                   "fecha":  "2026-09-14",
+                                                   "ventas":  11,
+                                                   "unidades":  11,
+                                                   "ingresos":  166985.34
+                                               },
+                                               {
+                                                   "fecha":  "2026-09-22",
+                                                   "ventas":  1,
+                                                   "unidades":  2,
+                                                   "ingresos":  70775
+                                               },
+                                               {
+                                                   "fecha":  "2026-09-23",
+                                                   "ventas":  1,
+                                                   "unidades":  2,
+                                                   "ingresos":  70775
+                                               },
+                                               {
+                                                   "fecha":  "2026-09-25",
+                                                   "ventas":  4,
+                                                   "unidades":  4,
+                                                   "ingresos":  131132
+                                               },
+                                               {
+                                                   "fecha":  "2026-09-28",
+                                                   "ventas":  4,
+                                                   "unidades":  13,
+                                                   "ingresos":  317340
+                                               },
+                                               {
+                                                   "fecha":  "2026-09-29",
+                                                   "ventas":  2,
+                                                   "unidades":  2,
+                                                   "ingresos":  37400
+                                               },
+                                               {
+                                                   "fecha":  "2026-09-30",
+                                                   "ventas":  10,
+                                                   "unidades":  16,
+                                                   "ingresos":  381900
+                                               }
+                                           ],
+                                  "productos":  [
+                                                    {
+                                                        "sku":  "1506112",
+                                                        "titulo":  "Papel Higienico Jumbo Elite 300 Mts (6112) X4u",
+                                                        "unidades":  11,
+                                                        "ventas":  2,
+                                                        "ingresos":  231000,
+                                                        "cobrado":  180617.12,
+                                                        "costo":  400620,
+                                                        "resultado":  -260093.79,
+                                                        "ventaNetaConCosto":  190909.09,
+                                                        "margenPct":  -1.3624,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "2332636",
+                                                        "titulo":  "Mantecol Lingote X 500g Sin Tacc",
+                                                        "unidades":  11,
+                                                        "ventas":  11,
+                                                        "ingresos":  166985.34,
+                                                        "cobrado":  111203.75,
+                                                        "costo":  67727.55,
+                                                        "resultado":  14495.27,
+                                                        "ventaNetaConCosto":  138004.41,
+                                                        "margenPct":  0.105,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "6295",
+                                                        "titulo":  "Toallas Elite Intercaladas Bca 10 Paquetes Con 250 Unidades 6295",
+                                                        "unidades":  4,
+                                                        "ventas":  2,
+                                                        "ingresos":  141550,
+                                                        "cobrado":  121680.05,
+                                                        "costo":  null,
+                                                        "resultado":  null,
+                                                        "ventaNetaConCosto":  0,
+                                                        "margenPct":  null,
+                                                        "sinCosto":  true
+                                                    },
+                                                    {
+                                                        "sku":  "1506283",
+                                                        "titulo":  "Toalla Intercalada Blanca Elite Professional 10paq. Cod6283 Blanco",
+                                                        "unidades":  4,
+                                                        "ventas":  4,
+                                                        "ingresos":  133472,
+                                                        "cobrado":  125669.7,
+                                                        "costo":  46176,
+                                                        "resultado":  56329.14,
+                                                        "ventaNetaConCosto":  110307.44,
+                                                        "margenPct":  0.5107,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504088",
+                                                        "titulo":  "Babysec Ultra Soft Xxgx50u Género Sin Género Tamaño Extra Extra Grande (xxg)",
+                                                        "unidades":  6,
+                                                        "ventas":  2,
+                                                        "ingresos":  111600,
+                                                        "cobrado":  90530.52,
+                                                        "costo":  63886.2,
+                                                        "resultado":  7275.72,
+                                                        "ventaNetaConCosto":  92231.4,
+                                                        "margenPct":  0.0789,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "74210",
+                                                        "titulo":  "Vino Tinto Malbec Alma Mora 750ml Incluye Estuche Caja 6 Botellas",
+                                                        "unidades":  2,
+                                                        "ventas":  2,
+                                                        "ingresos":  84000,
+                                                        "cobrado":  59999.61,
+                                                        "costo":  null,
+                                                        "resultado":  null,
+                                                        "ventaNetaConCosto":  0,
+                                                        "margenPct":  null,
+                                                        "sinCosto":  true
+                                                    },
+                                                    {
+                                                        "sku":  "1506109",
+                                                        "titulo":  "Elite Professional 6109 Papel Hig. X4 500m Simple",
+                                                        "unidades":  2,
+                                                        "ventas":  1,
+                                                        "ingresos":  79400,
+                                                        "cobrado":  67192.61,
+                                                        "costo":  123576,
+                                                        "resultado":  -70163.56,
+                                                        "ventaNetaConCosto":  65619.83,
+                                                        "margenPct":  -1.0692,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504216",
+                                                        "titulo":  "Pañales Babysec Super Premium Xgx48u Género Sin Género Tamaño Extra Grande (xg)",
+                                                        "unidades":  3,
+                                                        "ventas":  2,
+                                                        "ingresos":  78000,
+                                                        "cobrado":  72964.12,
+                                                        "costo":  48757.42,
+                                                        "resultado":  10669.51,
+                                                        "ventaNetaConCosto":  64462.81,
+                                                        "margenPct":  0.1655,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504217",
+                                                        "titulo":  "Pañales Babysec Super Premium G X 60 Unidades Grande (g) Sin Género",
+                                                        "unidades":  3,
+                                                        "ventas":  3,
+                                                        "ingresos":  72000,
+                                                        "cobrado":  67760.12,
+                                                        "costo":  48757.42,
+                                                        "resultado":  6506.83,
+                                                        "ventaNetaConCosto":  59504.13,
+                                                        "margenPct":  0.1094,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504087",
+                                                        "titulo":  "Babysec Ultra Soft Superpack Extra Grande (xg) X52 Un Sin Género",
+                                                        "unidades":  2,
+                                                        "ventas":  2,
+                                                        "ingresos":  37400,
+                                                        "cobrado":  41595.72,
+                                                        "costo":  21294.51,
+                                                        "resultado":  13810.3,
+                                                        "ventaNetaConCosto":  30909.09,
+                                                        "margenPct":  0.4468,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1506203",
+                                                        "titulo":  "Toalla De Papel Jumbo Classic Elite (6203)",
+                                                        "unidades":  1,
+                                                        "ventas":  1,
+                                                        "ingresos":  26700,
+                                                        "cobrado":  2028.5,
+                                                        "costo":  30300,
+                                                        "resultado":  -32905.38,
+                                                        "ventaNetaConCosto":  22066.12,
+                                                        "margenPct":  -1.4912,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504206",
+                                                        "titulo":  "Babysec Ultra Soft Grande Sin Género 40 Unidades Grande (g)",
+                                                        "unidades":  1,
+                                                        "ventas":  1,
+                                                        "ingresos":  14200,
+                                                        "cobrado":  15373.06,
+                                                        "costo":  7245.32,
+                                                        "resultado":  5663.28,
+                                                        "ventaNetaConCosto":  11735.54,
+                                                        "margenPct":  0.4826,
+                                                        "sinCosto":  false
+                                                    }
+                                                ],
+                                  "entrega":  [
+                                                  {
+                                                      "nombre":  "Mercado Envíos Flex",
+                                                      "ventas":  19,
+                                                      "ingresos":  916622
+                                                  },
+                                                  {
+                                                      "nombre":  "Acuerdo con el comprador",
+                                                      "ventas":  11,
+                                                      "ingresos":  166985.34
+                                                  },
+                                                  {
+                                                      "nombre":  "Correo y puntos de despacho",
+                                                      "ventas":  3,
+                                                      "ingresos":  92700
+                                                  }
+                                              ],
+                                  "estados":  [
+                                                  {
+                                                      "nombre":  "Entregada",
+                                                      "ventas":  31,
+                                                      "ingresos":  1107607.34
+                                                  },
+                                                  {
+                                                      "nombre":  "En camino / punto de retiro",
+                                                      "ventas":  2,
+                                                      "ingresos":  68700
+                                                  }
+                                              ]
+                              },
+                  "2026-10":  {
+                                  "cerrado":  false,
+                                  "periodoDesde":  "2026-10-01",
+                                  "periodoHasta":  "2026-10-05",
+                                  "totales":  {
+                                                  "ventas":  42,
+                                                  "unidades":  89,
+                                                  "ingresos":  1841126,
+                                                  "ventaNeta":  1521591.74,
+                                                  "cobrado":  1522459.15,
+                                                  "cargosML":  496818.98,
+                                                  "envioNeto":  8590,
+                                                  "retenciones":  51856.87,
+                                                  "bonificaciones":  238599,
+                                                  "costo":  1200255.46,
+                                                  "ventaNetaConCosto":  1486880.99,
+                                                  "resultado":  -26382.93,
+                                                  "margenPct":  -0.0177,
+                                                  "coberturaCostoPct":  0.9772,
+                                                  "ticketPromedio":  43836.33,
+                                                  "cancelaciones":  {
+                                                                        "cantidad":  0,
+                                                                        "monto":  0
+                                                                    }
+                                              },
+                                  "dias":  [
+                                               {
+                                                   "fecha":  "2026-10-01",
+                                                   "ventas":  25,
+                                                   "unidades":  44,
+                                                   "ingresos":  933200
+                                               },
+                                               {
+                                                   "fecha":  "2026-10-02",
+                                                   "ventas":  10,
+                                                   "unidades":  20,
+                                                   "ingresos":  443496
+                                               },
+                                               {
+                                                   "fecha":  "2026-10-03",
+                                                   "ventas":  2,
+                                                   "unidades":  5,
+                                                   "ingresos":  110700
+                                               },
+                                               {
+                                                   "fecha":  "2026-10-04",
+                                                   "ventas":  3,
+                                                   "unidades":  16,
+                                                   "ingresos":  272970
+                                               },
+                                               {
+                                                   "fecha":  "2026-10-05",
+                                                   "ventas":  2,
+                                                   "unidades":  4,
+                                                   "ingresos":  80760
+                                               }
+                                           ],
+                                  "productos":  [
+                                                    {
+                                                        "sku":  "1504088",
+                                                        "titulo":  "Babysec Ultra Soft Pañales Xxg X50",
+                                                        "unidades":  32,
+                                                        "ventas":  16,
+                                                        "ingresos":  606330,
+                                                        "cobrado":  498883.88,
+                                                        "costo":  340726.4,
+                                                        "resultado":  52926.65,
+                                                        "ventaNetaConCosto":  501099.17,
+                                                        "margenPct":  0.1056,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504217",
+                                                        "titulo":  "Pañales Babysec Super Premium G X 60 Unidades Grande (g) Sin Género",
+                                                        "unidades":  14,
+                                                        "ventas":  9,
+                                                        "ingresos":  336000,
+                                                        "cobrado":  274442.41,
+                                                        "costo":  227534.63,
+                                                        "resultado":  -11406.27,
+                                                        "ventaNetaConCosto":  277685.95,
+                                                        "margenPct":  -0.0411,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504087",
+                                                        "titulo":  "Pañales Babysec Ultra Soft Xg X52",
+                                                        "unidades":  13,
+                                                        "ventas":  6,
+                                                        "ingresos":  243100,
+                                                        "cobrado":  216765.76,
+                                                        "costo":  138414.34,
+                                                        "resultado":  36160.51,
+                                                        "ventaNetaConCosto":  200909.09,
+                                                        "margenPct":  0.18,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504216",
+                                                        "titulo":  "Pañales Babysec Super Premium Xgx48u Género Sin Género Tamaño Extra Grande (xg)",
+                                                        "unidades":  9,
+                                                        "ventas":  6,
+                                                        "ingresos":  234000,
+                                                        "cobrado":  210494.25,
+                                                        "costo":  146272.26,
+                                                        "resultado":  23610.42,
+                                                        "ventaNetaConCosto":  193388.43,
+                                                        "margenPct":  0.1221,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1504206",
+                                                        "titulo":  "Babysec Ultra Soft G 40un",
+                                                        "unidades":  12,
+                                                        "ventas":  1,
+                                                        "ingresos":  170400,
+                                                        "cobrado":  124713.6,
+                                                        "costo":  86943.84,
+                                                        "resultado":  8196.21,
+                                                        "ventaNetaConCosto":  140826.45,
+                                                        "margenPct":  0.0582,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1506112",
+                                                        "titulo":  "Papel Higienico Jumbo Elite 300 Mts (6112) X4u",
+                                                        "unidades":  6,
+                                                        "ventas":  2,
+                                                        "ingresos":  126000,
+                                                        "cobrado":  102666.12,
+                                                        "costo":  218520,
+                                                        "resultado":  -137721.65,
+                                                        "ventaNetaConCosto":  104132.23,
+                                                        "margenPct":  -1.3226,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "1506214",
+                                                        "titulo":  "Bobina Multiuso De Limpieza 400mts Pq X2 Beige 6214",
+                                                        "unidades":  1,
+                                                        "ventas":  1,
+                                                        "ingresos":  56596,
+                                                        "cobrado":  39177.02,
+                                                        "costo":  11544,
+                                                        "resultado":  17810.57,
+                                                        "ventaNetaConCosto":  46773.55,
+                                                        "margenPct":  0.3808,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
+                                                        "sku":  "74210",
+                                                        "titulo":  "Vino Tinto Malbec Alma Mora 750ml Incluye Estuche Caja 6 Botellas",
+                                                        "unidades":  1,
+                                                        "ventas":  1,
+                                                        "ingresos":  42000,
+                                                        "cobrado":  36341.61,
+                                                        "costo":  null,
+                                                        "resultado":  null,
+                                                        "ventaNetaConCosto":  0,
+                                                        "margenPct":  null,
+                                                        "sinCosto":  true
+                                                    },
+                                                    {
+                                                        "sku":  "1506203",
+                                                        "titulo":  "Toalla De Papel Jumbo Classic Elite (6203)",
+                                                        "unidades":  1,
+                                                        "ventas":  1,
+                                                        "ingresos":  26700,
+                                                        "cobrado":  18974.5,
+                                                        "costo":  30300,
+                                                        "resultado":  -15959.38,
+                                                        "ventaNetaConCosto":  22066.12,
+                                                        "margenPct":  -0.7233,
+                                                        "sinCosto":  false
+                                                    }
+                                                ],
+                                  "entrega":  [
+                                                  {
+                                                      "nombre":  "Mercado Envíos Flex",
+                                                      "ventas":  32,
+                                                      "ingresos":  1228960
+                                                  },
+                                                  {
+                                                      "nombre":  "Correo y puntos de despacho",
+                                                      "ventas":  10,
+                                                      "ingresos":  612166
+                                                  }
+                                              ],
+                                  "estados":  [
+                                                  {
+                                                      "nombre":  "Entregada",
+                                                      "ventas":  27,
+                                                      "ingresos":  1022900
+                                                  },
+                                                  {
+                                                      "nombre":  "En camino / punto de retiro",
+                                                      "ventas":  7,
+                                                      "ingresos":  483570
+                                                  },
+                                                  {
+                                                      "nombre":  "Por despachar",
+                                                      "ventas":  8,
+                                                      "ingresos":  334656
+                                                  }
+                                              ]
+                              }
+              }
+}
