@@ -21,10 +21,6 @@
       "detalle": "Saldo real de $121,8M (viernes) a $157,7M. Vigente: $63,5M → $62,0M. Vencido de 1 a 30 días: $40,0M → $77,5M. Hay que salir a cobrar esas facturas de septiembre antes de que pasen a más de 30 días."
     },
     {
-      "titulo": "El margen de octubre está inflado por una sola factura sin costo",
-      "detalle": "La FAC-B 0006-00000262 del 2/10 (Roberto Arigoni, empresa Lagopuelo, cargada por el vendedor Depósito) es \"Productos varios\" por $7,04M con costo cero. Con ella el margen de octubre da 23,2%; sin ella, 17,8%. Pendiente de confirmar si corresponde dejarla en Rentabilidad."
-    },
-    {
       "titulo": "Rechazos de octubre en 15,7%, concentrados en el 1/10",
       "detalle": "$9,7M sobre $62,1M de venta. Un solo comprobante del 1/10 (cliente 5949, cartera de Di Giorno) explica $4,5M; sin ese caso serían 8,4%, que sigue por encima de septiembre (5,35%) y agosto (5,65%). Con 3 días de venta un día grande distorsiona, pero conviene vigilarlo."
     },
@@ -36,7 +32,7 @@
   "vigilar": [
     {
       "titulo": "Octubre lleva 3 días hábiles y vende más lento que septiembre",
-      "detalle": "Venta neta de $106,4M en 3 días (~$35M por día) contra ~$46M por día de septiembre. La proyección lineal de cierre ($780M) todavía no es confiable: hoy cuenta la mañana del lunes como día completo y no descuenta el feriado del 12/10."
+      "detalle": "Venta neta de $99,4M en 3 días (~$33M por día) con margen de 17,8%, contra ~$46M por día de septiembre. Rentabilidad ya no cuenta una factura de \"Productos varios\" de $7,0M sin costo (no es mercadería). La proyección lineal de cierre ($729M) todavía no es confiable: hoy cuenta la mañana del lunes como día completo y no descuenta el feriado del 12/10."
     },
     {
       "titulo": "Cobertura y Potenciales del mes todavía no son representativos",
@@ -53,10 +49,9 @@
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
     "margenSepProyectado": 0.1375,
-    "ventaNetaOctActual": 106395511.38,
-    "ventaNetaOctProyectada": 780233750.12,
-    "margenOctConProductosVarios": 0.2316,
-    "margenOctSinProductosVarios": 0.1779,
+    "ventaNetaOctActual": 99358920.43,
+    "ventaNetaOctProyectada": 728632083.15,
+    "margenOct": 0.1779,
     "rechazosPctAgo": 0.0565,
     "rechazosPctSep": 0.0535,
     "rechazosMontoSep": 57328216.28,

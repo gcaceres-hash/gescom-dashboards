@@ -18,7 +18,8 @@ Reglas de negocio:
     toda su venta de septiembre estaba atribuida al vendedor "16"
     (deposito/logistica) y es venta real con proveedor asignado -- la
     tabla dinamica nativa de Gescom si la cuenta.
-  - excluye items con PrecioCosto=1 (servicios/transporte)
+  - excluye items con PrecioCosto=1 (servicios/transporte) y las lineas
+    "Productos varios" con PrecioCosto=0 (tampoco son mercaderia)
   - el mes de una fila lo define FechaComprobante (fecha de factura) -- ya
     NO se exige que coincida con FechaEntrega. Se probo esa igualdad antes
     (a pedido de la usuaria) pero se confirmo con su propia tabla dinamica
@@ -102,7 +103,7 @@ $lines = Read-AllLinesCompartido $CsvPath $enc
 $header = $lines[0] -split ';'
 $col = @{}
 for ($i = 0; $i -lt $header.Count; $i++) { $col[$header[$i]] = $i }
-foreach ($req in @("FechaComprobante","FechaEntrega","ImporteNetoItem","ImporteItem","CodVendedor","PrecioCosto","CantBase","Descuento","valorDescuento","Proveedor","Familia","TipoDeVenta","NumeroVenta","PesoKgReal")) {
+foreach ($req in @("FechaComprobante","FechaEntrega","ImporteNetoItem","ImporteItem","CodVendedor","PrecioCosto","CantBase","Descuento","valorDescuento","Proveedor","Familia","TipoDeVenta","NumeroVenta","PesoKgReal","Articulo")) {
     if (-not $col.ContainsKey($req)) { throw "El CSV no tiene la columna esperada '$req'. Encabezado: $($header -join ', ')" }
 }
 Write-Log "Filas de datos: $($lines.Count - 1)"
@@ -111,6 +112,8 @@ Write-Log "Filas de datos: $($lines.Count - 1)"
 $porMes = @{}
 $totalFilas = 0
 $totalCalifican = 0
+$productosVariosExcluidos = 0
+$productosVariosNeto = 0.0
 for ($i = 1; $i -lt $lines.Count; $i++) {
     $f = $lines[$i] -split ';'
     $totalFilas++
@@ -121,6 +124,14 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
     if ($EXCLUDED_VENDEDOR -contains $f[$col['CodVendedor']]) { continue }
     $precioCosto = ToNum $f[$col['PrecioCosto']]
     if ($precioCosto -eq 1.0) { continue }
+    # "Productos varios" con costo 0 es una linea que no es mercaderia (igual que
+    # los servicios con costo 1): inflaba el margen (100%) -- se excluye tambien
+    # su nota de credito para que no queden descompensadas.
+    if ($precioCosto -eq 0.0 -and $f[$col['Articulo']].Trim() -eq 'Productos varios') {
+        $productosVariosExcluidos++
+        $productosVariosNeto += (ToNum $f[$col['ImporteNetoItem']])
+        continue
+    }
     $fecha = ToFecha $f[$col['FechaComprobante']]
     $mesKey = $fecha.ToString("yyyy-MM")
     $totalCalifican++
@@ -152,6 +163,7 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
     $m.agg[$key].descuentos += $desc
 }
 Write-Log "Filas leidas: $totalFilas | filas que califican (vendedor no ficticio, no servicio): $totalCalifican"
+if ($productosVariosExcluidos -gt 0) { Write-Log "Excluidas $productosVariosExcluidos lineas 'Productos varios' con costo 0 (neto $productosVariosNeto): no son mercaderia." }
 
 # --- cargar historico existente y fusionar cada mes del archivo ---
 $meses = [ordered]@{}
