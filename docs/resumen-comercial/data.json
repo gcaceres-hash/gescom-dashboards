@@ -1,46 +1,46 @@
 {
-  "generadoEn": "2026-10-05T10:45:00-03:00",
-  "fuente": "Base compartida de Lucas (Rentabilidad via CSV del 5/10, Cobertura, Potenciales, Di Giorno, Rechazos, Compras, Cuentas Corrientes)",
+  "generadoEn": "2026-10-06T15:05:00-03:00",
+  "fuente": "Base compartida de Lucas (Rentabilidad via CSV del 6/10, Cobertura, Potenciales, Di Giorno, Rechazos, Compras, Cuentas Corrientes)",
   "bien": [
     {
-      "titulo": "La deuda de más de 30 días no se movió, y la de más de 90 sigue en $8,4M",
-      "detalle": "Lo vencido entre 31 y 90 días y a más de 90 días suma $18,2M (viernes: $18,3M). Todo el aumento de la cuenta corriente está en lo vencido hace menos de 30 días."
+      "titulo": "El margen de octubre viene bien: 16,7% contra 13,75% de septiembre",
+      "detalle": "Venta neta de $142,0M en 4 días hábiles. Softys rinde 20,1% e Ilolay 23,3%; Georgalos 22,1%. Ojo con Grupo Ayudin (4,9%) y LCB (5,3%), que traen mucha venta con poco margen."
     },
     {
-      "titulo": "Los cambios de Ilolay se mantienen bajos",
-      "detalle": "$0,7M en lo que va de octubre (1,1% de la venta), en línea con septiembre (0,7%). Ya no se mezclan con los rechazos."
+      "titulo": "Los rechazos se están normalizando",
+      "detalle": "Bajaron de 15,7% a 9,5% en un día ($12,3M sobre $129,8M de venta). Sin el comprobante de $4,5M de Di Giorno del 1/10 serían 6,0%, cerca de septiembre (5,35%) y agosto (5,65%)."
     },
     {
-      "titulo": "Septiembre sigue siendo el mejor mes del año",
-      "detalle": "Venta neta final de $1.007,1M (agosto: $851,8M) con margen de 13,75% (agosto: 13,46%)."
+      "titulo": "La deuda de más de 90 días no crece: sigue en $8,4M",
+      "detalle": "Se mantiene igual que ayer. Los cambios de Ilolay también siguen bajos: $1,2M en octubre (0,95% de la venta)."
     }
   ],
   "atencion": [
     {
-      "titulo": "La cuenta corriente subió $36M en 3 días y es todo deuda vencida a 1-30 días",
-      "detalle": "Saldo real de $121,8M (viernes) a $157,7M. Vigente: $63,5M → $62,0M. Vencido de 1 a 30 días: $40,0M → $77,5M. Hay que salir a cobrar esas facturas de septiembre antes de que pasen a más de 30 días."
+      "titulo": "Lo vencido de 61 a 90 días se duplicó: de $5,3M a $10,5M",
+      "detalle": "Son facturas que cruzaron los 60 días desde ayer. Si no se cobran, en el próximo mes pasan a más de 90. El saldo real total es $156,7M ($157,7M ayer): vigente $64,8M, vencido de 1 a 30 días $73,7M."
     },
     {
-      "titulo": "Rechazos de octubre en 15,7%, concentrados en el 1/10",
-      "detalle": "$9,7M sobre $62,1M de venta. Un solo comprobante del 1/10 (cliente 5949, cartera de Di Giorno) explica $4,5M; sin ese caso serían 8,4%, que sigue por encima de septiembre (5,35%) y agosto (5,65%). Con 3 días de venta un día grande distorsiona, pero conviene vigilarlo."
+      "titulo": "El saldo bajo el código 16 (depósito) sigue creciendo",
+      "detalle": "De $619,2M a $631,8M en un día (+$12,6M). Con los códigos 37 (logística, $50,1M) y 43 ($33,7M) son $715,6M de cuenta corriente que se excluye del cálculo. Falta confirmar con Lucas que no haya deuda real de clientes mal codificada."
     },
     {
-      "titulo": "Pendiente de confirmar con Lucas: $703M de cuenta corriente bajo códigos no comerciales",
-      "detalle": "Del saldo crudo, $703,1M queda bajo depósito (código 16: $619,2M), logística (37: $50,1M) y el código 43 ($33,7M), que se excluyen del cálculo. Buena parte son saldos entre empresas del grupo de 2024, pero falta confirmar que no haya deuda real de clientes mal codificada. (La semana pasada figuraba como $694M \"bajo el 16\": ese era el total de los tres códigos.)"
+      "titulo": "Di Giorno arranca con venta neta negativa y 2 de 27 clientes comprando",
+      "detalle": "-$2,7M en octubre por la devolución de $4,5M del 1/10. Su deuda en cuenta corriente es de $18,7M (ayer $17,9M)."
     }
   ],
   "vigilar": [
     {
-      "titulo": "Octubre lleva 3 días hábiles y vende más lento que septiembre",
-      "detalle": "Venta neta de $99,4M en 3 días (~$33M por día) con margen de 17,8%, contra ~$46M por día de septiembre. Rentabilidad ya no cuenta una factura de \"Productos varios\" de $7,0M sin costo (no es mercadería). La proyección lineal de cierre ($729M) todavía no es confiable: hoy cuenta la mañana del lunes como día completo y no descuenta el feriado del 12/10."
+      "titulo": "Octubre vende a ~$35M por día hábil, por debajo de septiembre (~$46M)",
+      "detalle": "La proyección lineal de cierre es $781M, 22% menos que septiembre, pero todavía es temprano: hoy cuenta el día de la fecha como completo (el export es de las 14:52) y no descuenta el feriado del 12/10."
     },
     {
-      "titulo": "Cobertura y Potenciales del mes todavía no son representativos",
-      "detalle": "Compraron 460 de 3.358 clientes con cartera (13,7%) y 662 de los 897 potenciales figuran sin compra. Es muy temprano en el mes. El número de potenciales en riesgo ($72,9M) se mantiene del cierre de septiembre."
+      "titulo": "Cobertura 25,5% y 460 de 902 potenciales sin comprar",
+      "detalle": "Compraron 857 de 3.356 clientes con cartera. Mejora día a día porque el mes avanza; sigue sin ser representativa hasta mitad de mes. El número de potenciales en riesgo ($72,9M) se mantiene del cierre de septiembre."
     },
     {
-      "titulo": "Di Giorno arranca con venta neta negativa",
-      "detalle": "-$3,5M en octubre: una devolución de $4,5M y un solo cliente comprando (1 de 26). Su deuda en cuenta corriente es de $17,9M."
+      "titulo": "Compras de octubre concentradas en Softys por ahora",
+      "detalle": "$123,0M en 6 días: Softys $107,5M (87%), Ilolay $7,7M, Georgalos $6,0M y Molino Chacabuco $1,9M. Septiembre cerró con Softys en 54,7% de $866,3M: la concentración debería bajar cuando entren las compras de los demás proveedores."
     }
   ],
   "numeros": {
@@ -49,22 +49,24 @@
     "ventaNetaAgoCerrado": 851843793.97,
     "margenAgo": 0.1346,
     "margenSepProyectado": 0.1375,
-    "ventaNetaOctActual": 99358920.43,
-    "ventaNetaOctProyectada": 728632083.15,
-    "margenOct": 0.1779,
+    "ventaNetaOctActual": 142048789.91,
+    "ventaNetaOctProyectada": 781268344.5,
+    "margenOct": 0.1673,
     "rechazosPctAgo": 0.0565,
     "rechazosPctSep": 0.0535,
     "rechazosMontoSep": 57328216.28,
-    "rechazosPctOct": 0.1569,
-    "rechazosMontoOct": 9737417.44,
+    "rechazosPctOct": 0.0945,
+    "rechazosMontoOct": 12264694.16,
     "cambiosMontoSep": 7474723.9,
     "cambiosPctSep": 0.007,
-    "cambiosMontoOct": 707423.73,
-    "cuentaCorrienteTotal": 157660898.52,
-    "cuentaCorrienteVencido1a30": 77465803.4,
-    "cuentaCorrienteD90mas": 8422980.72,
+    "cambiosMontoOct": 1236631.38,
+    "cuentaCorrienteTotal": 156723577.3,
+    "cuentaCorrienteVencido1a30": 73730817.48,
+    "cuentaCorrienteD61a90": 10488013.75,
+    "cuentaCorrienteD90mas": 8422285.96,
     "potencialesEnRiesgo": 72948601.3,
+    "compraSinImpuestoOct": 123036977.11,
     "compraSinImpuestoSep": 866330822.18,
-    "compraPctMayorProveedor": 54.68
+    "compraPctMayorProveedor": 87.37
   }
 }

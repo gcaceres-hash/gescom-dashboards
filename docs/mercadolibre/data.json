@@ -1,5 +1,5 @@
 {
-    "generadoEn":  "2026-10-05T15:37:34-03:00",
+    "generadoEn":  "2026-10-06T14:58:03-03:00",
     "fuente":  "Reporte de ventas de Mercado Libre (Excel, descarga manual) + costo e IVA de Gescom",
     "mesActual":  "2026-10",
     "supuestos":  {
@@ -270,23 +270,23 @@
                   "2026-10":  {
                                   "cerrado":  false,
                                   "periodoDesde":  "2026-10-01",
-                                  "periodoHasta":  "2026-10-05",
+                                  "periodoHasta":  "2026-10-06",
                                   "totales":  {
-                                                  "ventas":  42,
-                                                  "unidades":  89,
-                                                  "ingresos":  1841126,
-                                                  "ventaNeta":  1521591.74,
-                                                  "cobrado":  1522459.15,
-                                                  "cargosML":  496818.98,
+                                                  "ventas":  44,
+                                                  "unidades":  92,
+                                                  "ingresos":  1955138,
+                                                  "ventaNeta":  1615816.53,
+                                                  "cobrado":  1620472.5,
+                                                  "cargosML":  511640.54,
                                                   "envioNeto":  8590,
-                                                  "retenciones":  51856.87,
-                                                  "bonificaciones":  238599,
-                                                  "costo":  1200255.46,
-                                                  "ventaNetaConCosto":  1486880.99,
-                                                  "resultado":  -26382.93,
-                                                  "margenPct":  -0.0177,
-                                                  "coberturaCostoPct":  0.9772,
-                                                  "ticketPromedio":  43836.33,
+                                                  "retenciones":  54831.96,
+                                                  "bonificaciones":  240397,
+                                                  "costo":  1261575.46,
+                                                  "ventaNetaConCosto":  1546395.04,
+                                                  "resultado":  -38529.14,
+                                                  "margenPct":  -0.0249,
+                                                  "coberturaCostoPct":  0.957,
+                                                  "ticketPromedio":  44434.95,
                                                   "cancelaciones":  {
                                                                         "cantidad":  0,
                                                                         "monto":  0
@@ -322,6 +322,12 @@
                                                    "ventas":  2,
                                                    "unidades":  4,
                                                    "ingresos":  80760
+                                               },
+                                               {
+                                                   "fecha":  "2026-10-06",
+                                                   "ventas":  2,
+                                                   "unidades":  3,
+                                                   "ingresos":  114012
                                                }
                                            ],
                                   "productos":  [
@@ -404,6 +410,32 @@
                                                         "sinCosto":  false
                                                     },
                                                     {
+                                                        "sku":  "74210",
+                                                        "titulo":  "Alma Mora Malbec Tinto 750 Ml Caja X 6",
+                                                        "unidades":  2,
+                                                        "ventas":  2,
+                                                        "ingresos":  84000,
+                                                        "cobrado":  72683.22,
+                                                        "costo":  null,
+                                                        "resultado":  null,
+                                                        "ventaNetaConCosto":  0,
+                                                        "margenPct":  null,
+                                                        "sinCosto":  true
+                                                    },
+                                                    {
+                                                        "sku":  "1506298",
+                                                        "titulo":  "Toalla Elite Dh 200 Mts X 2 Rollos (6298)",
+                                                        "unidades":  2,
+                                                        "ventas":  1,
+                                                        "ingresos":  72012,
+                                                        "cobrado":  61671.74,
+                                                        "costo":  61320,
+                                                        "resultado":  -12146.21,
+                                                        "ventaNetaConCosto":  59514.05,
+                                                        "margenPct":  -0.2041,
+                                                        "sinCosto":  false
+                                                    },
+                                                    {
                                                         "sku":  "1506214",
                                                         "titulo":  "Bobina Multiuso De Limpieza 400mts Pq X2 Beige 6214",
                                                         "unidades":  1,
@@ -415,19 +447,6 @@
                                                         "ventaNetaConCosto":  46773.55,
                                                         "margenPct":  0.3808,
                                                         "sinCosto":  false
-                                                    },
-                                                    {
-                                                        "sku":  "74210",
-                                                        "titulo":  "Vino Tinto Malbec Alma Mora 750ml Incluye Estuche Caja 6 Botellas",
-                                                        "unidades":  1,
-                                                        "ventas":  1,
-                                                        "ingresos":  42000,
-                                                        "cobrado":  36341.61,
-                                                        "costo":  null,
-                                                        "resultado":  null,
-                                                        "ventaNetaConCosto":  0,
-                                                        "margenPct":  null,
-                                                        "sinCosto":  true
                                                     },
                                                     {
                                                         "sku":  "1506203",
@@ -446,8 +465,8 @@
                                   "entrega":  [
                                                   {
                                                       "nombre":  "Mercado Envíos Flex",
-                                                      "ventas":  32,
-                                                      "ingresos":  1228960
+                                                      "ventas":  34,
+                                                      "ingresos":  1342972
                                                   },
                                                   {
                                                       "nombre":  "Correo y puntos de despacho",
@@ -458,18 +477,18 @@
                                   "estados":  [
                                                   {
                                                       "nombre":  "Entregada",
-                                                      "ventas":  27,
-                                                      "ingresos":  1022900
+                                                      "ventas":  36,
+                                                      "ingresos":  1417330
                                                   },
                                                   {
                                                       "nombre":  "En camino / punto de retiro",
-                                                      "ventas":  7,
-                                                      "ingresos":  483570
+                                                      "ventas":  6,
+                                                      "ingresos":  423796
                                                   },
                                                   {
                                                       "nombre":  "Por despachar",
-                                                      "ventas":  8,
-                                                      "ingresos":  334656
+                                                      "ventas":  2,
+                                                      "ingresos":  114012
                                                   }
                                               ]
                               }
