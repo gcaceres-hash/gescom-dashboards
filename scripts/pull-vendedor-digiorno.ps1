@@ -47,6 +47,9 @@ $proveedores = Invoke-PanelSql "SELECT codigo, nombre FROM proveedores"
 $provNombre = @{}
 foreach ($p in $proveedores) { $provNombre[[string]$p.codigo] = $p.nombre }
 $clientes = Invoke-PanelSql "SELECT codigo, nombre, vendedor FROM clientes WHERE activo = 1"
+# Guarda (7/10/2026): ver pull-cobertura-general.ps1 -- si la base viene sin vendedores, la cartera de este vendedor da 0 y se pisaria el dato bueno.
+$conVendedor = @($clientes | Where-Object { $_.vendedor }).Count
+if ($conVendedor -lt 1000) { throw "La base trae solo $conVendedor clientes con vendedor asignado (lo normal son ~3.300): posible falla de la sincronizacion de catalogos. No se actualiza para no pisar el dato anterior; avisar a Lucas." }
 $clienteNombre = @{}
 foreach ($c in $clientes) { $clienteNombre[[string]$c.codigo] = $c.nombre }
 $vendedores = Invoke-PanelSql "SELECT codigo, nombre FROM vendedores"

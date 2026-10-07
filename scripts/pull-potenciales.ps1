@@ -42,6 +42,8 @@ function Invoke-PanelSql([string]$Sql) {
 
 Write-Log "Descargando clientes con cartera asignada..."
 $clientesRaw = Invoke-PanelSql "SELECT codigo, nombre, localidad, vendedor, rutas FROM clientes WHERE activo = 1 AND vendedor IS NOT NULL AND vendedor <> ''"
+# Guarda (7/10/2026): ver pull-cobertura-general.ps1 -- si la base viene sin vendedores, no pisar el dato anterior.
+if (@($clientesRaw).Count -lt 1000) { throw "La base trae solo $(@($clientesRaw).Count) clientes con vendedor asignado (lo normal son ~3.300): posible falla de la sincronizacion de catalogos. No se actualiza para no pisar el dato anterior; avisar a Lucas." }
 
 $clienteInfo = @{}
 $vendedoresConCartera = New-Object System.Collections.Generic.HashSet[string]
