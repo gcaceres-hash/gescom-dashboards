@@ -42,7 +42,7 @@ function Invoke-PanelSql([string]$Sql) {
 function R2($x) { return [math]::Round([double]$x, 2) }
 
 # ramos que son el mismo en Gescom y en Georgalos (o duplicados): id -> id del grupo
-$GRUPOS = @{ "georgalos-7"="3"; "georgalos-1"="4"; "georgalos-4"="6"; "georgalos-32"="7"; "14"="8" }
+$GRUPOS = @{ "georgalos-7"="3"; "georgalos-1"="4"; "9"="4"; "10"="4"; "georgalos-4"="6"; "georgalos-32"="7"; "14"="8" }   # 9 y 10 = Autoservicio A y B, pedido de Gisela (7/10/2026)
 # nombre para mostrar (los de Gescom vienen en MAYUSCULAS y sin acentos)
 $aE = [string][char]0xE9; $aI = [string][char]0xED; $aO = [string][char]0xF3   # e, i, o con acento (el script se mantiene ASCII)
 $NOMBRES_FIX = @{
