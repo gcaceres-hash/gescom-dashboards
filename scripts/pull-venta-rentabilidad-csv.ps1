@@ -112,6 +112,7 @@ Write-Log "Filas de datos: $($lines.Count - 1)"
 $porMes = @{}
 $totalFilas = 0
 $totalCalifican = 0
+$catArticulos = @{}
 $productosVariosExcluidos = 0
 $productosVariosNeto = 0.0
 for ($i = 1; $i -lt $lines.Count; $i++) {
@@ -143,6 +144,8 @@ for ($i = 1; $i -lt $lines.Count; $i++) {
 
     $prov = $f[$col['Proveedor']]
     $fam = $f[$col['Familia']]
+    # categoria de cada articulo (la usa el tablero Compras - Stock y Pedidos; la base compartida no la tiene)
+    if ($fam -and $col.ContainsKey('Codigo') -and $f[$col['Codigo']]) { $catArticulos[$f[$col['Codigo']].Trim()] = $fam.Trim() }
     if (-not $prov) { $prov = "_SIN_PROVEEDOR_"; $fam = "_SIN_FAMILIA_" }
     elseif (-not $fam) { $fam = "_SIN_FAMILIA_" }
 
@@ -259,3 +262,14 @@ $jsonText = $out | ConvertTo-Json -Depth 10 -Compress
 [System.IO.File]::WriteAllText($OutPath, $jsonText, (New-Object System.Text.UTF8Encoding $false))
 Copy-Item $TemplatePath (Join-Path $DocsDir "index.html") -Force
 Write-Log "Guardado: $OutPath"
+
+# --- mapa articulo -> categoria (para Compras - Stock y Pedidos): se completa con cada CSV cargado ---
+if ($catArticulos.Count -gt 0) {
+    $catPath = Join-Path (Split-Path -Parent $TemplatePath) "categorias-articulos.json"
+    $catTodo = [ordered]@{}
+    if (Test-Path $catPath) { foreach ($p in ([System.IO.File]::ReadAllText($catPath, (New-Object System.Text.UTF8Encoding $false)) | ConvertFrom-Json).PSObject.Properties) { $catTodo[$p.Name] = [string]$p.Value } }
+    $antes = $catTodo.Count
+    foreach ($k in $catArticulos.Keys) { $catTodo[$k] = $catArticulos[$k] }
+    [System.IO.File]::WriteAllText($catPath, (ConvertTo-Json -InputObject $catTodo -Compress), (New-Object System.Text.UTF8Encoding $false))
+    Write-Log "Categorias de articulos: $($catTodo.Count) (antes $antes) -> $catPath"
+}

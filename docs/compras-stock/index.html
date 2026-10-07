@@ -1,0 +1,401 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compras · Stock y Pedidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #0a0e0f;
+    --surface:   #12181a;
+    --surface-2: #171f21;
+    --ink:       #eef2f0;
+    --ink-2:     #9fb0ab;
+    --ink-3:     #64726e;
+    --hair:      #263030;
+    --border:    rgba(238,242,240,0.10);
+    --amber:     #ffb020;
+    --amber-dim: #7a5416;
+    --low:       rgba(230,103,103,.20);
+    --high:      rgba(250,178,25,.18);
+    --slow:      rgba(236,131,90,.30);
+    --critical:  #e66767;
+    --good-ink:  #4bd07a;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#0a0e0f; --surface:#12181a; --surface-2:#171f21; --ink:#eef2f0; --ink-2:#9fb0ab; --ink-3:#64726e;
+    --hair:#263030; --border:rgba(238,242,240,0.10); --amber:#ffb020; --amber-dim:#7a5416;
+    --low:rgba(230,103,103,.20); --high:rgba(250,178,25,.18); --slow:rgba(236,131,90,.30); --critical:#e66767; --good-ink:#4bd07a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1240px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+  button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:18px 0 24px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600;letter-spacing:-0.01em;}
+  .board .cell .value.amber{color:var(--amber);}
+  .board .cell .value.crit{color:var(--critical);}
+  .board .cell .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.45;}
+
+  .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--hair);flex-wrap:wrap;}
+  .tab{font-family:"IBM Plex Mono",monospace;background:none;border:none;color:var(--ink-3);padding:10px 12px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tab:hover{color:var(--ink-2);}
+  .tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+  .ctrl{display:flex;flex-direction:column;gap:6px;}
+  .ctrl label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);}
+  .inp, select.inp{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;min-width:220px;}
+  .inp::placeholder{color:var(--ink-3);}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);padding:8px 0;cursor:pointer;}
+  .chk input{accent-color:var(--amber);width:15px;height:15px;}
+  .btn{font-family:"IBM Plex Mono",monospace;background:var(--surface);color:var(--ink);border:1px solid var(--amber-dim);border-radius:4px;padding:8px 14px;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;}
+  .btn:hover{border-color:var(--amber);}
+  .hint{font-size:12px;color:var(--ink-3);margin:0 0 12px;line-height:1.5;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin:0 0 12px;}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;}
+
+  .table-wrap{border:1px solid var(--hair);overflow-x:auto;}
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px;min-width:880px;}
+  table.t th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--hair);white-space:nowrap;position:sticky;top:0;background:var(--bg);}
+  table.t th.num, table.t td.num{text-align:right;}
+  .th-sort{cursor:pointer;user-select:none;background:none;border:none;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;padding:0;}
+  th.sorted .th-sort{color:var(--amber);}
+  table.t td{padding:9px 12px;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:middle;}
+  table.t td.nom{color:var(--ink);font-weight:500;}
+  table.t td.prod{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
+  table.t tr.click{cursor:pointer;}
+  table.t tr.click:hover td{background:var(--surface);}
+  table.t tr.total td{background:var(--surface);border-top:1px solid var(--amber-dim);color:var(--ink);font-weight:600;border-bottom:none;}
+  table.t td.strong{color:var(--ink);font-weight:600;}
+  td.c-low{background:var(--low);color:var(--ink);} td.c-high{background:var(--high);color:var(--ink);} td.c-slow{background:var(--slow);color:var(--ink);font-weight:600;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;border-radius:3px;padding:2px 7px;text-transform:uppercase;letter-spacing:.03em;}
+  .b-urg{background:var(--low);color:#ff9a9a;} .b-ped{background:var(--high);color:var(--amber);} .b-ok{background:rgba(75,208,122,.14);color:var(--good-ink);} .b-old{background:var(--hair);color:var(--ink-3);}
+  .b-slow{background:var(--slow);color:#ffb08e;}
+  .empty{color:var(--ink-3);font-style:italic;padding:16px;font-size:12.5px;}
+
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .chip{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 10px;font-size:11.5px;cursor:pointer;}
+  .chip:hover{border-color:var(--amber-dim);color:var(--ink);} .chip.active{border-color:var(--amber);color:var(--ink);background:var(--surface-2);}
+  .chip b{color:var(--amber);font-weight:600;margin-left:6px;}
+
+  .params{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:24px;}
+  .pbox{border:1px solid var(--hair);background:var(--surface);padding:14px 16px;}
+  .pbox label{display:block;font-size:11.5px;color:var(--ink-2);margin-bottom:8px;line-height:1.4;}
+  .pbox input{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--ink);border-radius:4px;padding:8px 10px;font-size:14px;font-family:"IBM Plex Mono",monospace;}
+  .plazos{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px 18px;}
+  .plazos div{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--hair);padding:6px 0;font-size:12.5px;color:var(--ink-2);}
+  .plazos input{width:74px;text-align:right;border:1px solid var(--border);background:var(--bg);color:var(--ink);border-radius:4px;padding:5px 8px;font-family:"IBM Plex Mono",monospace;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+  @media (max-width: 900px){ body{padding:22px 14px 50px;} .board{grid-template-columns:repeat(2,1fr);} .meta{text-align:left;} }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Compras · Stock y Pedidos</h1></div>
+      <div class="sub">Cuántos días de stock hay, qué comprar y qué sobra — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Stock al: <b id="corteText">—</b><br>
+      Venta analizada: <b id="ventanaText">—</b><br>
+      Actualizado: <b id="generadoText">—</b>
+    </div>
+  </header>
+
+  <div class="board" id="kpiRow"></div>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="vista"></div>
+
+  <footer>
+    <div><b>Cómo se calcula:</b> <b>venta diaria</b> = unidades vendidas en la ventana (facturas y débitos menos rechazos) ÷ días hábiles con operación; <b>días de stock</b> = stock del depósito principal ÷ venta diaria. A nivel proveedor o categoría los días se calculan <b>a costo</b> (valor del stock ÷ venta diaria a costo) para que productos de distinto tamaño sean comparables. <b>Clase ABC</b> por proveedor sobre la venta neta de la ventana: A = hasta el 80%, B = hasta el 95%, C = el resto. <b>Sugerido</b> = venta diaria × (stock de seguridad + plazo de reposición) − stock, redondeado a bultos; seguridad A/B/C y plazos se cambian en <b>Parámetros</b> (se guardan en este navegador). El costo es el del bulto ÷ unidades del bulto, sin impuestos. En los productos que se pesan las unidades son gramos.</div>
+    <div style="margin-top:6px"><b>Límites:</b> el sugerido no descuenta pedidos hechos que todavía no llegaron (no están en la base); los productos de temporada conviene ajustarlos a mano; "sin venta reciente" = no vendió en los últimos días definidos en Parámetros. El historial de compras de la base empieza el 17/5/2026.</div>
+    <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom) y el export de ventas de Gescom (categorías). Se actualiza sola todos los días.</div>
+  </footer>
+</div>
+
+<script src="../gate.js"></script>
+<script>
+let DATA = null, P = null, ART = [];
+let tab = 'dias', filtroProv = '', busca = '', soloPedir = true, soloReciente = true, ocultarViejos = true;
+const sorts = {};
+const LS = 'gescom-compras-stock-params';
+const TABS = [['dias','Días de stock'],['cat','Por categoría'],['sin','Sin compra del mes'],['pedido','Sugerido de pedido'],['valor','Stock valorizado'],['lento','Stock alto · venta lenta'],['params','Parámetros']];
+
+const money = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
+function compact(n){ const a = Math.abs(n), s = n < 0 ? '-' : ''; if (a >= 1e6) return s + '$' + (a/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M'; if (a >= 1e3) return s + '$' + (a/1e3).toLocaleString('es-AR',{maximumFractionDigits:0}) + 'K'; return s + '$' + Math.round(a).toLocaleString('es-AR'); }
+const num = (n, d = 0) => (n == null || isNaN(n)) ? '—' : n.toLocaleString('es-AR', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const dias1 = n => n == null ? '—' : n.toLocaleString('es-AR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+const pct = (n, d = 1) => (n * 100).toLocaleString('es-AR', { maximumFractionDigits: d }) + '%';
+const fechaCorta = s => s ? s.split('-').reverse().join('/') : '—';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---------- parametros ----------
+function cargarParams(){
+  P = Object.assign({}, DATA.params); P.plazos = {};
+  try { const g = JSON.parse(localStorage.getItem(LS) || '{}'); Object.assign(P, g.p || {}); P.plazos = g.plazos || {}; } catch (e) { /* sin almacenamiento: valores por defecto */ }
+}
+function guardarParams(){
+  const p = {}; ['plazo','segA','segB','segC','alto','muyLento','reciente'].forEach(k => p[k] = P[k]);
+  try { localStorage.setItem(LS, JSON.stringify({ p, plazos: P.plazos })); } catch (e) { /* no se pudo guardar */ }
+}
+const plazoDe = prov => (P.plazos[prov] !== undefined && P.plazos[prov] !== '' && !isNaN(Number(P.plazos[prov]))) ? Number(P.plazos[prov]) : P.plazo;
+
+// ---------- calculo por producto ----------
+function derivar(){
+  const corte = new Date(DATA.fechaCorte + 'T12:00:00');
+  ART = DATA.articulos.map(a => {
+    const vd = a.d > 0 ? a.v / a.d : 0;
+    const dias = vd > 0 ? a.s / vd : null;
+    const seg = a.a === 'A' ? P.segA : a.a === 'B' ? P.segB : a.a === 'C' ? P.segC : 0;
+    const plazo = plazoDe(a.p);
+    const obj = vd * (seg + plazo), falta = Math.max(0, obj - a.s);
+    const bultos = falta > 0 ? Math.ceil(falta / a.u - 1e-9) : 0;
+    const dsv = a.uv ? Math.round((corte - new Date(a.uv + 'T12:00:00')) / 864e5) : null;
+    const dsc = a.uc ? Math.round((corte - new Date(a.uc + 'T12:00:00')) / 864e5) : null;
+    const x = Object.assign({}, a, { vd, dias, seg, plazo, obj, falta, bultos, unidPedir: bultos * a.u, importe: bultos * a.u * a.k,
+      valor: a.s * a.k, vdCosto: vd * a.k, stockB: a.s / a.u, dsv, dsc, reciente: dsv != null && dsv <= P.reciente });
+    x.prio = prioridad(x);
+    return x;
+  });
+}
+function prioridad(x){
+  if (!x.reciente) return { t: 'Sin venta reciente', o: 4, c: 'b-old' };
+  if (x.dias == null) return { t: 'Sin venta', o: 5, c: 'b-old' };
+  if (x.dias < x.plazo) return { t: 'Urgente', o: 1, c: 'b-urg' };
+  if (x.dias < x.plazo + x.seg) return { t: 'Pedir pronto', o: 2, c: 'b-ped' };
+  return { t: 'Hay stock', o: 3, c: 'b-ok' };
+}
+function clsDias(d, plazo){
+  if (d == null) return '';
+  if (d > P.muyLento) return 'c-slow';
+  if (d > P.alto) return 'c-high';
+  if (d < (plazo == null ? P.plazo : plazo)) return 'c-low';
+  return '';
+}
+function agrupar(lista, keyFn){
+  const m = new Map();
+  lista.forEach(x => {
+    const k = keyFn(x); let g = m.get(k.id);
+    if (!g) { g = Object.assign({ n: 0, venta: 0, vdCosto: 0, vdU: 0, stockU: 0, stockB: 0, valor: 0 }, k); m.set(k.id, g); }
+    g.n++; g.venta += x.m; g.vdCosto += x.vdCosto; g.vdU += x.vd; g.stockU += x.s; g.stockB += x.stockB; g.valor += x.valor;
+  });
+  return [...m.values()].map(g => Object.assign(g, { dias: g.vdCosto > 0 ? g.valor / g.vdCosto : null, diasU: g.vdU > 0 ? g.stockU / g.vdU : null }));
+}
+
+// ---------- tabla generica ----------
+function tabla(id, cols, rows, defKey, defDir, totalHTML, onClickRow){
+  const st = sorts[id] || (sorts[id] = { k: defKey, dir: defDir });
+  const col = cols.find(c => c.k === st.k) || cols[0];
+  const val = r => col.sv ? col.sv(r) : r[col.k];
+  rows = rows.slice().sort((a, b) => {
+    const av = val(a), bv = val(b);
+    if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+    return st.dir * (typeof av === 'string' ? av.localeCompare(bv, 'es') : av - bv);
+  });
+  const head = cols.map(c => `<th class="${c.n ? 'num' : ''} ${st.k === c.k ? 'sorted' : ''}"><button class="th-sort" data-id="${id}" data-k="${c.k}">${c.l}</button></th>`).join('');
+  const body = rows.map((r, i) => '<tr class="' + (onClickRow ? 'click' : '') + '" data-i="' + i + '">' + cols.map(c => {
+    const html = c.f ? c.f(r) : esc(r[c.k]);
+    const cl = [c.n ? 'num mono' : '', c.cls ? c.cls(r) : ''].join(' ');
+    return `<td class="${cl}">${html}</td>`;
+  }).join('') + '</tr>').join('');
+  return { html: `<div class="table-wrap"><table class="t"><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td class="empty" colspan="${cols.length}">sin datos con estos filtros</td></tr>`}${totalHTML || ''}</tbody></table></div>`, rows };
+}
+function engancharTabla(contenedor, rows, onClickRow){
+  contenedor.querySelectorAll('.th-sort').forEach(b => b.addEventListener('click', () => {
+    const s = sorts[b.dataset.id]; if (s.k === b.dataset.k) s.dir *= -1; else { s.k = b.dataset.k; s.dir = 1; }
+    render();
+  }));
+  if (onClickRow) contenedor.querySelectorAll('tbody tr.click').forEach(tr => tr.addEventListener('click', () => onClickRow(rows[+tr.dataset.i])));
+}
+function filtros({ prov = true, buscar = true, extra = '' } = {}){
+  const provs = DATA.proveedores;
+  return `<div class="controls">
+    ${prov ? `<div class="ctrl"><label for="fProv">Proveedor</label><select class="inp" id="fProv"><option value="">Todos los proveedores</option>${provs.map(p => `<option value="${esc(p)}" ${p === filtroProv ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></div>` : ''}
+    ${buscar ? `<div class="ctrl"><label for="fBusca">Producto o código</label><input class="inp" id="fBusca" type="text" placeholder="buscar_producto..." value="${esc(busca)}"></div>` : ''}
+    ${extra}</div>`;
+}
+function engancharFiltros(){
+  const fp = document.getElementById('fProv'); if (fp) fp.addEventListener('change', () => { filtroProv = fp.value; render(); });
+  const fb = document.getElementById('fBusca'); if (fb) fb.addEventListener('input', () => { busca = fb.value.trim().toLowerCase(); const pos = fb.selectionStart; render(); const nb = document.getElementById('fBusca'); if (nb) { nb.focus(); nb.setSelectionRange(pos, pos); } });
+}
+const pasaFiltro = x => (!filtroProv || x.p === filtroProv) && (!busca || x.n.toLowerCase().includes(busca) || x.c.toLowerCase().includes(busca));
+const leyendaDias = () => `<div class="legend"><span><i style="background:var(--low)"></i>menos días que el plazo de reposición (puede faltar)</span><span><i style="background:var(--high)"></i>stock alto (más de ${P.alto} días)</span><span><i style="background:var(--slow)"></i>venta muy lenta (más de ${P.muyLento} días)</span></div>`;
+
+// ---------- vistas ----------
+function vistaDias(el){
+  const rows = agrupar(ART, x => ({ id: x.p, prov: x.p }));
+  const t = rows.reduce((a, r) => ({ n: a.n + r.n, venta: a.venta + r.venta, vdCosto: a.vdCosto + r.vdCosto, vdU: a.vdU + r.vdU, stockU: a.stockU + r.stockU, stockB: a.stockB + r.stockB, valor: a.valor + r.valor }), { n: 0, venta: 0, vdCosto: 0, vdU: 0, stockU: 0, stockB: 0, valor: 0 });
+  const cols = [
+    { k: 'prov', l: 'Proveedor', cls: () => 'nom' }, { k: 'n', l: 'Productos', n: 1, f: r => num(r.n) }, { k: 'venta', l: 'Venta de la ventana ($ neto)', n: 1, f: r => compact(r.venta) },
+    { k: 'vdCosto', l: 'Venta diaria a costo', n: 1, f: r => compact(r.vdCosto) }, { k: 'stockU', l: 'Stock (u)', n: 1, f: r => num(r.stockU) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB) },
+    { k: 'valor', l: 'Stock a costo', n: 1, f: r => compact(r.valor) },
+    { k: 'dias', l: 'DÍAS DE STOCK (a costo)', n: 1, f: r => `<b>${dias1(r.dias)}</b>`, cls: r => clsDias(r.dias, plazoDe(r.prov)) },
+    { k: 'diasU', l: 'Días de stock (por unidades)', n: 1, f: r => dias1(r.diasU), cls: r => clsDias(r.diasU, plazoDe(r.prov)) }
+  ];
+  const tot = `<tr class="total"><td>TOTAL</td><td class="num mono">${num(t.n)}</td><td class="num mono">${compact(t.venta)}</td><td class="num mono">${compact(t.vdCosto)}</td><td class="num mono">${num(t.stockU)}</td><td class="num mono">${num(t.stockB)}</td><td class="num mono">${compact(t.valor)}</td><td class="num mono">${dias1(t.vdCosto > 0 ? t.valor / t.vdCosto : null)}</td><td class="num mono">${dias1(t.vdU > 0 ? t.stockU / t.vdU : null)}</td></tr>`;
+  const r = tabla('dias', cols, rows, 'valor', -1, tot, true);
+  el.innerHTML = `<p class="hint">Tocá un proveedor para ver sus categorías. Los días a costo comparan productos de distinto tamaño; los de unidades suman cosas distintas (pañales con jabones).</p>${leyendaDias()}${r.html}`;
+  engancharTabla(el, r.rows, row => { filtroProv = row.prov; tab = 'cat'; render(); });
+}
+function vistaCat(el){
+  const rows = agrupar(ART.filter(x => !filtroProv || x.p === filtroProv), x => ({ id: x.p + '|' + x.g, prov: x.p, cat: x.g }));
+  const cols = [
+    { k: 'prov', l: 'Proveedor', cls: () => 'nom' }, { k: 'cat', l: 'Categoría', cls: () => 'nom' }, { k: 'n', l: 'Productos', n: 1, f: r => num(r.n) }, { k: 'venta', l: 'Venta de la ventana ($ neto)', n: 1, f: r => compact(r.venta) },
+    { k: 'vdCosto', l: 'Venta diaria a costo', n: 1, f: r => compact(r.vdCosto) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB) }, { k: 'valor', l: 'Stock a costo', n: 1, f: r => compact(r.valor) },
+    { k: 'dias', l: 'DÍAS DE STOCK (a costo)', n: 1, f: r => `<b>${dias1(r.dias)}</b>`, cls: r => clsDias(r.dias, plazoDe(r.prov)) },
+    { k: 'diasU', l: 'Días de stock (por unidades)', n: 1, f: r => dias1(r.diasU), cls: r => clsDias(r.diasU, plazoDe(r.prov)) }
+  ];
+  const r = tabla('cat', cols, rows, 'valor', -1, '', false);
+  el.innerHTML = filtros({ buscar: false }) + `<p class="hint">Cada proveedor abierto por las categorías de Gescom (papel higiénico, toalla femenina, pañal...).</p>${leyendaDias()}${r.html}`;
+  engancharFiltros(); engancharTabla(el, r.rows, null);
+}
+function vistaSin(el){
+  let lista = ART.filter(x => x.v > 0 && x.cm <= 0 && pasaFiltro(x));
+  if (ocultarViejos) lista = lista.filter(x => x.reciente);
+  const cols = [
+    { k: 'p', l: 'Proveedor' }, { k: 'g', l: 'Categoría' }, { k: 'c', l: 'Código' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.n)}">${esc(r.n)}</span>` },
+    { k: 'a', l: 'Clase' }, { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) }, { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) },
+    { k: 'dias', l: 'Días de stock', n: 1, f: r => dias1(r.dias), cls: r => clsDias(r.dias, r.plazo) },
+    { k: 'uc', l: 'Última compra', n: 1, f: r => r.uc ? fechaCorta(r.uc) : 'sin registro' }, { k: 'dsc', l: 'Días sin comprar', n: 1, f: r => num(r.dsc) },
+    { k: 'prio', l: 'Prioridad', sv: r => r.prio.o, f: r => `<span class="badge ${r.prio.c}">${r.prio.t}</span>` }
+  ];
+  const r = tabla('sin', cols, lista, 'prio', 1, '', false);
+  const urg = lista.filter(x => x.prio.o === 1).length;
+  el.innerHTML = filtros({ extra: `<label class="chk"><input type="checkbox" id="cViejos" ${ocultarViejos ? 'checked' : ''}> ocultar los que no vendieron en los últimos ${P.reciente} días</label>` }) +
+    `<p class="hint">Productos que venden y no tuvieron ingreso de compra desde el ${fechaCorta(DATA.inicioMes)}. <b>${num(lista.length)}</b> productos, <b>${num(urg)}</b> urgentes (les queda menos stock que el plazo de reposición).</p>${leyendaDias()}${r.html}`;
+  engancharFiltros(); engancharTabla(el, r.rows, null);
+  document.getElementById('cViejos').addEventListener('change', e => { ocultarViejos = e.target.checked; render(); });
+}
+function vistaPedido(el){
+  const base = ART.filter(x => ['A','B','C'].includes(x.a) && pasaFiltro(x));
+  let lista = base.filter(x => (!soloPedir || x.bultos > 0) && (!soloReciente || x.reciente));
+  const porProv = new Map();
+  ART.filter(x => ['A','B','C'].includes(x.a) && x.bultos > 0 && x.reciente).forEach(x => { const g = porProv.get(x.p) || { imp: 0, n: 0 }; g.imp += x.importe; g.n++; porProv.set(x.p, g); });
+  const totalImp = [...porProv.values()].reduce((a, g) => a + g.imp, 0), totalN = [...porProv.values()].reduce((a, g) => a + g.n, 0);
+  const chips = [...porProv.entries()].sort((a, b) => b[1].imp - a[1].imp).map(([p, g]) => `<button class="chip ${p === filtroProv ? 'active' : ''}" data-p="${esc(p)}">${esc(p)}<b>${compact(g.imp)}</b></button>`).join('');
+  const cols = [
+    { k: 'p', l: 'Proveedor' }, { k: 'g', l: 'Categoría' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.c)} · ${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
+    { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) }, { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) },
+    { k: 'dias', l: 'Días de stock', n: 1, f: r => dias1(r.dias), cls: r => clsDias(r.dias, r.plazo) },
+    { k: 'seg', l: 'Seguridad (días)', n: 1, f: r => num(r.seg) }, { k: 'plazo', l: 'Plazo (días)', n: 1, f: r => num(r.plazo) }, { k: 'obj', l: 'Stock objetivo (u)', n: 1, f: r => num(r.obj) },
+    { k: 'bultos', l: 'BULTOS A PEDIR', n: 1, f: r => `<b>${num(r.bultos)}</b>` }, { k: 'unidPedir', l: 'Unidades a pedir', n: 1, f: r => num(r.unidPedir) },
+    { k: 'k', l: 'Costo unit.', n: 1, f: r => '$' + num(r.k, 2) }, { k: 'importe', l: 'IMPORTE A COSTO', n: 1, f: r => `<b>${money(r.importe)}</b>` }
+  ];
+  const sumImp = lista.reduce((a, x) => a + x.importe, 0);
+  const tot = lista.length ? `<tr class="total"><td colspan="10">TOTAL (${num(lista.length)} líneas)</td><td class="num mono">${num(lista.reduce((a, x) => a + x.bultos, 0))}</td><td></td><td></td><td class="num mono">${money(sumImp)}</td></tr>` : '';
+  const r = tabla('pedido', cols, lista, 'importe', -1, tot, false);
+  el.innerHTML = filtros({ extra: `<label class="chk"><input type="checkbox" id="cPedir" ${soloPedir ? 'checked' : ''}> solo lo que hay que pedir</label><label class="chk"><input type="checkbox" id="cRec" ${soloReciente ? 'checked' : ''}> solo con venta en los últimos ${P.reciente} días</label><button class="btn" id="bCsv">Descargar CSV</button>` }) +
+    `<p class="hint">Objetivo = venta diaria × (seguridad A ${P.segA} / B ${P.segB} / C ${P.segC} días + plazo de reposición). Pedido total sugerido: <b>${money(totalImp)}</b> en ${num(totalN)} líneas. Tocá un proveedor para filtrar.</p><div class="chips">${chips}</div>${leyendaDias()}${r.html}`;
+  engancharFiltros(); engancharTabla(el, r.rows, null);
+  document.getElementById('cPedir').addEventListener('change', e => { soloPedir = e.target.checked; render(); });
+  document.getElementById('cRec').addEventListener('change', e => { soloReciente = e.target.checked; render(); });
+  el.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filtroProv = filtroProv === b.dataset.p ? '' : b.dataset.p; render(); }));
+  document.getElementById('bCsv').addEventListener('click', () => {
+    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Venta diaria (u)','Stock (u)','Días de stock','Bultos a pedir','Unid. por bulto','Unidades a pedir','Costo unit.','Importe a costo'];
+    const f = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const filas = r.rows.map(x => [x.p, x.g, x.c, x.n, x.a, x.vd.toFixed(2).replace('.', ','), String(x.s).replace('.', ','), x.dias == null ? '' : x.dias.toFixed(1).replace('.', ','), x.bultos, x.u, x.unidPedir, x.k.toFixed(2).replace('.', ','), x.importe.toFixed(2).replace('.', ',')].map(f).join(';'));
+    const blob = new Blob(['﻿' + [cab.map(f).join(';')].concat(filas).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedido-sugerido-' + DATA.fechaCorte + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  });
+}
+function vistaValor(el){
+  const rows = agrupar(ART, x => ({ id: x.p, prov: x.p }));
+  const total = rows.reduce((a, r) => a + r.valor, 0);
+  rows.forEach(r => r.pct = total ? r.valor / total : 0);
+  const cols = [
+    { k: 'prov', l: 'Proveedor', cls: () => 'nom' }, { k: 'stockU', l: 'Stock (u)', n: 1, f: r => num(r.stockU) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB) },
+    { k: 'valor', l: 'Valor a costo', n: 1, f: r => `<b>${money(r.valor)}</b>` }, { k: 'pct', l: '% del total', n: 1, f: r => pct(r.pct) }
+  ];
+  const tot = `<tr class="total"><td>TOTAL</td><td class="num mono">${num(rows.reduce((a, r) => a + r.stockU, 0))}</td><td class="num mono">${num(rows.reduce((a, r) => a + r.stockB, 0))}</td><td class="num mono">${money(total)}</td><td class="num mono">100%</td></tr>`;
+  const r1 = tabla('valor', cols, rows, 'valor', -1, tot, false);
+  const top = ART.slice().sort((a, b) => b.valor - a.valor).slice(0, 30);
+  const cols2 = [
+    { k: 'p', l: 'Proveedor' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.n)}">${esc(r.n)}</span>` }, { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) },
+    { k: 'valor', l: 'Valor a costo', n: 1, f: r => `<b>${money(r.valor)}</b>` }, { k: 'dias', l: 'Días de stock', n: 1, f: r => dias1(r.dias), cls: r => clsDias(r.dias, r.plazo) }
+  ];
+  const r2 = tabla('valorTop', cols2, top, 'valor', -1, '', false);
+  el.innerHTML = `<p class="hint">Stock del depósito principal valorizado a precio de costo sin impuestos.</p>${r1.html}<h2 style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:28px 0 12px">Los 30 productos con más stock valorizado</h2>${r2.html}`;
+  engancharTabla(el, r1.rows, null);
+}
+function vistaLento(el){
+  const lista = ART.filter(x => x.s > 0 && (x.v <= 0 || (x.dias != null && x.dias > P.alto)) && pasaFiltro(x));
+  const est = x => x.v <= 0 || x.dias == null ? { t: 'Sin venta en la ventana', o: 1, c: 'b-slow' } : x.dias > P.muyLento ? { t: 'Venta muy lenta', o: 2, c: 'b-slow' } : { t: 'Stock alto', o: 3, c: 'b-ped' };
+  lista.forEach(x => { x.est = est(x); });
+  const valTotal = lista.reduce((a, x) => a + x.valor, 0), valStock = ART.reduce((a, x) => a + x.valor, 0);
+  const cols = [
+    { k: 'p', l: 'Proveedor' }, { k: 'g', l: 'Categoría' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.c)} · ${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
+    { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB, 1) }, { k: 'valor', l: 'VALOR A COSTO', n: 1, f: r => `<b>${money(r.valor)}</b>` },
+    { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) }, { k: 'dias', l: 'Días de stock', n: 1, f: r => dias1(r.dias), cls: r => clsDias(r.dias, r.plazo) },
+    { k: 'uv', l: 'Última venta', n: 1, f: r => r.uv ? fechaCorta(r.uv) : 'sin ventas' }, { k: 'est', l: 'Estado', sv: r => r.est.o, f: r => `<span class="badge ${r.est.c}">${r.est.t}</span>` }
+  ];
+  const r = tabla('lento', cols, lista, 'valor', -1, '', false);
+  el.innerHTML = filtros({}) + `<p class="hint"><b>${num(lista.length)}</b> productos con stock alto (más de ${P.alto} días) o sin venta en la ventana, que inmovilizan <b>${money(valTotal)}</b> a costo (${pct(valStock ? valTotal / valStock : 0)} del stock total).</p>${leyendaDias()}${r.html}`;
+  engancharFiltros(); engancharTabla(el, r.rows, null);
+}
+function vistaParams(el){
+  const campos = [['plazo','Plazo de reposición por defecto (días entre pedir y recibir)'],['segA','Stock de seguridad productos A (días de venta)'],['segB','Stock de seguridad productos B (días de venta)'],['segC','Stock de seguridad productos C (días de venta)'],['alto','Stock alto: más de (días de stock)'],['muyLento','Venta muy lenta: más de (días de stock)'],['reciente','Venta reciente: vendió en los últimos (días)']];
+  el.innerHTML = `<p class="hint">Estos valores se guardan en este navegador y recalculan todo el tablero. El plazo de reposición es el supuesto que más mueve el pedido sugerido: conviene cargar el real de cada proveedor.</p>
+    <div class="params">${campos.map(([k, l]) => `<div class="pbox"><label for="p_${k}">${l}</label><input id="p_${k}" type="number" min="0" step="1" value="${P[k]}"></div>`).join('')}</div>
+    <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:0 0 6px">Plazo de reposición por proveedor (días)</h2>
+    <p class="hint">Vacío = usa el plazo por defecto (${P.plazo}).</p>
+    <div class="plazos">${DATA.proveedores.map(p => `<div><span>${esc(p)}</span><input type="number" min="0" step="1" data-prov="${esc(p)}" placeholder="${P.plazo}" value="${P.plazos[p] !== undefined ? P.plazos[p] : ''}"></div>`).join('')}</div>
+    <p style="margin-top:20px"><button class="btn" id="bReset">Restablecer valores originales</button></p>`;
+  campos.forEach(([k]) => document.getElementById('p_' + k).addEventListener('change', e => { const v = Number(e.target.value); if (!isNaN(v) && v >= 0) { P[k] = v; guardarParams(); derivar(); renderKPIs(); } }));
+  el.querySelectorAll('input[data-prov]').forEach(i => i.addEventListener('change', () => { if (i.value === '') delete P.plazos[i.dataset.prov]; else P.plazos[i.dataset.prov] = Number(i.value); guardarParams(); derivar(); renderKPIs(); }));
+  document.getElementById('bReset').addEventListener('click', () => { try { localStorage.removeItem(LS); } catch (e) { /* nada */ } cargarParams(); derivar(); renderKPIs(); render(); });
+}
+
+// ---------- marco ----------
+function renderKPIs(){
+  const valor = ART.reduce((a, x) => a + x.valor, 0), vdc = ART.reduce((a, x) => a + x.vdCosto, 0);
+  const quiebres = ART.filter(x => x.vd > 0 && x.s <= 0);
+  const ventaTotal = ART.reduce((a, x) => a + x.m, 0), ventaQ = quiebres.reduce((a, x) => a + x.m, 0);
+  const ped = ART.filter(x => ['A','B','C'].includes(x.a) && x.bultos > 0 && x.reciente);
+  const cells = [
+    { l: 'Stock a costo', v: compact(valor), f: money(valor) + ' · sin impuestos' },
+    { l: 'Cobertura total', v: dias1(vdc > 0 ? valor / vdc : null) + ' días', f: 'valor del stock ÷ venta diaria a costo', a: true },
+    { l: 'Quiebres', v: num(quiebres.length), f: 'venden y hoy no tienen stock · ' + pct(ventaTotal ? ventaQ / ventaTotal : 0) + ' de la venta (' + compact(ventaQ) + ')', crit: quiebres.length > 0 },
+    { l: 'Pedido sugerido', v: compact(ped.reduce((a, x) => a + x.importe, 0)), f: num(ped.length) + ' líneas a costo · con seguridad A ' + P.segA + ' / B ' + P.segB + ' / C ' + P.segC + ' días' }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c => `<div class="cell"><div class="label">${c.l}</div><div class="value mono ${c.a ? 'amber' : ''} ${c.crit ? 'crit' : ''}">${c.v}</div><div class="foot">${c.f}</div></div>`).join('');
+}
+function render(){
+  document.getElementById('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'active' : ''}" role="tab" aria-selected="${k === tab}" data-t="${k}">${l}</button>`).join('');
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.t; render(); }));
+  const el = document.getElementById('vista');
+  ({ dias: vistaDias, cat: vistaCat, sin: vistaSin, pedido: vistaPedido, valor: vistaValor, lento: vistaLento, params: vistaParams })[tab](el);
+}
+
+cargarDatos('./data.json')
+  .then(data => {
+    DATA = data;
+    const g = new Date(DATA.generatedAt);
+    document.getElementById('generadoText').textContent = isNaN(g) ? '—' : g.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('corteText').textContent = fechaCorta(DATA.fechaCorte);
+    const v = DATA.ventana;
+    document.getElementById('ventanaText').textContent = fechaCorta(v.desde) + ' – ' + fechaCorta(v.hasta) + ' (' + num(v.diasTotal, 1) + ' días con operación)';
+    cargarParams(); derivar(); renderKPIs(); render();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML = `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer los datos (${esc(err.message)}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>

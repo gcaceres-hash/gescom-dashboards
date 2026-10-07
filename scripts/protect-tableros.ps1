@@ -23,7 +23,7 @@ param(
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs"),
     [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$Clave = "",
-    [string[]]$Tableros = @("rentabilidad","cobranzas","digip-resumen","digip-pedidos","digip-stock","resumen-comercial","compras","proyeccion","digiorno")
+    [string[]]$Tableros = @("rentabilidad","cobranzas","digip-resumen","digip-pedidos","digip-stock","resumen-comercial","compras","proyeccion","digiorno","compras-stock")
 )
 $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
