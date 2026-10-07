@@ -18,9 +18,17 @@ jobs:
         shell: bash
         run: echo '${{ secrets.PANEL_CONFIG }}' > scripts/panel-config.json
 
+      - name: Descifrar datos previos (solo si hay contrasena configurada)
+        shell: pwsh
+        run: ./scripts/protect-tableros.ps1 -Modo Descifrar -Tableros compras
+
       - name: Correr pull-compras.ps1
         shell: pwsh
         run: ./scripts/pull-compras.ps1
+
+      - name: Cifrar datos antes de publicar (solo si hay contrasena configurada)
+        shell: pwsh
+        run: ./scripts/protect-tableros.ps1 -Modo Cifrar -Tableros compras
 
       - name: Publicar cambios (commit + push a docs/compras)
         shell: bash

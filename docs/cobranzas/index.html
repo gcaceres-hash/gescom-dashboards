@@ -180,6 +180,7 @@
   </footer>
 </div>
 
+<script src="../gate.js"></script>
 <script>
 let DATA = null;
 
@@ -344,8 +345,7 @@ function renderAll(){
   }
 }
 
-fetch('./data.json?t=' + Date.now())
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+cargarDatos('./data.json')
   .then(data => { DATA = data; renderAll(); })
   .catch(err => {
     document.getElementById('kpiRow').innerHTML =

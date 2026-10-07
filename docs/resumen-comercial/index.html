@@ -110,6 +110,7 @@
   </footer>
 </div>
 
+<script src="../gate.js"></script>
 <script>
 function renderCards(containerId, items, cls){
   document.getElementById(containerId).innerHTML = items.map(i => `
@@ -119,8 +120,7 @@ function renderCards(containerId, items, cls){
     </div>`).join('');
 }
 
-fetch('./data.json?t=' + Date.now())
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+cargarDatos('./data.json')
   .then(d => {
     document.getElementById('generadoText').textContent = new Date(d.generadoEn).toLocaleString('es-AR');
     renderCards('bienList', d.bien, 'good');

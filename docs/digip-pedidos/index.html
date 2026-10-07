@@ -112,6 +112,7 @@
   </footer>
 </div>
 
+<script src="../gate.js"></script>
 <script>
 function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
 function fmtMoneyCompact(n){
@@ -155,8 +156,7 @@ function renderVendedores(d){
     + `<div class="trow total-row"><span class="name">TOTAL</span><span class="num mono">${total}</span></div>`;
 }
 
-fetch('./data.json?t=' + Date.now())
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+cargarDatos('./data.json')
   .then(d => {
     document.getElementById('generadoText').textContent = new Date(d.generadoEn).toLocaleString('es-AR');
     renderKPIs(d);
