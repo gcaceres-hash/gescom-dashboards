@@ -20,3 +20,6 @@ docs/resumen-comercial/data.json
 docs/compras/data.json
 docs/proyeccion/data.json
 docs/digiorno/data.json
+
+# Excel de compras: datos intermedios (ventas), no se suben
+scripts/compras-stock/tmp/
