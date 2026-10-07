@@ -33,7 +33,9 @@ else {
     $c2 = Leer-Oculto "Escribila de nuevo"
 }
 if ($c1 -ne $c2) { throw "Las dos contrasenas no coinciden. No se guardo nada." }
-if ($c1.Length -lt 12) { throw "Muy corta: usa al menos 12 caracteres (mejor una frase). No se guardo nada." }
+if ($c1.Length -lt 16) { throw "Muy corta: usa una frase de al menos 16 caracteres (4 palabras sin relacion entre si). No se guardo nada." }
+if (@($c1 -split '[ -]' | Where-Object { $_ }).Count -lt 3) { throw "Usa una frase de al menos 3 palabras separadas por espacios o guiones (por ejemplo: tigre ventana cafe nube). No se guardo nada." }
+if ($c1 -match '(?i)puelo|elebes|gescom|dashboard|contrasena|password|12345|tigre ventana') { throw "Esa frase tiene el nombre de la empresa o una palabra muy comun: es facil de adivinar. Elegi palabras sin relacion con el negocio. No se guardo nada." }
 if ($c1 -notmatch '^[A-Za-z0-9 _.,;:!?@#%&*+=/()\[\]{}~^|-]+$') { throw "Tiene caracteres no permitidos (acentos, comillas, barra invertida o `$). Proba otra. No se guardo nada." }
 
 $utf8 = New-Object System.Text.UTF8Encoding $false

@@ -8,3 +8,15 @@ scripts/stock-dashboard-share.html
 scripts/venta-rentabilidad.html
 scripts/ultimo-csv-procesado.txt
 .claude/settings.local.json
+
+# Tableros protegidos con contrasena: los datos en claro NUNCA se suben (solo data.enc.json cifrado).
+# Ver scripts/protect-tableros.ps1. Para trabajar en local: -Modo Descifrar, y -Modo Cifrar antes de commitear.
+docs/rentabilidad/data.json
+docs/cobranzas/data.json
+docs/digip-resumen/data.json
+docs/digip-pedidos/data.json
+docs/digip-stock/data.json
+docs/resumen-comercial/data.json
+docs/compras/data.json
+docs/proyeccion/data.json
+docs/digiorno/data.json
