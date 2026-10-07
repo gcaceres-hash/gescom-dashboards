@@ -1,0 +1,347 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clientes por Ramo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:        #070f0e;
+    --surface:   #0f1a19;
+    --surface-2: #142120;
+    --ink:       #e9f4f2;
+    --ink-2:     #9fb9b5;
+    --ink-3:     #61807b;
+    --hair:      #1f3330;
+    --border:    rgba(233,244,242,0.10);
+    --accent:    #3fd6c3;
+    --accent-dim:#14544c;
+    --good-ink:  #4bd07a;
+    --warning:   #fab219;
+    --serious:   #ec835a;
+    --critical:  #e66767;
+  }
+  :root[data-theme="light"]{
+    color-scheme: dark;
+    --bg:#070f0e; --surface:#0f1a19; --surface-2:#142120; --ink:#e9f4f2; --ink-2:#9fb9b5; --ink-3:#61807b;
+    --hair:#1f3330; --border:rgba(233,244,242,0.10); --accent:#3fd6c3; --accent-dim:#14544c;
+    --good-ink:#4bd07a; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+  .aviso{margin:14px 0 0;padding:10px 14px;border:1px solid #5a4510;background:rgba(250,178,25,.08);color:var(--warning);font-size:12.5px;line-height:1.5;border-radius:4px;}
+
+  .month-tabs{display:flex;gap:6px;margin:18px 0 4px;flex-wrap:wrap;}
+  .month-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.02em;text-transform:uppercase;}
+  .month-tab:hover{border-color:var(--accent-dim);color:var(--ink);}
+  .month-tab.active{background:var(--accent);border-color:var(--accent);color:#04100e;font-weight:700;}
+  .month-tab .badge{font-size:9.5px;opacity:.75;margin-left:5px;}
+  button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 26px;}
+  .board .cell{background:var(--bg);padding:18px 20px;}
+  .board .cell .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .cell .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
+  .board .cell .value.accent{color:var(--accent);}
+  .board .cell .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.45;}
+
+  .mode-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--hair);}
+  .mode-tab{font-family:"IBM Plex Mono",monospace;background:none;border:none;color:var(--ink-3);padding:10px 4px;margin-right:22px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .mode-tab:hover{color:var(--ink-2);}
+  .mode-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:16px;}
+  .chips{align-items:center;}
+  .ctrl-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .ctrl-group label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"IBM Plex Mono",monospace;width:240px;}
+  .search::placeholder{color:var(--ink-3);}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{font-family:"IBM Plex Mono",monospace;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 10px;font-size:11.5px;font-weight:500;cursor:pointer;}
+  .chip:hover{border-color:var(--accent-dim);color:var(--ink);}
+  .chip.active{border-color:var(--accent);color:var(--ink);background:var(--surface-2);}
+  .chip .sw{width:9px;height:9px;border-radius:2px;flex:none;}
+  .hint{font-size:11.5px;color:var(--ink-3);margin:0 0 12px;}
+
+  .table-wrap{border:1px solid var(--hair);overflow-x:auto;}
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px;min-width:900px;}
+  table.t th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--hair);white-space:nowrap;}
+  table.t th.num, table.t td.num{text-align:right;}
+  .th-sort{cursor:pointer;user-select:none;background:none;border:none;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;padding:0;}
+  th.sorted .th-sort{color:var(--accent);}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:middle;}
+  table.t tr.fila{cursor:pointer;}
+  table.t tr.fila:hover td{background:var(--surface);}
+  table.t tr.fila.open td{background:var(--surface-2);}
+  table.t tr.total td{background:var(--surface);border-top:1px solid var(--accent-dim);color:var(--ink);font-weight:600;border-bottom:none;}
+  table.t td.nom{color:var(--ink);font-weight:600;white-space:nowrap;}
+  table.t td.nom .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  .chev{color:var(--ink-3);font-size:10px;display:inline-block;width:14px;transition:transform .15s;}
+  tr.open .chev{transform:rotate(90deg);color:var(--accent);}
+  tr.detalle td{background:var(--surface-2);padding:0;border-bottom:1px solid var(--hair);}
+  .detalle-inner{padding:12px 16px 18px 40px;}
+  table.sub{width:100%;border-collapse:collapse;font-size:12px;}
+  table.sub th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:9.5px;letter-spacing:.05em;padding:6px 10px;border-bottom:1px solid var(--hair);}
+  table.sub th.num, table.sub td.num{text-align:right;}
+  table.sub td{padding:6px 10px;border-bottom:1px solid var(--hair);color:var(--ink-2);}
+  .good{color:var(--good-ink);} .warn{color:var(--warning);} .serious{color:var(--serious);} .crit{color:var(--critical);}
+  .strong{color:var(--ink);font-weight:600;}
+
+  .stack{display:flex;height:12px;min-width:150px;background:var(--hair);border-radius:3px;overflow:hidden;gap:1px;}
+  .stack > span{display:block;height:100%;min-width:2px;}
+  .empty-note{color:var(--ink-3);font-size:12.5px;font-style:italic;padding:14px;}
+  .pct-bar{display:inline-block;height:6px;border-radius:3px;background:var(--accent);vertical-align:middle;margin-right:8px;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+  @media (max-width: 900px){ body{padding:22px 16px 50px;} .board{grid-template-columns:repeat(2,1fr);} .meta{text-align:left;} }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Clientes por Ramo</h1></div>
+      <div class="sub">Cómo está compuesta la cartera de cada vendedor y cuánto vende cada ramo — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Período: <b id="periodoText">—</b><br>
+      Datos al: <b id="fechaText">—</b>
+    </div>
+  </header>
+  <div class="aviso" id="avisoCartera" style="display:none"></div>
+
+  <div class="month-tabs" id="monthTabs" role="tablist" aria-label="Mes"></div>
+  <div class="board" id="kpiRow"></div>
+
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab" data-modo="vendedor" role="tab">Por vendedor</button>
+    <button class="mode-tab" data-modo="ramo" role="tab">Por ramo</button>
+  </div>
+
+  <div id="vistaVendedor">
+    <div class="controls">
+      <div class="ctrl-group"><label for="buscar">Vendedor</label><input class="search" id="buscar" type="text" placeholder="buscar_vendedor..."></div>
+      <div class="ctrl-group" style="flex:1"><label>Ramo</label><div class="chips" id="chipsRamo"></div></div>
+    </div>
+    <p class="hint" id="hintVend"></p>
+    <div class="table-wrap"><table class="t" id="tablaVend"><thead id="headVend"></thead><tbody id="bodyVend"></tbody></table></div>
+  </div>
+
+  <div id="vistaRamo" style="display:none">
+    <p class="hint">Todos los vendedores juntos. Tocá un ramo para ver cómo le va a cada vendedor en ese ramo.</p>
+    <div class="table-wrap"><table class="t"><thead id="headRamo"></thead><tbody id="bodyRamo"></tbody></table></div>
+  </div>
+
+  <footer>
+    <div><b>Metodología:</b> el <b>ramo</b> es la categoría del cliente en Gescom (Almacén, Autoservicio, Kiosco, Mayorista...); los ramos que Georgalos cargó con otro código pero son lo mismo se unificaron. La <b>cartera</b> de un vendedor son sus clientes activos con vendedor asignado (mismo criterio que Cobertura y Potenciales). <b>Compraron</b> = clientes con al menos una factura en el mes; <b>cobertura</b> = compraron ÷ clientes. <b>Venta</b> = venta neta de facturas y notas de débito, atribuida al vendedor dueño de la cartera del cliente (no a quien cargó el pedido); las notas de crédito no se restan. <b>% de su venta</b> = venta del ramo ÷ venta total de ese vendedor. Se excluyen los códigos 1176, 43, 16 y 37 (no son vendedores reales). La venta de clientes que no están en ninguna cartera se informa aparte: <span id="fueraNote">—</span>.</div>
+    <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom). Foto fija: se actualiza sola todos los días, o pedile a Claude que la actualice.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null, MESES = [], mesKey = null, modo = 'vendedor', ramoSel = null, sortKey = 'venta', sortDir = -1, abierto = null, filtro = '';
+const PALETA = ['#3fd6c3','#f2b84b','#8f8cf5','#ef7b72','#6fc3f0','#c68be0','#9fcf66','#e89bb5','#d8a35a','#7aa6a0'];
+const MESES_N = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+const fmtMoney = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
+function fmtCompact(n){
+  const a = Math.abs(n), s = n < 0 ? '-' : '';
+  if (a >= 1e6) return s + '$' + (a/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (a >= 1e3) return s + '$' + (a/1e3).toLocaleString('es-AR',{maximumFractionDigits:0}) + 'K';
+  return s + '$' + Math.round(a).toLocaleString('es-AR');
+}
+const fmtPct = (n, d = 0) => (n * 100).toLocaleString('es-AR', {maximumFractionDigits: d}) + '%';
+const fmtFecha = s => s.split('-').reverse().join('/');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nombreMes = k => { const [y,m] = k.split('-'); return MESES_N[+m - 1] + ' ' + y; };
+const mes = () => DATA.meses[mesKey];
+function color(id){ const i = DATA.ramos.findIndex(r => r.id === id); return i >= 0 && i < PALETA.length ? PALETA[i] : '#5d6f6c'; }
+function clsCob(p){ return p >= 0.7 ? 'good' : p >= 0.5 ? 'warn' : 'serious'; }
+const div = (a, b) => b ? a / b : 0;
+
+function renderTabs(){
+  document.getElementById('monthTabs').innerHTML = MESES.map(k => {
+    const m = DATA.meses[k];
+    return `<button class="month-tab ${k === mesKey ? 'active' : ''}" role="tab" aria-selected="${k === mesKey}" data-k="${k}">${nombreMes(k)}${m.cerrado ? '' : '<span class="badge">● en curso</span>'}</button>`;
+  }).join('');
+  document.querySelectorAll('.month-tab').forEach(b => b.addEventListener('click', () => { mesKey = b.dataset.k; abierto = null; renderAll(); }));
+  document.querySelectorAll('.mode-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.modo === modo);
+    b.setAttribute('aria-selected', b.dataset.modo === modo);
+  });
+}
+
+function renderKPIs(){
+  const m = mes(), t = m.totales, top = m.ramos[0];
+  const cells = [
+    { l:'Clientes en cartera', v: t.clientes.toLocaleString('es-AR'), f: m.vendedores.length + ' vendedores · ' + m.ramos.length + ' ramos' },
+    { l:'Compraron en el mes', v: t.compraron.toLocaleString('es-AR'), f: 'cobertura ' + fmtPct(div(t.compraron, t.clientes), 1), a:true },
+    { l:'Venta neta', v: fmtCompact(t.venta), f: fmtMoney(t.venta) },
+    { l:'Ramo que más vende', v: top ? top.nombre : '—', f: top ? fmtPct(div(top.venta, t.venta), 1) + ' de la venta · ' + top.clientes.toLocaleString('es-AR') + ' clientes' : '', small:true }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c =>
+    `<div class="cell"><div class="label">${c.l}</div><div class="value mono ${c.a ? 'accent' : ''}" style="${c.small ? 'font-size:19px;line-height:1.35' : ''}">${esc(c.v)}</div><div class="foot">${c.f}</div></div>`).join('');
+  document.getElementById('fueraNote').textContent = fmtCompact(t.ventaFueraDeCartera) + ' en ' + nombreMes(mesKey) + ' (clientes sin vendedor asignado o dados de baja)';
+}
+
+function renderChips(){
+  const ids = DATA.ramos.filter(r => mes().ramos.some(x => x.id === r.id));
+  const principales = ids.slice(0, PALETA.length), otros = ids.slice(PALETA.length);
+  document.getElementById('chipsRamo').innerHTML =
+    `<button class="chip ${ramoSel === null ? 'active' : ''}" data-id="">Todos los ramos</button>` +
+    principales.map(r => `<button class="chip ${ramoSel === r.id ? 'active' : ''}" data-id="${esc(r.id)}"><span class="sw" style="background:${color(r.id)}"></span>${esc(r.nombre)}</button>`).join('') +
+    (otros.length ? `<select class="search" id="otrosRamos" aria-label="Otros ramos" style="width:auto;padding:6px 10px;font-size:11.5px"><option value="">Otros ramos (${otros.length})…</option>` +
+      otros.map(r => `<option value="${esc(r.id)}" ${ramoSel === r.id ? 'selected' : ''}>${esc(r.nombre)}</option>`).join('') + '</select>' : '');
+  const elegir = id => { ramoSel = id || null; abierto = null; renderVendedores(); renderChips(); };
+  document.querySelectorAll('#chipsRamo .chip').forEach(b => b.addEventListener('click', () => elegir(b.dataset.id)));
+  const sel = document.getElementById('otrosRamos');
+  if (sel) sel.addEventListener('change', () => elegir(sel.value));
+}
+
+function stackHTML(items, key, total){
+  if (!total) return '<div class="stack"></div>';
+  return '<div class="stack">' + items.filter(x => x[key] > 0).map(x =>
+    `<span style="width:${(x[key] / total * 100).toFixed(2)}%;background:${color(x.id)}" title="${esc(x.nombre)}: ${key === 'venta' ? fmtMoney(x.venta) : x.clientes + ' clientes'} (${fmtPct(x[key] / total, 1)})"></span>`).join('') + '</div>';
+}
+
+function filasVendedor(){
+  const rows = mes().vendedores.map(v => {
+    if (!ramoSel) return { v, nombre: v.nombre, clientes: v.clientes, compraron: v.compraron, cob: div(v.compraron, v.clientes), venta: v.venta };
+    const r = v.ramos.find(x => x.id === ramoSel) || { clientes: 0, compraron: 0, venta: 0 };
+    return { v, nombre: v.nombre, clientes: r.clientes, compraron: r.compraron, cob: div(r.compraron, r.clientes), venta: r.venta,
+             pctCartera: div(r.clientes, v.clientes), pctVenta: div(r.venta, v.venta), porCliente: div(r.venta, r.compraron) };
+  }).filter(r => (!ramoSel || r.clientes > 0) && (!filtro || r.nombre.toLowerCase().includes(filtro) || r.v.codigo.includes(filtro)));
+  rows.sort((a, b) => {
+    const av = a[sortKey], bv = b[sortKey];
+    return typeof av === 'string' ? sortDir * av.localeCompare(bv) : sortDir * ((av || 0) - (bv || 0));
+  });
+  return rows;
+}
+
+function thSort(key, label, num){
+  return `<th class="${num ? 'num' : ''} ${sortKey === key ? 'sorted' : ''}"><button class="th-sort" data-key="${key}">${label}</button></th>`;
+}
+
+function renderVendedores(){
+  const m = mes();
+  const head = document.getElementById('headVend');
+  if (!ramoSel) {
+    head.innerHTML = '<tr><th></th>' + thSort('nombre','Vendedor') + thSort('clientes','Clientes',1) + thSort('compraron','Compraron',1) + thSort('cob','Cobertura',1) + thSort('venta','Venta neta',1) +
+      '<th>Cartera por ramo</th><th>Venta por ramo</th></tr>';
+    document.getElementById('hintVend').textContent = 'Tocá un vendedor para ver el detalle por ramo. Pasá el mouse por las barras para ver cada ramo.';
+  } else {
+    const nom = DATA.ramos.find(r => r.id === ramoSel).nombre;
+    head.innerHTML = '<tr><th></th>' + thSort('nombre','Vendedor') + thSort('clientes','Clientes del ramo',1) + thSort('pctCartera','% de su cartera',1) + thSort('compraron','Compraron',1) +
+      thSort('cob','Cobertura',1) + thSort('venta','Venta del ramo',1) + thSort('pctVenta','% de su venta',1) + thSort('porCliente','Venta por cliente que compró',1) + '</tr>';
+    document.getElementById('hintVend').textContent = 'Mostrando solo el ramo ' + nom + ': cuánto pesa en la cartera y en la venta de cada vendedor.';
+  }
+  head.querySelectorAll('.th-sort').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.key;
+    if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === 'nombre' ? 1 : -1; }
+    renderVendedores();
+  }));
+
+  const rows = filasVendedor();
+  const cols = ramoSel ? 9 : 8;
+  let html = '';
+  for (const r of rows) {
+    const v = r.v, open = abierto === v.codigo;
+    if (!ramoSel) {
+      html += `<tr class="fila ${open ? 'open' : ''}" data-c="${esc(v.codigo)}"><td><span class="chev">▸</span></td>
+        <td class="nom">${esc(v.nombre)}<span class="code">#${esc(v.codigo)}</span></td>
+        <td class="num mono">${v.clientes.toLocaleString('es-AR')}</td><td class="num mono">${v.compraron.toLocaleString('es-AR')}</td>
+        <td class="num mono ${clsCob(r.cob)}">${fmtPct(r.cob)}</td><td class="num mono strong">${fmtCompact(v.venta)}</td>
+        <td>${stackHTML(v.ramos, 'clientes', v.clientes)}</td><td>${stackHTML(v.ramos, 'venta', v.venta)}</td></tr>`;
+    } else {
+      html += `<tr class="fila ${open ? 'open' : ''}" data-c="${esc(v.codigo)}"><td><span class="chev">▸</span></td>
+        <td class="nom">${esc(v.nombre)}<span class="code">#${esc(v.codigo)}</span></td>
+        <td class="num mono">${r.clientes.toLocaleString('es-AR')}</td><td class="num mono">${fmtPct(r.pctCartera)}</td>
+        <td class="num mono">${r.compraron.toLocaleString('es-AR')}</td><td class="num mono ${clsCob(r.cob)}">${fmtPct(r.cob)}</td>
+        <td class="num mono strong">${fmtCompact(r.venta)}</td><td class="num mono">${fmtPct(r.pctVenta, 1)}</td>
+        <td class="num mono">${r.compraron ? fmtCompact(r.porCliente) : '—'}</td></tr>`;
+    }
+    if (open) html += `<tr class="detalle"><td colspan="${cols}"><div class="detalle-inner">${detalleVendedor(v)}</div></td></tr>`;
+  }
+  if (!rows.length) html = `<tr><td colspan="${cols}" class="empty-note">sin vendedores para mostrar</td></tr>`;
+  else if (!ramoSel && !filtro) {
+    const t = m.totales;
+    html += `<tr class="total"><td></td><td class="nom">TOTAL</td><td class="num mono">${t.clientes.toLocaleString('es-AR')}</td><td class="num mono">${t.compraron.toLocaleString('es-AR')}</td>
+      <td class="num mono">${fmtPct(div(t.compraron, t.clientes))}</td><td class="num mono">${fmtCompact(t.venta)}</td><td>${stackHTML(m.ramos, 'clientes', t.clientes)}</td><td>${stackHTML(m.ramos, 'venta', t.venta)}</td></tr>`;
+  }
+  const body = document.getElementById('bodyVend');
+  body.innerHTML = html;
+  body.querySelectorAll('tr.fila').forEach(tr => tr.addEventListener('click', () => { abierto = abierto === tr.dataset.c ? null : tr.dataset.c; renderVendedores(); }));
+}
+
+function detalleVendedor(v){
+  return `<table class="sub"><thead><tr><th>Ramo</th><th class="num">Clientes</th><th class="num">% de su cartera</th><th class="num">Compraron</th><th class="num">Cobertura</th>
+    <th class="num">Venta neta</th><th class="num">% de su venta</th><th class="num">Venta por cliente que compró</th></tr></thead><tbody>` +
+    v.ramos.map(r => `<tr><td class="strong"><span class="chip-sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px;background:${color(r.id)}"></span>${esc(r.nombre)}</td>
+      <td class="num mono">${r.clientes.toLocaleString('es-AR')}</td><td class="num mono">${fmtPct(div(r.clientes, v.clientes))}</td>
+      <td class="num mono">${r.compraron.toLocaleString('es-AR')}</td><td class="num mono ${clsCob(div(r.compraron, r.clientes))}">${fmtPct(div(r.compraron, r.clientes))}</td>
+      <td class="num mono strong">${fmtMoney(r.venta)}</td><td class="num mono">${fmtPct(div(r.venta, v.venta), 1)}</td>
+      <td class="num mono">${r.compraron ? fmtMoney(div(r.venta, r.compraron)) : '—'}</td></tr>`).join('') + '</tbody></table>';
+}
+
+function renderRamos(){
+  const m = mes(), t = m.totales;
+  document.getElementById('headRamo').innerHTML = '<tr><th>Ramo</th><th class="num">Clientes</th><th class="num">% de la cartera</th><th class="num">Compraron</th><th class="num">Cobertura</th><th class="num">Venta neta</th><th>% de la venta</th><th class="num">Venta por cliente que compró</th></tr>';
+  const maxP = Math.max(...m.ramos.map(r => div(r.venta, t.venta)), 0.01);
+  document.getElementById('bodyRamo').innerHTML = m.ramos.map(r => {
+    const p = div(r.venta, t.venta);
+    return `<tr class="fila" data-id="${esc(r.id)}"><td class="nom"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px;background:${color(r.id)}"></span>${esc(r.nombre)}</td>
+      <td class="num mono">${r.clientes.toLocaleString('es-AR')}</td><td class="num mono">${fmtPct(div(r.clientes, t.clientes), 1)}</td>
+      <td class="num mono">${r.compraron.toLocaleString('es-AR')}</td><td class="num mono ${clsCob(div(r.compraron, r.clientes))}">${fmtPct(div(r.compraron, r.clientes))}</td>
+      <td class="num mono strong">${fmtCompact(r.venta)}</td>
+      <td><span class="pct-bar" style="width:${Math.max(2, p / maxP * 90).toFixed(0)}px;background:${color(r.id)}"></span><span class="mono">${fmtPct(p, 1)}</span></td>
+      <td class="num mono">${r.compraron ? fmtCompact(div(r.venta, r.compraron)) : '—'}</td></tr>`; }).join('') +
+    `<tr class="total"><td class="nom">TOTAL</td><td class="num mono">${t.clientes.toLocaleString('es-AR')}</td><td class="num mono">100%</td><td class="num mono">${t.compraron.toLocaleString('es-AR')}</td>
+      <td class="num mono">${fmtPct(div(t.compraron, t.clientes))}</td><td class="num mono">${fmtCompact(t.venta)}</td><td class="mono">100%</td><td class="num mono">${t.compraron ? fmtCompact(div(t.venta, t.compraron)) : '—'}</td></tr>`;
+  document.querySelectorAll('#bodyRamo tr.fila').forEach(tr => tr.addEventListener('click', () => { ramoSel = tr.dataset.id; modo = 'vendedor'; sortKey = 'venta'; sortDir = -1; abierto = null; renderAll(); }));
+}
+
+function renderAll(){
+  const m = mes();
+  document.getElementById('periodoText').textContent = fmtFecha(m.periodoDesde) + ' – ' + fmtFecha(m.periodoHasta) + (m.cerrado ? '' : ' (en curso)');
+  document.getElementById('vistaVendedor').style.display = modo === 'vendedor' ? '' : 'none';
+  document.getElementById('vistaRamo').style.display = modo === 'ramo' ? '' : 'none';
+  if (ramoSel && !m.ramos.some(r => r.id === ramoSel)) ramoSel = null;
+  renderTabs(); renderKPIs(); renderChips(); renderVendedores(); renderRamos();
+}
+
+document.getElementById('buscar').addEventListener('input', e => { filtro = e.target.value.trim().toLowerCase(); renderVendedores(); });
+document.querySelectorAll('.mode-tab').forEach(b => b.addEventListener('click', () => { modo = b.dataset.modo; renderAll(); }));
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    MESES = Object.keys(DATA.meses).sort();
+    mesKey = MESES.includes(DATA.mesActual) ? DATA.mesActual : MESES[MESES.length - 1];
+    const g = new Date(DATA.generatedAt);
+    document.getElementById('fechaText').textContent = isNaN(g) ? '—' : g.toLocaleString('es-AR', { dateStyle:'short', timeStyle:'short' });
+    if (DATA.carteraFuente && DATA.carteraFuente !== 'base') {
+      const av = document.getElementById('avisoCartera');
+      av.style.display = '';
+      av.textContent = 'Atención: la base compartida perdió el vendedor de los clientes, así que la cartera de cada vendedor se toma del último reparto bueno (' + DATA.carteraFuente + '). Los números de venta y compras son de hoy. Se corrige solo cuando la base se repare.';
+    }
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML =
+      `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${esc(err.message)}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>
