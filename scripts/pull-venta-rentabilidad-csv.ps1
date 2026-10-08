@@ -170,6 +170,12 @@ if ($productosVariosExcluidos -gt 0) { Write-Log "Excluidas $productosVariosExcl
 
 # --- cargar historico existente y fusionar cada mes del archivo ---
 $meses = [ordered]@{}
+# Tablero protegido: si esta el historico cifrado pero no el data.json en claro, arrancar
+# sin historico borraria todos los meses anteriores (paso el 7/10/2026). Mejor frenar.
+$encPath = Join-Path (Split-Path $OutPath -Parent) "data.enc.json"
+if (-not (Test-Path $OutPath) -and (Test-Path $encPath)) {
+    throw "Existe $encPath pero no el data.json en claro: correr antes protect-tableros.ps1 -Modo Descifrar (si no, se pierde el historico)."
+}
 try {
     if (Test-Path $OutPath) {
         $rawText = [System.IO.File]::ReadAllText($OutPath, [System.Text.Encoding]::UTF8)

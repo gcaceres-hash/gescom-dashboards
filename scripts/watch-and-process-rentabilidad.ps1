@@ -50,6 +50,9 @@ if ($marcaActual -eq $marcaAnterior.Trim()) {
 }
 
 Write-Log "Procesando '$($elegido.Name)' (modificado $($elegido.LastWriteTime))..."
+# Rentabilidad y Proyeccion estan protegidos: el historico vive cifrado en data.enc.json.
+# Descifrarlo antes (si no, el script arranca sin historico) y volver a cifrar antes de subir.
+& "$RepoDir\scripts\protect-tableros.ps1" -Modo Descifrar -Tableros rentabilidad,proyeccion
 & powershell -NoProfile -Command "& '$RepoDir\scripts\pull-venta-rentabilidad-csv.ps1' -CsvPath '$($elegido.FullName)' -DocsDir '$RepoDir\docs\rentabilidad' -TemplatePath '$RepoDir\scripts\venta-rentabilidad-template.html'"
 if ($LASTEXITCODE -ne 0) { throw "pull-venta-rentabilidad-csv.ps1 fallo con codigo $LASTEXITCODE" }
 
@@ -57,12 +60,14 @@ Write-Log "Recalculando proyeccion de cierre..."
 & powershell -NoProfile -File "$RepoDir\scripts\pull-proyeccion-cierre.ps1"
 if ($LASTEXITCODE -ne 0) { throw "pull-proyeccion-cierre.ps1 fallo con codigo $LASTEXITCODE" }
 
+& "$RepoDir\scripts\protect-tableros.ps1" -Modo Cifrar -Tableros rentabilidad,proyeccion
+
 Set-Content -Path $MarcadorPath -Value $marcaActual -NoNewline
 
 Write-Log "Subiendo a GitHub..."
 Push-Location $RepoDir
 try {
-    git add scripts/pull-venta-rentabilidad-csv.ps1 docs/rentabilidad/data.json docs/rentabilidad/index.html docs/proyeccion/data.json docs/proyeccion/index.html
+    git add scripts/pull-venta-rentabilidad-csv.ps1 docs/rentabilidad/data.enc.json docs/rentabilidad/index.html docs/proyeccion/data.enc.json docs/proyeccion/index.html
     $cambios = @(git status --porcelain -- docs/rentabilidad docs/proyeccion scripts/pull-venta-rentabilidad-csv.ps1)
     if ($cambios.Count -eq 0) {
         Write-Log "No hay cambios para commitear (el data.json ya estaba igual)."
