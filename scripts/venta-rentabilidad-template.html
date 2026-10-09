@@ -127,6 +127,7 @@
     .trow > :nth-child(4), .trow > :nth-child(5), .trow > :nth-child(7){display:none;}
   }
 </style>
+<link rel="stylesheet" href="../tema-claro.css">
 
 <div class="wrap">
   <header class="top">
@@ -329,7 +330,7 @@ function renderList(){
 }
 
 const AMBER_RAMP = ['#ffb020','#e89c1c','#d18818','#ba7414','#a36010','#8c4c0c','#754008'];
-const OTROS_COLOR = '#2a3335';
+const OTROS_COLOR = '#c5ccd3';
 
 function renderWeightBar(){
   const rows = computeRows().filter(r => r.ventaNeta > 0).sort((a,b) => b.ventaNeta - a.ventaNeta);

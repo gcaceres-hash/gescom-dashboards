@@ -1,0 +1,44 @@
+/*
+ * Tema claro comun de todos los tableros (pedido de Gisela, 9/10/2026: "fondo blanco y amigable con la vista").
+ * Cada tablero define su paleta oscura en :root; este archivo se carga DESPUES y la reemplaza.
+ * Para cambiar colores de todos los tableros a la vez, tocar solo este archivo.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root, :root[data-theme], :root[data-theme="light"], :root[data-theme="dark"] {
+  color-scheme: light;
+  /* fondos y texto */
+  --bg:#f5f7fa; --surface:#ffffff; --surface-2:#eef2f6;
+  --ink:#1f2933; --ink-2:#4a5866; --ink-3:#7b8794;
+  --hair:#e4e8ee; --border:#d5dbe3;
+  /* color de marca de cada tablero (mas oscuro para que se lea sobre blanco) y su version suave */
+  --amber:#c27c0e;   --amber-dim:#f3dfb4;
+  --accent:#2f6fde;  --accent-dim:#cfdcf7;  --accent-soft:#e8f0fd;
+  --violet:#6d4fc2;  --violet-dim:#ddd3f5;
+  --coral:#d0573a;   --coral-dim:#f6d3c9;
+  --magenta:#b83c7f; --magenta-dim:#f1d2e3;
+  --rose:#c2415b;    --rose-dim:#f4d3da;
+  --cyan:#0f8b8d;    --cyan-dim:#c9ecec;
+  /* estados */
+  --good:#1f8a4c; --good-ink:#1f8a4c; --warning:#b7791f; --serious:#d0662b; --critical:#c2412d;
+  --red:#c2412d; --red-soft:#fdecea; --green:#1f8a4c; --green-soft:#e6f5ec;
+  /* Compras - Stock y Pedidos */
+  --low:rgba(194,65,45,.12); --high:rgba(194,124,14,.14); --slow:rgba(208,102,43,.14);
+  /* Resumen comercial / Digip resumen: tarjetas bien / atencion / vigilar */
+  --good-bg:#e9f6ee; --good-line:#a9d9bb; --warn:#fff6e5; --warn-line:#f0d29a; --warn-ink:#8a5a00;
+  --bad:#fdecea; --bad-line:#f1b8af; --bad-ink:#a33224;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
+}
+
+html, body { background:var(--bg) !important; color:var(--ink); }
+body, body * { font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif !important; }
+body { font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; }
+h1 { text-transform:none !important; letter-spacing:-.01em !important; font-weight:700 !important; }
+
+/* tarjetas y tablas con borde suave y algo de sombra */
+.board, .kpis, .kpi-grid { box-shadow:var(--shadow); border-radius:12px; overflow:hidden; }
+.tbl-wrap, .ticker-list, table { background:var(--surface); }
+a.card { box-shadow:var(--shadow); border-radius:12px !important; }
+a.card:hover { border-color:var(--accent) !important; }
+a.card b { text-transform:none !important; letter-spacing:0 !important; font-size:15px !important; }
+select, input, button { font-family:inherit; }
