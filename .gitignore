@@ -24,3 +24,4 @@ docs/digiorno/data.json
 # Excel de compras: datos intermedios (ventas), no se suben
 scripts/compras-stock/tmp/
 docs/compras-stock/data.json
+docs/rastreador/data.json

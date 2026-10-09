@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rastreador de precios mayoristas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0a0e0f; --surface:#12181a; --surface-2:#171f21;
+    --ink:#eef2f0; --ink-2:#9fb0ab; --ink-3:#64726e; --hair:#263030; --border:rgba(238,242,240,0.10);
+    --amber:#ffb020; --amber-dim:#7a5416; --red:#ff6b5e; --green:#4fd18b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  @media (max-width:700px){ body{padding:20px 16px 50px;} }
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1280px;margin:0 auto;}
+  a{color:inherit;}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:6px;max-width:720px;line-height:1.5;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;max-width:360px;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+  .tabs{display:flex;gap:6px;margin:18px 0 4px;flex-wrap:wrap;}
+  .tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:.02em;}
+  .tab.active{background:var(--amber);border-color:var(--amber);color:var(--bg);font-weight:700;}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0 4px;}
+  .controls label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);display:flex;flex-direction:column;gap:4px;}
+  select,input[type=search]{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:7px 10px;font-size:12.5px;font-family:"IBM Plex Mono",monospace;}
+  input[type=search]{width:220px;}
+  .chk{flex-direction:row !important;align-items:center;gap:6px !important;text-transform:none !important;font-size:12.5px !important;color:var(--ink-2) !important;letter-spacing:0 !important;margin-top:14px;}
+  .btn{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:7px 12px;font-size:12px;cursor:pointer;margin-top:14px;}
+  .btn:hover{border-color:var(--amber-dim);color:var(--ink);}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:20px 0 28px;}
+  @media (max-width:900px){ .board{grid-template-columns:repeat(2,1fr);} }
+  .board .cell{background:var(--bg);padding:16px 18px;}
+  .board .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:8px;}
+  .board .value{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600;}
+  .board .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.4;}
+  .red{color:var(--red);} .green{color:var(--green);} .amber{color:var(--amber);} .dim{color:var(--ink-3);}
+  section{margin-bottom:30px;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0 0 6px;}
+  .note{color:var(--ink-3);font-size:12px;margin:0 0 12px;line-height:1.5;}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--hair);}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);text-align:right;padding:9px 10px;border-bottom:1px solid var(--hair);white-space:nowrap;cursor:pointer;user-select:none;background:var(--surface);position:sticky;top:0;}
+  th.l,td.l{text-align:left;}
+  th.sorted{color:var(--amber);}
+  td{padding:9px 10px;border-bottom:1px solid var(--hair);text-align:right;vertical-align:top;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  td.prod{font-family:"IBM Plex Sans",sans-serif;white-space:normal;min-width:230px;}
+  td.prod .sub{color:var(--ink-3);font-size:11px;margin-top:2px;font-family:"IBM Plex Mono",monospace;}
+  tr:hover td{background:var(--surface);}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-start;min-width:200px;white-space:normal;}
+  .chip{border:1px solid var(--hair);border-radius:3px;padding:2px 6px;font-size:11px;text-decoration:none;color:var(--ink-2);}
+  .chip b{color:var(--ink);font-weight:600;}
+  .chip.min{border-color:var(--amber-dim);}
+  .chip:hover{border-color:var(--amber);}
+  .small{font-size:11px;color:var(--ink-3);}
+  .bar{position:relative;height:8px;background:var(--surface-2);min-width:120px;border-radius:2px;}
+  .bar i{position:absolute;top:0;bottom:0;}
+  .bar .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink-3);}
+  .empty{padding:30px;text-align:center;color:var(--ink-3);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Rastreador de precios mayoristas</h1></div>
+      <div class="sub">Los artículos que hacen el 80% de nuestra venta, a precio de lista y con las dinámicas de Gescom, contra las revistas y folletos semanales de los mayoristas. Todo por unidad y con IVA. Diferencia positiva = estamos más caros que la oferta más barata.</div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="tabs"><button class="tab active">80% de la venta</button></div>
+
+  <div class="controls">
+    <label>Empresa<select id="fEmp"><option value="">Todas</option><option>Lago Puelo</option><option>Elebes</option></select></label>
+    <label>Proveedor<select id="fProv"><option value="">Todos los proveedores</option></select></label>
+    <label>Comparar contra<select id="fBase">
+      <option value="din">Precio con dinámica (promedio cobrado)</option>
+      <option value="dinMin">Mejor dinámica (escalón más bajo)</option>
+      <option value="l1">Lista 1</option>
+      <option value="l3">Lista 3</option>
+    </select></label>
+    <label>Posición<select id="fPos"><option value="">Todos</option><option value="caro">Más caros (+3% o más)</option><option value="linea">En línea (±3%)</option><option value="barato">Más baratos (−3% o menos)</option></select></label>
+    <label>Buscar<input type="search" id="fQ" placeholder="artículo o código"></label>
+    <label class="chk"><input type="checkbox" id="fSin"> Incluir los que no aparecen en folletos</label>
+    <button class="btn" id="exp">Exportar a Excel (CSV)</button>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <section>
+    <h2>Por proveedor</h2>
+    <p class="note">Diferencia mediana de nuestro precio (el elegido en "Comparar contra") contra el mínimo de los folletos, entre los artículos del 80% que encontramos.</p>
+    <div class="tbl-wrap"><table id="tProv"></table></div>
+  </section>
+
+  <section>
+    <h2>Artículos</h2>
+    <p class="note">Ordenados por venta de los últimos 30 días. "Con dinámica" es lo que efectivamente se cobró por unidad (lista menos dinámicas y descuentos); "mejor dinámica" es el escalón más bajo cobrado, sin contar bonificaciones. Tocá un precio de folleto para abrirlo; pasá el mouse para ver las condiciones.</p>
+    <div class="tbl-wrap"><table id="tArt"></table></div>
+  </section>
+</div>
+
+<script src="../gate.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const fmt$ = v => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-AR');
+const fmtM = v => v == null ? '—' : '$' + (v/1e6).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' M';
+const fmtP = (v,s=true) => v == null || !isFinite(v) ? '—' : (s && v>0 ? '+' : '') + (v*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const median = a => { if(!a.length) return null; const s=[...a].sort((x,y)=>x-y), m=Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
+const BASE_TXT = {din:'precio con dinámica', dinMin:'mejor dinámica', l1:'Lista 1', l3:'Lista 3'};
+let D, sortKey='n30', sortDir=-1;
+
+function minMk(r){ if(!r.m.length) return null; return r.m.reduce((a,b)=> b.p < a.p ? b : a); }
+function enrich(r, base){
+  const mn = minMk(r), nuestro = r[base] ?? r.l1;
+  const dif = mn && nuestro ? nuestro/mn.p - 1 : null;
+  const pos = dif == null ? 'sin' : dif >= 0.03 ? 'caro' : dif <= -0.03 ? 'barato' : 'linea';
+  const margenIgualar = mn && r.cu ? (mn.p - r.cu)/mn.p : null;
+  return {...r, mn, nuestro, dif, pos, margenIgualar, difL1: mn && r.l1 ? r.l1/mn.p - 1 : null, difDin: mn && r.din ? r.din/mn.p - 1 : null};
+}
+function filtrados(){
+  const emp=$('#fEmp').value, prov=$('#fProv').value, pos=$('#fPos').value, q=$('#fQ').value.trim().toLowerCase(), sin=$('#fSin').checked, base=$('#fBase').value;
+  return D.rows.map(r=>enrich(r,base)).filter(r=>
+    (!emp || r.e===emp) && (!prov || r.pv===prov) && (sin || r.mn) && (!pos || r.pos===pos) &&
+    (!q || r.d.toLowerCase().includes(q) || r.c.toLowerCase().includes(q)));
+}
+function render(){
+  const base=$('#fBase').value, all=filtrados(), comp=all.filter(r=>r.mn);
+  const caros=comp.filter(r=>r.pos==='caro'), baratos=comp.filter(r=>r.pos==='barato'), linea=comp.filter(r=>r.pos==='linea');
+  const ventaTot = D.rows.reduce((s,r)=>s+r.n30,0);
+  $('#board').innerHTML = `
+    <div class="cell"><div class="label">Artículos del 80% comparados</div><div class="value">${comp.length}<span class="dim" style="font-size:15px"> de ${D.rows.length}</span></div><div class="foot">${D.rows.length} artículos hacen el ${Math.round(D.ventana.corte*100)}% de ${fmtM(D.ventana.ventaNetaTotal)} de venta neta (30 días). Los demás no salen en los folletos de esta semana.</div></div>
+    <div class="cell"><div class="label">Diferencia mediana</div><div class="value ${median(comp.map(r=>r.dif))>0?'red':'green'}">${fmtP(median(comp.map(r=>r.dif)))}</div><div class="foot">${BASE_TXT[base]} contra el mínimo de los folletos</div></div>
+    <div class="cell"><div class="label">Estamos más caros</div><div class="value red">${caros.length}</div><div class="foot">${fmtM(caros.reduce((s,r)=>s+r.n30,0))} de venta neta 30 días en juego</div></div>
+    <div class="cell"><div class="label">Estamos más baratos · en línea</div><div class="value green">${baratos.length}<span class="dim" style="font-size:15px"> · ${linea.length}</span></div><div class="foot">más baratos: posible margen sin aprovechar</div></div>`;
+
+  // por proveedor
+  const pm = {};
+  comp.forEach(r=>{ (pm[r.pv] ||= []).push(r); });
+  const provs = Object.entries(pm).map(([pv,rs])=>({pv, n:rs.length, caros:rs.filter(r=>r.pos==='caro').length, baratos:rs.filter(r=>r.pos==='barato').length, med:median(rs.map(r=>r.dif)), venta:rs.reduce((s,r)=>s+r.n30,0)})).sort((a,b)=>b.venta-a.venta);
+  $('#tProv').innerHTML = `<tr><th class="l">Proveedor</th><th>Comparados</th><th>Más caros</th><th>Más baratos</th><th>Venta 30 días</th><th>Diferencia mediana</th><th class="l">−30% · 0 · +30%</th></tr>` +
+    (provs.length ? provs.map(p=>{ const w=Math.min(Math.abs(p.med)/0.3,1)*50; const st=p.med>=0?`left:50%;width:${w}%;background:var(--red)`:`right:50%;width:${w}%;background:var(--green)`;
+      return `<tr><td class="l">${esc(p.pv)}</td><td>${p.n}</td><td class="red">${p.caros}</td><td class="green">${p.baratos}</td><td>${fmtM(p.venta)}</td><td class="${p.med>0.03?'red':p.med<-0.03?'green':''}">${fmtP(p.med)}</td><td class="l"><div class="bar"><span class="mid"></span><i style="${st}"></i></div></td></tr>`; }).join('')
+    : `<tr><td colspan="7" class="empty">Sin artículos comparados con estos filtros.</td></tr>`);
+
+  // articulos
+  const cols = [
+    ['d','Producto','l'],['n30','Venta 30 días'],['l1','Lista 1'],['din','Con dinámica'],['dinMin','Mejor dinámica'],['cu','Costo c/IVA'],
+    ['mnp','Mejor folleto'],['difL1','Dif. lista 1'],['difDin','Dif. con dinámica'],['margenIgualar','Margen al igualar'],['m','Folletos','l']];
+  const rows = [...all].sort((a,b)=>{ const va = sortKey==='mnp' ? (a.mn?a.mn.p:null) : a[sortKey], vb = sortKey==='mnp' ? (b.mn?b.mn.p:null) : b[sortKey];
+    if (va==null && vb==null) return 0; if (va==null) return 1; if (vb==null) return -1; return (typeof va==='string' ? va.localeCompare(vb) : va-vb) * sortDir; });
+  $('#tArt').innerHTML = `<tr>${cols.map(([k,t,c])=>`<th class="${c||''} ${k===sortKey?'sorted':''}" data-k="${k}">${t}${k===sortKey?(sortDir<0?' ▾':' ▴'):''}</th>`).join('')}</tr>` +
+    (rows.length ? rows.map(r=>{
+      const chips = r.m.slice().sort((a,b)=>a.p-b.p).map(x=>`<a class="chip ${r.mn && x===r.mn?'min':''}" href="${esc(x.u)}" target="_blank" rel="noopener" title="${esc(x.t+' — '+x.n)}">${esc(x.f)} <b>${fmt$(x.p)}</b></a>`).join('') || '<span class="small">no aparece en folletos</span>';
+      const descTxt = r.l1 && r.din ? `<div class="small">${fmtP(r.din/r.l1-1)} · ${Math.round(r.pctUniDesc*100)}% de las u. con desc.</div>` : '';
+      const cls = v => v==null ? '' : v>=0.03 ? 'red' : v<=-0.03 ? 'green' : '';
+      return `<tr>
+        <td class="prod l">${esc(r.d)}<div class="sub">${esc(r.c)} · ${esc(r.e)} · ${esc(r.pv)}${r.k>1?` · precio por unidad (bulto de ${r.k})`:''}</div></td>
+        <td>${fmtM(r.n30)}<div class="small">${Math.round(r.acum*100)}% acum.</div></td>
+        <td>${fmt$(r.l1)}${r.l3?`<div class="small">L3 ${fmt$(r.l3)}</div>`:''}</td>
+        <td>${fmt$(r.din)}${descTxt}</td>
+        <td>${fmt$(r.dinMin)}</td>
+        <td>${fmt$(r.cu)}</td>
+        <td>${r.mn?`${fmt$(r.mn.p)}<div class="small">${esc(r.mn.f)}</div>`:'—'}</td>
+        <td class="${cls(r.difL1)}">${fmtP(r.difL1)}</td>
+        <td class="${cls(r.difDin)}">${fmtP(r.difDin)}</td>
+        <td class="${r.margenIgualar!=null && r.margenIgualar<0.08?'red':''}">${fmtP(r.margenIgualar,false)}</td>
+        <td class="l"><div class="chips">${chips}</div></td></tr>`; }).join('')
+    : `<tr><td colspan="11" class="empty">Sin artículos con estos filtros.</td></tr>`);
+  document.querySelectorAll('#tArt th').forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(k==='m') return; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir= k==='d'?1:-1; } render(); });
+}
+function exportar(){
+  const rs = filtrados(), sep=';', n=v=>v==null?'':String(Math.round(v*100)/100).replace('.',',');
+  const head = ['Codigo','Articulo','Empresa','Proveedor','Unidades por bulto','Venta neta 30 dias','Lista 1','Lista 3','Con dinamica','Mejor dinamica','Costo c/IVA','Mejor folleto','Mayorista','Dif lista 1 %','Dif con dinamica %','Margen al igualar %', ...D.mercado.fuentes];
+  const lines = rs.map(r=>[r.c,r.d,r.e,r.pv,r.k,n(r.n30),n(r.l1),n(r.l3),n(r.din),n(r.dinMin),n(r.cu),n(r.mn&&r.mn.p),r.mn?r.mn.f:'',n(r.difL1!=null?r.difL1*100:null),n(r.difDin!=null?r.difDin*100:null),n(r.margenIgualar!=null?r.margenIgualar*100:null),
+    ...D.mercado.fuentes.map(f=>{ const x=r.m.find(y=>y.f===f); return x?n(x.p):''; })].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(sep));
+  const blob = new Blob(['﻿'+[head.join(sep),...lines].join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rastreador-80-venta.csv'; a.click();
+}
+cargarDatos('./data.json').then(data=>{
+  D = data;
+  const g = new Date(D.generadoEn);
+  $('#meta').innerHTML = `<div>Actualizado <b>${g.toLocaleDateString('es-AR')} ${g.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</b></div><div>Folletos relevados <b>${esc(D.mercado.generado)}</b></div><div>Fuentes <b>${esc(D.mercado.fuentes.join(', '))}</b></div><div>Venta desde <b>${esc(D.ventana.desde)}</b> (${D.ventana.dias} días)</div>`;
+  [...new Set(D.rows.map(r=>r.pv))].sort().forEach(p=>{ const o=document.createElement('option'); o.value=p; const n=D.rows.filter(r=>r.pv===p), c=n.filter(r=>r.m.length).length; o.textContent=`${p} (${c} comparados de ${n.length})`; $('#fProv').appendChild(o); });
+  ['#fEmp','#fProv','#fBase','#fPos','#fSin'].forEach(s=>$(s).addEventListener('change',render));
+  $('#fQ').addEventListener('input',render);
+  $('#exp').addEventListener('click',exportar);
+  render();
+});
+</script>
+</body>
+</html>
