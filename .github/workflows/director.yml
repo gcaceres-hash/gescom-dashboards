@@ -1,0 +1,45 @@
+name: Tablero del Director Comercial
+
+on:
+  schedule:
+    - cron: "0 11 * * 1-5"
+    - cron: "0 19 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escribir panel-config.json desde el secret
+        shell: bash
+        run: echo '${{ secrets.PANEL_CONFIG }}' > scripts/panel-config.json
+
+      - name: Correr pull-director.ps1 (descifra los objetivos si hace falta)
+        shell: pwsh
+        run: ./scripts/pull-director.ps1
+
+      - name: Cifrar datos antes de publicar
+        shell: pwsh
+        run: ./scripts/protect-tableros.ps1 -Modo Cifrar -Tableros director
+
+      - name: Publicar cambios (commit + push a docs/director)
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/director
+          git diff --cached --quiet || git commit -m "Actualiza Tablero del Director Comercial"
+          for i in 1 2 3 4 5; do
+            if git push; then
+              break
+            fi
+            echo "Push rechazado (el repo avanzo mientras corria) -- reintentando ($i)..."
+            git fetch origin
+            git merge origin/main -X ours -m "Merge automatico" --no-edit
+            sleep 5
+          done

@@ -25,3 +25,7 @@ docs/digiorno/data.json
 scripts/compras-stock/tmp/
 docs/compras-stock/data.json
 docs/rastreador/data.json
+
+# Objetivos comerciales (se publican solo cifrados)
+scripts/privado/*/data.json
+docs/director/data.json

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero del Director Comercial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  :root{ --bg:#f5f7fa; --surface:#fff; --surface-2:#eef2f6; --ink:#1f2933; --ink-2:#4a5866; --ink-3:#7b8794; --hair:#e4e8ee; --border:#d5dbe3;
+    --accent:#2f6fde; --accent-soft:#e8f0fd; --red:#c2412d; --red-soft:#fdecea; --green:#1f8a4c; --green-soft:#e6f5ec; --amber:#b7791f; --amber-soft:#fff6e5;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06); }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.45;padding:28px 28px 60px;font-variant-numeric:tabular-nums;}
+  @media (max-width:700px){ body{padding:16px 16px 40px;} }
+  .wrap{max-width:1280px;margin:0 auto;}
+  header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;}
+  .kicker{font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;}
+  h1{font-size:26px;margin:4px 0 4px;letter-spacing:-.01em;}
+  .sub{color:var(--ink-2);font-size:13.5px;}
+  .meta{text-align:right;font-size:12.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);}
+  .esc{display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-top:6px;}
+  .esc button{border:0;background:var(--surface);padding:6px 14px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-2);}
+  .esc button.on{background:var(--accent);color:#fff;font-weight:600;}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:8px 0 26px;}
+  @media (max-width:1000px){ .cards{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .cards{grid-template-columns:1fr;} }
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;cursor:pointer;transition:border-color .15s;text-decoration:none;color:inherit;display:block;}
+  .card:hover{border-color:var(--accent);}
+  .card .top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .num{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex:none;}
+  .card .t{font-weight:700;font-size:13.5px;text-transform:uppercase;letter-spacing:.04em;}
+  .card .v{font-size:26px;font-weight:700;letter-spacing:-.01em;margin:2px 0;}
+  .card .d{font-size:12.5px;color:var(--ink-2);}
+  .pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:600;}
+  .pill.r{background:var(--red-soft);color:var(--red);} .pill.g{background:var(--green-soft);color:var(--green);} .pill.a{background:var(--amber-soft);color:var(--amber);}
+  .red{color:var(--red);} .green{color:var(--green);} .dim{color:var(--ink-3);}
+  section{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:18px;scroll-margin-top:12px;}
+  section h2{display:flex;align-items:center;gap:10px;font-size:18px;margin:0 0 2px;}
+  section .q2{color:var(--ink-3);font-size:13px;margin:0 0 14px 38px;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px;}
+  .kpi{background:var(--surface-2);border-radius:10px;padding:12px 14px;}
+  .kpi .l{font-size:12px;color:var(--ink-3);}
+  .kpi .v{font-size:20px;font-weight:700;margin-top:2px;}
+  .kpi .s{font-size:12px;color:var(--ink-2);margin-top:2px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:900px){ .two{grid-template-columns:1fr;} }
+  h3{font-size:13.5px;margin:6px 0 8px;color:var(--ink-2);}
+  .tw{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{font-size:11.5px;font-weight:600;color:var(--ink-3);text-align:right;padding:7px 8px;border-bottom:1px solid var(--hair);white-space:nowrap;}
+  td{padding:7px 8px;border-bottom:1px solid var(--hair);text-align:right;white-space:nowrap;}
+  th:first-child,td:first-child{text-align:left;white-space:normal;}
+  tr:last-child td{border-bottom:none;}
+  .bar{height:8px;border-radius:4px;background:var(--surface-2);position:relative;min-width:90px;}
+  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent);}
+  .bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);}
+  .note{font-size:12px;color:var(--ink-3);margin-top:8px;}
+  .prio{list-style:none;padding:0;margin:0 0 14px;}
+  .prio li{border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+  .prio li b{display:block;font-size:13.5px;}
+  .prio li span{font-size:12.5px;color:var(--ink-2);}
+  .todo{display:flex;gap:8px;margin-top:6px;}
+  .todo input[type=text]{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:inherit;min-width:0;}
+  .todo button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;}
+  .checks{list-style:none;padding:0;margin:10px 0 0;}
+  .checks li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--hair);}
+  .checks li.done span{text-decoration:line-through;color:var(--ink-3);}
+  .checks li button{margin-left:auto;border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:16px;}
+</style>
+<link rel="stylesheet" href="../tema-claro.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">Lunes 8:00 · uso personal</div>
+      <h1>Tablero del Director Comercial</h1>
+      <div class="sub">Los 8 indicadores para empezar la semana con foco: dónde estamos, qué lo explica y qué hacemos distinto.</div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="cards" id="cards"></div>
+
+  <section id="s1"><h2><span class="num" style="background:#2f6fde">01</span>Ventas</h2><p class="q2">¿Cómo estamos contra el objetivo?</p><div id="b1"></div></section>
+  <section id="s2"><h2><span class="num" style="background:#1f8a4c">02</span>Margen</h2><p class="q2">¿Estamos creciendo rentablemente?</p><div id="b2"></div></section>
+  <section id="s3"><h2><span class="num" style="background:#d0662b">03</span>Volumen y mix</h2><p class="q2">¿Qué estamos vendiendo?</p><div id="b3"></div></section>
+  <section id="s4"><h2><span class="num" style="background:#c2412d">04</span>Clientes</h2><p class="q2">¿Quién está comprando?</p><div id="b4"></div></section>
+  <section id="s5"><h2><span class="num" style="background:#6d4fc2">05</span>Pipeline y conversión</h2><p class="q2">¿De dónde vendrá la próxima venta?</p><div id="b5"></div></section>
+  <section id="s6"><h2><span class="num" style="background:#0f8b8d">06</span>Canales</h2><p class="q2">¿Dónde estamos ganando o perdiendo?</p><div id="b6"></div></section>
+  <section id="s7"><h2><span class="num" style="background:#b7791f">07</span>Forecast</h2><p class="q2">¿Qué tan predecible es el negocio?</p><div id="b7"></div></section>
+  <section id="s8"><h2><span class="num" style="background:#1f2933">08</span>Ejecución</h2><p class="q2">¿Qué haremos diferente esta semana?</p><div id="b8"></div></section>
+</div>
+
+<script src="../gate.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const M = v => v == null ? '—' : (v<0?'−':'') + '$' + (Math.abs(v)/1e6).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'M';
+const PES = v => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-AR');
+const P = (v,s=false) => v == null || !isFinite(v) ? '—' : (s && v>0?'+':'') + (v*100).toLocaleString('es-AR',{maximumFractionDigits:1}) + '%';
+const N = v => v == null ? '—' : Math.round(v).toLocaleString('es-AR');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const div = (a,b) => b ? a/b : null;
+const fdate = s => { const p = s.split('-'); return p[2]+'/'+p[1]; };
+let D, ESC = 'eq';
+try { ESC = localStorage.getItem('director-esc') || 'eq'; } catch(e) {}
+const obj = o => o ? (ESC==='eq' ? o.objEq : o.objIdeal) : null;
+const pillVs = v => v==null || !isFinite(v) ? '—' : `<span class="pill ${v>=0?'g':'r'}">${P(v,true)}</span>`;
+function kpi(l,v,s){ return `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`; }
+function bar(frac, mark){ const w=Math.max(0,Math.min(1,frac||0))*100; return `<div class="bar"><i style="width:${w}%"></i>${mark!=null?`<b style="left:${Math.min(100,mark*100)}%"></b>`:''}</div>`; }
+function table(head, rows){ return `<div class="tw"><table><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.join('') || `<tr><td colspan="${head.length}" class="dim">Sin datos.</td></tr>`}</table></div>`; }
+const sub = s => `<div class="dim" style="font-size:11.5px">${esc(s)}</div>`;
+
+function render(){
+  const V=D.ventas, Mg=D.margen, Cl=D.clientes, Pp=D.pipeline, Ca=D.canales, F=D.forecast, per=D.periodo;
+  const objT = ESC==='eq' ? V.objEq : V.objIdeal, ritmoNec = ESC==='eq' ? V.ritmoNecEq : V.ritmoNecIdeal;
+  const t = V.avanceTiempo, av = div(V.mtd,objT);
+  document.querySelectorAll('.esc button').forEach(b=>b.classList.toggle('on', b.dataset.e===ESC));
+
+  const lider = Mg.proveedores[0] || {};
+  const cards = [
+    ['s1','01','Ventas','#2f6fde', M(V.mtd), `${P(av)} del objetivo con el ${P(t)} del mes`, av!=null ? av>=t : null],
+    ['s2','02','Margen','#1f8a4c', P(Mg.margen), `mismos días del mes pasado: ${P(Mg.margenPrevMtd)}`, Mg.margen>=Mg.margenPrevMtd],
+    ['s3','03','Volumen y mix','#d0662b', N(D.mix.skusActivos)+' SKUs', `${esc(lider.nombre||'')} lidera con ${M(lider.venta)}`, null],
+    ['s4','04','Clientes','#c2412d', N(Cl.compradores), `compradores · ${N(Cl.nuevos)} nuevos · ticket ${PES(Cl.ticket)}`, Cl.compradores>=Cl.compradoresPrevMtd],
+    ['s5','05','Pipeline','#6d4fc2', P(Pp.cobertura), `de la cartera ya compró · ${N(Pp.claveSinCompra)} clientes clave sin compra`, null],
+    ['s6','06','Canales','#0f8b8d', M(Ca.canales[0].venta), `preventa · mayorista ${M(Ca.canales[1].venta)}`, null],
+    ['s7','07','Forecast','#b7791f', M(F.ritmo5), `cierre al ritmo actual · objetivo ${M(objT)}`, objT ? F.ritmo5>=objT : null],
+    ['s8','08','Ejecución','#1f2933', N(D.prioridades.length), 'prioridades para esta semana', null]
+  ];
+  $('#cards').innerHTML = cards.map(([id,n,t1,col,v,d,ok])=>`<a class="card" href="#${id}"><div class="top"><span class="num" style="background:${col}">${n}</span><span class="t">${t1}</span>${ok==null?'':`<span class="pill ${ok?'g':'r'}" style="margin-left:auto">${ok?'bien':'atención'}</span>`}</div><div class="v">${v}</div><div class="d">${d}</div></a>`).join('');
+
+  // 1 ventas
+  const provRows = Mg.proveedores.filter(p=>obj(p)).slice(0,12).map(p=>{ const o=obj(p), a=div(p.venta,o), gap=p.venta-o*t; return `<tr><td>${esc(p.nombre)}</td><td>${M(p.venta)}</td><td>${M(o)}</td><td>${P(a)}</td><td style="width:22%">${bar(a,t)}</td><td class="${gap<0?'red':'green'}">${M(gap)}</td></tr>`; });
+  $('#b1').innerHTML = `<div class="kpis">${kpi('Venta neta del mes',M(V.mtd),`al ${fdate(per.corte)} · ${per.habilesTransc} de ${per.habilesTotal} días hábiles`)}${kpi('Objetivo ('+(ESC==='eq'?'equilibrio':'ideal')+')',M(objT),`avance ${P(av)} · tiempo transcurrido ${P(t)}`)}${kpi('vs mes anterior (mismos días hábiles)',pillVs(V.varVsPrev),`${M(V.prevMtd)} al ${fdate(per.cortePrev)}`)}${kpi('Ritmo actual / necesario',M(V.ritmoActual)+' / '+M(ritmoNec),'por día hábil')}${kpi('Forecast al ritmo de los últimos 5 días',M(F.ritmo5),`lineal ${M(F.lineal)}`)}</div>
+   <h3>¿Qué explica la variación? Cada proveedor contra su objetivo</h3>${table(['Proveedor','Vendido','Objetivo','Avance','Línea negra = % del mes transcurrido','Adelanto / atraso'],provRows)}
+   <p class="note">"Adelanto / atraso" = lo vendido menos lo que debería llevar a esta altura (objetivo × % del mes transcurrido). Año anterior: la base compartida empieza en agosto 2026, por eso se compara contra el mes anterior.</p>`;
+
+  // 2 margen
+  const mRows = Mg.proveedores.slice(0,12).map(p=>{ const dpp = p.margen!=null&&p.margenPrevMtd!=null ? (p.margen-p.margenPrevMtd)*100 : null; return `<tr><td>${esc(p.nombre)}</td><td>${M(p.venta)}</td><td>${P(p.margen)}</td><td>${P(p.margenPrevMtd)}</td><td class="${dpp<0?'red':'green'}">${dpp==null?'—':(dpp>0?'+':'')+dpp.toLocaleString('es-AR',{maximumFractionDigits:1})+' pp'}</td><td>${P(p.descuento)}</td></tr>`; });
+  $('#b2').innerHTML = `<div class="kpis">${kpi('Margen bruto del mes',P(Mg.margen),`mismos días del mes pasado ${P(Mg.margenPrevMtd)} · mes pasado completo ${P(Mg.margenPrevTotal)}`)}${kpi('Contribución bruta',M(Mg.contribucion),`mes pasado, mismos días: ${M(Mg.contribucionPrevMtd)}`)}${kpi('Descuento promedio sobre lista',P(Mg.descuento),`mes pasado completo ${P(Mg.descuentoPrev)} (dinámicas y descuentos)`)}</div>
+   <h3>Margen por proveedor: impacto de precio, descuentos y mix</h3>${table(['Proveedor','Venta','Margen','Margen mes pasado (mismos días)','Diferencia','Descuento s/ lista'],mRows)}`;
+
+  // 3 volumen y mix
+  const totCat = D.mix.categorias.reduce((s,c)=>s+Math.max(0,c.venta),0);
+  const cRows = D.mix.categorias.slice(0,12).map(c=>`<tr><td>${esc(c.nombre)}</td><td>${M(c.venta)}</td><td>${P(div(c.venta,totCat))}</td><td>${M(c.ventaPrevMtd)}</td><td>${pillVs(div(c.venta-c.ventaPrevMtd,c.ventaPrevMtd))}</td></tr>`);
+  const sRows = D.mix.skus.slice(0,15).map(s=>`<tr><td>${esc(s.nombre)}${sub(s.proveedor)}</td><td>${M(s.venta)}</td><td>${pillVs(div(s.venta-s.ventaPrevMtd,s.ventaPrevMtd))}</td><td>${P(s.margen)}</td><td class="${s.stockDigip<=0?'red':''}">${s.stockDigip<=0?'sin stock':N(s.stockDigip)}</td></tr>`);
+  $('#b3').innerHTML = `<div class="two"><div><h3>Categorías (contra los mismos días del mes pasado)</h3>${table(['Categoría','Venta','Peso','Mes pasado','Var.'],cRows)}</div><div><h3>Los SKUs que más venden</h3>${table(['Artículo','Venta','Var.','Margen','Stock Digip'],sRows)}</div></div>`;
+
+  // 4 clientes
+  const svRows = Cl.topSinVolver.slice(0,10).map(c=>`<tr><td>${esc(c.nombre)}${sub(c.vendedor)}</td><td>${M(c.ventaPrev)}</td><td>${c.dosMeses?'<span class="pill r">venía comprando</span>':''}</td></tr>`);
+  const nvRows = Cl.nuevosLista.map(c=>`<tr><td>${esc(c.nombre)}${sub(c.vendedor)}</td><td>${M(c.venta)}</td></tr>`);
+  $('#b4').innerHTML = `<div class="kpis">${kpi('Clientes que compraron',N(Cl.compradores),`mes pasado, mismos días: ${N(Cl.compradoresPrevMtd)}`)}${kpi('Nuevos',N(Cl.nuevos),'primera compra registrada (la base empieza en agosto)')}${kpi('Recurrencia',P(Cl.recurrencia),'de los compradores también compró el mes pasado')}${kpi('Frecuencia',(Cl.frecuencia??0).toLocaleString('es-AR')+' pedidos',`por cliente · mes pasado, mismos días: ${(Cl.frecuenciaPrev??0).toLocaleString('es-AR')}`)}${kpi('Ticket promedio',PES(Cl.ticket),`mes pasado, mismos días: ${PES(Cl.ticketPrev)}`)}${kpi('Retención / pérdida',N(Cl.sinVolver)+' sin volver',`compraron el mes pasado (${M(Cl.ventaSinVolverPrev)}) y todavía no este mes; ${N(Cl.enRiesgo)} venían de 2 meses seguidos`)}</div>
+   <div class="two"><div><h3>Los clientes más grandes del mes pasado que todavía no volvieron</h3>${table(['Cliente','Compró el mes pasado',''],svRows)}</div><div><h3>Clientes nuevos del mes</h3>${table(['Cliente','Venta'],nvRows)}</div></div>`;
+
+  // 5 pipeline
+  const kRows = Pp.topClaveSin.slice(0,12).map(c=>`<tr><td>${esc(c.nombre)}${sub(c.vendedor)}</td><td>${M(c.promedioMensual)}</td></tr>`);
+  const pa = Pp.pendientesAntiguedad;
+  $('#b5').innerHTML = `<div class="kpis">${kpi('Cartera activa',N(Pp.cartera),'clientes con vendedor asignado')}${kpi('Conversión (cobertura)',P(Pp.cobertura),`${N(Pp.carteraCompro)} ya compraron este mes`)}${kpi('Clientes clave sin compra',N(Pp.claveSinCompra)+' de '+N(Pp.clientesClave),`promedian ${M(Pp.ventaMensualClaveSin)} por mes: es la venta más cercana`)}${kpi('Pedidos pendientes (Digip)',N(Pp.pendientes),`${M(Pp.pendientesImporte)} · ${pa.masDe7} con más de 7 días`)}</div>
+   <h3>Clientes clave (hacen el 80% de la venta) que todavía no compraron este mes</h3>${table(['Cliente','Promedio mensual'],kRows)}
+   <p class="note">Pedidos pendientes por antigüedad: menos de 1 día ${pa.menosDe1} · 1 a 3 días ${pa.de1a3} · 3 a 7 días ${pa.de3a7} · más de 7 días ${pa.masDe7}. Digip actualizado ${esc((Pp.digipActualizado||'').replace('T',' ').slice(0,16))} (UTC).</p>`;
+
+  // 6 canales
+  const chRows = Ca.canales.map(c=>{ const o=obj(c), a=div(c.venta,o); return `<tr><td>${c.nombre}</td><td>${M(c.venta)}</td><td>${M(o)}</td><td>${P(a)}</td><td style="width:22%">${bar(a,t)}</td><td>${pillVs(div(c.venta-c.ventaPrevMtd,c.ventaPrevMtd))}</td></tr>`; });
+  const rRows = Ca.ramos.slice(0,8).map(r=>`<tr><td>${esc(r.nombre)}</td><td>${M(r.venta)}</td><td>${N(r.compradores)}</td><td>${pillVs(div(r.venta-r.ventaPrevMtd,r.ventaPrevMtd))}</td></tr>`);
+  const vRows = Ca.vendedores.filter(v=>obj(v)).map(v=>{ const o=obj(v), a=div(v.venta,o); return `<tr><td>${esc(v.codigo+' '+v.nombre)}${sub(v.canal)}</td><td>${M(v.venta)}</td><td>${M(o)}</td><td class="${a<t*0.8?'red':a>=t?'green':''}">${P(a)}</td><td style="width:20%">${bar(a,t)}</td></tr>`; });
+  $('#b6').innerHTML = `<h3>Preventa y mayorista contra el objetivo</h3>${table(['Canal','Venta','Objetivo','Avance','','vs mes pasado'],chRows)}
+   <div class="two" style="margin-top:14px"><div><h3>Por ramo del cliente (contra los mismos días del mes pasado)</h3>${table(['Ramo','Venta','Compradores','vs mes pasado'],rRows)}</div><div><h3>Vendedores contra su objetivo</h3>${table(['Vendedor','Venta','Objetivo','Avance',''],vRows)}<p class="note">El objetivo por vendedor ya tiene el cambio de rutas; la venta es la del código actual.</p></div></div>`;
+
+  // 7 forecast
+  const W=760,H=260,pl=52,pr=16,pt=16,pb=28, tot=per.habilesTotal;
+  const maxY = Math.max(objT||0, F.prevTotal||0, F.ritmo5||0, 1)*1.05;
+  const x = d => pl + (d/tot)*(W-pl-pr), y = v => H-pb - (v/maxY)*(H-pt-pb);
+  const line = arr => arr.map((p,i)=>(i?'L':'M')+x(p.dia).toFixed(1)+','+y(p.acum).toFixed(1)).join(' ');
+  const last = F.curvaActual[F.curvaActual.length-1] || {dia:0,acum:0};
+  let grid=''; for(let k=0;k<=4;k++){ const v=maxY*k/4; grid+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#e4e8ee"/><text x="${pl-6}" y="${y(v)+4}" font-size="10" text-anchor="end" fill="#7b8794">${Math.round(v/1e6)}M</text>`; }
+  const svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Venta acumulada del mes contra el mes pasado y el objetivo">${grid}
+    ${objT?`<line x1="${pl}" x2="${W-pr}" y1="${y(objT)}" y2="${y(objT)}" stroke="#c2412d" stroke-dasharray="5 4"/><text x="${W-pr}" y="${y(objT)-5}" font-size="11" text-anchor="end" fill="#c2412d">Objetivo ${M(objT)}</text>`:''}
+    <path d="${line(F.curvaPrev)}" fill="none" stroke="#9aa5b1" stroke-width="2"/>
+    <path d="${line(F.curvaActual)}" fill="none" stroke="#2f6fde" stroke-width="3"/>
+    <line x1="${x(last.dia)}" y1="${y(last.acum)}" x2="${x(tot)}" y2="${y(F.ritmo5)}" stroke="#2f6fde" stroke-dasharray="4 4" stroke-width="2"/>
+    <text x="${x(tot)}" y="${y(F.ritmo5)+16}" font-size="11" text-anchor="end" fill="#2f6fde">Forecast ${M(F.ritmo5)}</text>
+    <text x="${pl}" y="${H-8}" font-size="10" fill="#7b8794">día hábil 1</text><text x="${W-pr}" y="${H-8}" font-size="10" text-anchor="end" fill="#7b8794">día hábil ${tot}</text></svg>`;
+  $('#b7').innerHTML = `<div class="kpis">${kpi('Forecast al ritmo de los últimos 5 días',M(F.ritmo5),`${M(F.ritmoDiario5)} por día hábil`)}${kpi('Forecast lineal (promedio del mes)',M(F.lineal),'venta del mes ÷ días hábiles × total')}${kpi('Contra el objetivo',objT?pillVs(div(F.ritmo5-objT,objT)):'—',`objetivo ${M(objT)}`)}${kpi('Precisión del forecast',F.errorPrevMismoDia==null?'—':'±'+P(Math.abs(F.errorPrevMismoDia)),`el mes pasado, en este mismo día hábil, el lineal decía ${M(F.fcPrevMismoDia)} y cerró en ${M(F.prevTotal)}`)}</div>
+   ${svg}<p class="note">Azul: este mes, acumulado por día hábil (punteado: forecast al ritmo de los últimos 5 días). Gris: el mes pasado. Rojo: objetivo.</p>`;
+
+  // 8 ejecucion
+  $('#b8').innerHTML = `<h3>Prioridades que marcan los datos</h3><ul class="prio">${D.prioridades.map(p=>`<li><b>${esc(p.titulo)}</b><span>${esc(p.detalle)}</span></li>`).join('')}</ul>
+   <h3>Mis acciones de la semana</h3><div class="todo"><input type="text" id="tIn" placeholder="Ej.: Visitar los 5 clientes clave sin compra de la ruta 51 — Ezequiel — jueves"><button id="tAdd">Agregar</button></div><ul class="checks" id="tList"></ul>
+   <p class="note">Tu lista queda guardada en este navegador.</p>`;
+  renderTodo(); $('#tAdd').onclick = addTodo; $('#tIn').onkeydown = e => { if (e.key==='Enter') addTodo(); };
+}
+function loadTodo(){ try { return JSON.parse(localStorage.getItem('director-todo')||'[]'); } catch(e){ return []; } }
+function saveTodo(l){ try { localStorage.setItem('director-todo', JSON.stringify(l)); } catch(e){} }
+function renderTodo(){ const l=loadTodo(); $('#tList').innerHTML = l.map((x,i)=>`<li class="${x.ok?'done':''}"><input type="checkbox" data-i="${i}" ${x.ok?'checked':''}><span>${esc(x.t)}</span><button data-d="${i}" title="Borrar">×</button></li>`).join('') || '<li class="dim">Todavía no cargaste acciones.</li>';
+  document.querySelectorAll('#tList input').forEach(c=>c.onchange=()=>{ const l=loadTodo(); l[c.dataset.i].ok=c.checked; saveTodo(l); renderTodo(); });
+  document.querySelectorAll('#tList button').forEach(b=>b.onclick=()=>{ const l=loadTodo(); l.splice(b.dataset.d,1); saveTodo(l); renderTodo(); }); }
+function addTodo(){ const v=$('#tIn').value.trim(); if(!v) return; const l=loadTodo(); l.push({t:v,ok:false}); saveTodo(l); $('#tIn').value=''; renderTodo(); }
+
+cargarDatos('./data.json').then(data=>{
+  D = data;
+  const g = new Date(D.generadoEn);
+  $('#meta').innerHTML = `Actualizado <b>${g.toLocaleDateString('es-AR')} ${g.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</b><br>Mes <b>${D.periodo.mes}</b> al ${fdate(D.periodo.corte)} · ${D.periodo.habilesTransc}/${D.periodo.habilesTotal} días hábiles<br><span class="esc"><button data-e="eq">Equilibrio</button><button data-e="ideal">Ideal</button></span>`;
+  document.querySelectorAll('.esc button').forEach(b=>b.onclick=()=>{ ESC=b.dataset.e; try{localStorage.setItem('director-esc',ESC);}catch(e){} render(); });
+  render();
+});
+</script>
+</body>
+</html>
