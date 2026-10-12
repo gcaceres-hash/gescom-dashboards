@@ -77,7 +77,7 @@
     <div>
       <div class="kicker">Lunes 8:00 · uso personal</div>
       <h1>Tablero del Director Comercial</h1>
-      <div class="sub">Los 8 indicadores para empezar la semana con foco: dónde estamos, qué lo explica y qué hacemos distinto.</div>
+      <div class="sub">Los 8 indicadores para empezar la semana con foco: dónde estamos, qué lo explica y qué hacemos distinto. Ventas y objetivos con IVA; margen sobre el neto sin IVA.</div>
     </div>
     <div class="meta" id="meta"></div>
   </header>
@@ -134,13 +134,13 @@ function render(){
 
   // 1 ventas
   const provRows = Mg.proveedores.filter(p=>obj(p)).slice(0,12).map(p=>{ const o=obj(p), a=div(p.venta,o), gap=p.venta-o*t; return `<tr><td>${esc(p.nombre)}</td><td>${M(p.venta)}</td><td>${M(o)}</td><td>${P(a)}</td><td style="width:22%">${bar(a,t)}</td><td class="${gap<0?'red':'green'}">${M(gap)}</td></tr>`; });
-  $('#b1').innerHTML = `<div class="kpis">${kpi('Venta neta del mes',M(V.mtd),`al ${fdate(per.corte)} · ${per.habilesTransc} de ${per.habilesTotal} días hábiles`)}${kpi('Objetivo ('+(ESC==='eq'?'equilibrio':'ideal')+')',M(objT),`avance ${P(av)} · tiempo transcurrido ${P(t)}`)}${kpi('vs mes anterior (mismos días hábiles)',pillVs(V.varVsPrev),`${M(V.prevMtd)} al ${fdate(per.cortePrev)}`)}${kpi('Ritmo actual / necesario',M(V.ritmoActual)+' / '+M(ritmoNec),'por día hábil')}${kpi('Forecast al ritmo de los últimos 5 días',M(F.ritmo5),`lineal ${M(F.lineal)}`)}</div>
+  $('#b1').innerHTML = `<div class="kpis">${kpi('Venta del mes (con IVA)',M(V.mtd),`al ${fdate(per.corte)} · ${per.habilesTransc} de ${per.habilesTotal} días hábiles`)}${kpi('Objetivo ('+(ESC==='eq'?'equilibrio':'ideal')+')',M(objT),`avance ${P(av)} · tiempo transcurrido ${P(t)}`)}${kpi('vs mes anterior (mismos días hábiles)',pillVs(V.varVsPrev),`${M(V.prevMtd)} al ${fdate(per.cortePrev)}`)}${kpi('Ritmo actual / necesario',M(V.ritmoActual)+' / '+M(ritmoNec),'por día hábil')}${kpi('Forecast al ritmo de los últimos 5 días',M(F.ritmo5),`lineal ${M(F.lineal)}`)}</div>
    <h3>¿Qué explica la variación? Cada proveedor contra su objetivo</h3>${table(['Proveedor','Vendido','Objetivo','Avance','Línea negra = % del mes transcurrido','Adelanto / atraso'],provRows)}
    <p class="note">"Adelanto / atraso" = lo vendido menos lo que debería llevar a esta altura (objetivo × % del mes transcurrido). Año anterior: la base compartida empieza en agosto 2026, por eso se compara contra el mes anterior.</p>`;
 
   // 2 margen
   const mRows = Mg.proveedores.slice(0,12).map(p=>{ const dpp = p.margen!=null&&p.margenPrevMtd!=null ? (p.margen-p.margenPrevMtd)*100 : null; return `<tr><td>${esc(p.nombre)}</td><td>${M(p.venta)}</td><td>${P(p.margen)}</td><td>${P(p.margenPrevMtd)}</td><td class="${dpp<0?'red':'green'}">${dpp==null?'—':(dpp>0?'+':'')+dpp.toLocaleString('es-AR',{maximumFractionDigits:1})+' pp'}</td><td>${P(p.descuento)}</td></tr>`; });
-  $('#b2').innerHTML = `<div class="kpis">${kpi('Margen bruto del mes',P(Mg.margen),`mismos días del mes pasado ${P(Mg.margenPrevMtd)} · mes pasado completo ${P(Mg.margenPrevTotal)}`)}${kpi('Contribución bruta',M(Mg.contribucion),`mes pasado, mismos días: ${M(Mg.contribucionPrevMtd)}`)}${kpi('Descuento promedio sobre lista',P(Mg.descuento),`mes pasado completo ${P(Mg.descuentoPrev)} (dinámicas y descuentos)`)}</div>
+  $('#b2').innerHTML = `<div class="kpis">${kpi('Margen bruto del mes (sin IVA)',P(Mg.margen),`mismos días del mes pasado ${P(Mg.margenPrevMtd)} · mes pasado completo ${P(Mg.margenPrevTotal)}`)}${kpi('Contribución bruta (sin IVA)',M(Mg.contribucion),`mes pasado, mismos días: ${M(Mg.contribucionPrevMtd)}`)}${kpi('Descuento promedio sobre lista',P(Mg.descuento),`mes pasado completo ${P(Mg.descuentoPrev)} (dinámicas y descuentos)`)}</div>
    <h3>Margen por proveedor: impacto de precio, descuentos y mix</h3>${table(['Proveedor','Venta','Margen','Margen mes pasado (mismos días)','Diferencia','Descuento s/ lista'],mRows)}`;
 
   // 3 volumen y mix

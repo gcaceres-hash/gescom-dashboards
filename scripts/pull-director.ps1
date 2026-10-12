@@ -65,11 +65,11 @@ if (-not $obj) { Write-Log "AVISO: no hay objetivos cargados para $mes (se muest
 
 # ---------------- datos ----------------
 Write-Log "Venta diaria..."
-$diario = Invoke-PanelSql "SELECT v.fecha AS f, SUM($SIGNO * v.neto) AS n FROM ventas v WHERE v.fecha >= '$($iniPrev2.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.fecha ORDER BY v.fecha"
+$diario = Invoke-PanelSql "SELECT v.fecha AS f, SUM($SIGNO * v.total) AS n FROM ventas v WHERE v.fecha >= '$($iniPrev2.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.fecha ORDER BY v.fecha"
 Write-Log "Venta por articulo (mes y mes anterior)..."
 $arts = Invoke-PanelSql @"
 SELECT substr(v.fecha,1,7) AS m, i.articulo AS a,
-  SUM($SIGNO * i.neto) AS n,
+  SUM($SIGNO * i.neto) AS n, SUM($SIGNO * i.total) AS t,
   SUM($SIGNO * i.precio_costo * i.cantidad * COALESCE(i.factor,1)) AS c,
   SUM(CASE WHEN v.tipo='VEN' THEN i.neto ELSE 0 END) AS nv,
   SUM(CASE WHEN v.tipo='VEN' THEN i.precio_unitario * i.cantidad ELSE 0 END) AS lv,
@@ -80,23 +80,23 @@ GROUP BY m, i.articulo
 "@
 # mismo periodo del mes anterior (para comparar margen y mix con los mismos dias)
 $artsPrevMtd = Invoke-PanelSql @"
-SELECT i.articulo AS a, SUM($SIGNO * i.neto) AS n, SUM($SIGNO * i.precio_costo * i.cantidad * COALESCE(i.factor,1)) AS c
+SELECT i.articulo AS a, SUM($SIGNO * i.neto) AS n, SUM($SIGNO * i.total) AS t, SUM($SIGNO * i.precio_costo * i.cantidad * COALESCE(i.factor,1)) AS c
 FROM ventas v JOIN venta_items i ON i.venta_id = v.id
 WHERE v.fecha >= '$($iniPrev.ToString('yyyy-MM-dd'))' AND v.fecha <= '$($cortePrev.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL)
 GROUP BY i.articulo
 "@
 Write-Log "Clientes..."
 $cliMes = Invoke-PanelSql @"
-SELECT substr(v.fecha,1,7) AS m, v.cliente AS cl, SUM($SIGNO * v.neto) AS n,
+SELECT substr(v.fecha,1,7) AS m, v.cliente AS cl, SUM($SIGNO * v.total) AS n,
   COUNT(DISTINCT CASE WHEN v.tipo='VEN' THEN v.fecha END) AS ped
 FROM ventas v WHERE v.fecha >= '$($iniPrev2.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL)
 GROUP BY m, v.cliente
 "@
-$cliPrevMtd = Invoke-PanelSql "SELECT v.cliente AS cl, SUM($SIGNO * v.neto) AS n, COUNT(DISTINCT CASE WHEN v.tipo='VEN' THEN v.fecha END) AS ped FROM ventas v WHERE v.fecha >= '$($iniPrev.ToString('yyyy-MM-dd'))' AND v.fecha <= '$($cortePrev.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.cliente"
+$cliPrevMtd = Invoke-PanelSql "SELECT v.cliente AS cl, SUM($SIGNO * v.total) AS n, COUNT(DISTINCT CASE WHEN v.tipo='VEN' THEN v.fecha END) AS ped FROM ventas v WHERE v.fecha >= '$($iniPrev.ToString('yyyy-MM-dd'))' AND v.fecha <= '$($cortePrev.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.cliente"
 $primera = @{}; Invoke-PanelSql "SELECT cliente AS cl, MIN(fecha) AS f FROM ventas WHERE tipo='VEN' GROUP BY cliente" | ForEach-Object { $primera[[string]$_.cl] = [string]$_.f }
 Write-Log "Vendedores..."
-$vendMes = Invoke-PanelSql "SELECT v.vendedor AS ve, SUM($SIGNO * v.neto) AS n FROM ventas v WHERE v.fecha >= '$($ini.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.vendedor"
-$vendPrevMtd = Invoke-PanelSql "SELECT v.vendedor AS ve, SUM($SIGNO * v.neto) AS n FROM ventas v WHERE v.fecha >= '$($iniPrev.ToString('yyyy-MM-dd'))' AND v.fecha <= '$($cortePrev.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.vendedor"
+$vendMes = Invoke-PanelSql "SELECT v.vendedor AS ve, SUM($SIGNO * v.total) AS n FROM ventas v WHERE v.fecha >= '$($ini.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.vendedor"
+$vendPrevMtd = Invoke-PanelSql "SELECT v.vendedor AS ve, SUM($SIGNO * v.total) AS n FROM ventas v WHERE v.fecha >= '$($iniPrev.ToString('yyyy-MM-dd'))' AND v.fecha <= '$($cortePrev.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.vendedor"
 $vendNom = @{}; Invoke-PanelSql "SELECT codigo, nombre FROM vendedores" | ForEach-Object { $vendNom[([string]$_.codigo).TrimStart('0')] = [string]$_.nombre }
 Write-Log "Catalogos, cartera, Digip..."
 $catArt = @{}; Invoke-PanelSql "SELECT a.codigo, a.descripcion, p.nombre AS prov FROM articulos a LEFT JOIN proveedores p ON p.codigo = a.proveedor" | ForEach-Object { $catArt[[string]$_.codigo] = $_ }
@@ -147,38 +147,39 @@ foreach ($x in $arts) {
     $t = $totP; if ($esAct) { $t = $tot }
     $t.n += [double]$x.n; $t.c += [double]$x.c; $t.nv += [double]$x.nv; $t.lv += [double]$x.lv
     if ($esAct) {
-        if (-not $porProv[$prov]) { $porProv[$prov] = @{ n=0.0; c=0.0; nv=0.0; lv=0.0; pn=0.0; pc=0.0; pt=0.0 } }
-        $pp = $porProv[$prov]; $pp.n += [double]$x.n; $pp.c += [double]$x.c; $pp.nv += [double]$x.nv; $pp.lv += [double]$x.lv
-        if (-not $porCat[$cat]) { $porCat[$cat] = @{ n=0.0; pn=0.0 } }; $porCat[$cat].n += [double]$x.n
-        $skus[$a] = @{ n=[double]$x.n; c=[double]$x.c; u=[double]$x.u; pn=0.0 }
+        # venta = con IVA (t), como los objetivos; margen = sobre el neto sin IVA (n y c)
+        if (-not $porProv[$prov]) { $porProv[$prov] = @{ n=0.0; c=0.0; nv=0.0; lv=0.0; pn=0.0; pc=0.0; pt=0.0; vt=0.0; pvt=0.0 } }
+        $pp = $porProv[$prov]; $pp.n += [double]$x.n; $pp.c += [double]$x.c; $pp.nv += [double]$x.nv; $pp.lv += [double]$x.lv; $pp.vt += [double]$x.t
+        if (-not $porCat[$cat]) { $porCat[$cat] = @{ n=0.0; pn=0.0 } }; $porCat[$cat].n += [double]$x.t
+        $skus[$a] = @{ n=[double]$x.n; c=[double]$x.c; u=[double]$x.u; t=[double]$x.t; pn=0.0 }
     } else {
-        if (-not $porProv[$prov]) { $porProv[$prov] = @{ n=0.0; c=0.0; nv=0.0; lv=0.0; pn=0.0; pc=0.0; pt=0.0 } }
-        $porProv[$prov].pt += [double]$x.n
+        if (-not $porProv[$prov]) { $porProv[$prov] = @{ n=0.0; c=0.0; nv=0.0; lv=0.0; pn=0.0; pc=0.0; pt=0.0; vt=0.0; pvt=0.0 } }
+        $porProv[$prov].pt += [double]$x.t
     }
 }
 foreach ($x in $artsPrevMtd) {
     $a = [string]$x.a; $info = $catArt[$a]; $prov = if ($info -and $info.prov) { [string]$info.prov } else { 'Sin proveedor' }
     $cat = if ($categ.ContainsKey($a)) { $categ[$a] } else { 'Sin categoria' }
-    if (-not $porProv[$prov]) { $porProv[$prov] = @{ n=0.0; c=0.0; nv=0.0; lv=0.0; pn=0.0; pc=0.0; pt=0.0 } }
-    $porProv[$prov].pn += [double]$x.n; $porProv[$prov].pc += [double]$x.c
-    if (-not $porCat[$cat]) { $porCat[$cat] = @{ n=0.0; pn=0.0 } }; $porCat[$cat].pn += [double]$x.n
-    if ($skus.ContainsKey($a)) { $skus[$a].pn = [double]$x.n }
+    if (-not $porProv[$prov]) { $porProv[$prov] = @{ n=0.0; c=0.0; nv=0.0; lv=0.0; pn=0.0; pc=0.0; pt=0.0; vt=0.0; pvt=0.0 } }
+    $porProv[$prov].pn += [double]$x.n; $porProv[$prov].pc += [double]$x.c; $porProv[$prov].pvt += [double]$x.t
+    if (-not $porCat[$cat]) { $porCat[$cat] = @{ n=0.0; pn=0.0 } }; $porCat[$cat].pn += [double]$x.t
+    if ($skus.ContainsKey($a)) { $skus[$a].pn = [double]$x.t }
 }
 $prevMtdN = ($artsPrevMtd | Measure-Object n -Sum).Sum; $prevMtdC = ($artsPrevMtd | Measure-Object c -Sum).Sum
 $margen = [ordered]@{
     margen = R4 (Div ($tot.n - $tot.c) $tot.n); margenPrevMtd = R4 (Div ($prevMtdN - $prevMtdC) $prevMtdN); margenPrevTotal = R4 (Div ($totP.n - $totP.c) $totP.n)
     contribucion = R0 ($tot.n - $tot.c); contribucionPrevMtd = R0 ($prevMtdN - $prevMtdC)
     descuento = R4 (1 - (Div $tot.nv $tot.lv)); descuentoPrev = R4 (1 - (Div $totP.nv $totP.lv))
-    proveedores = @($porProv.GetEnumerator() | Where-Object { $_.Value.n -ne 0 -or $_.Value.pn -ne 0 } | Sort-Object { -$_.Value.n } | ForEach-Object {
+    proveedores = @($porProv.GetEnumerator() | Where-Object { $_.Value.n -ne 0 -or $_.Value.pn -ne 0 } | Sort-Object { -$_.Value.vt } | ForEach-Object {
         $v = $_.Value; $o = if ($obj -and $obj.proveedores.($_.Key)) { $obj.proveedores.($_.Key) } else { $null }
-        [ordered]@{ nombre=$_.Key; venta=R0 $v.n; ventaPrevMtd=R0 $v.pn; ventaPrevTotal=R0 $v.pt; margen=R4 (Div ($v.n-$v.c) $v.n); margenPrevMtd=R4 (Div ($v.pn-$v.pc) $v.pn)
+        [ordered]@{ nombre=$_.Key; venta=R0 $v.vt; ventaPrevMtd=R0 $v.pvt; ventaPrevTotal=R0 $v.pt; margen=R4 (Div ($v.n-$v.c) $v.n); margenPrevMtd=R4 (Div ($v.pn-$v.pc) $v.pn)
             descuento=R4 (1 - (Div $v.nv $v.lv)); objEq=$(if ($o) { R0 $o.eq } else { $null }); objIdeal=$(if ($o) { R0 $o.ideal } else { $null }) } })
 }
 $mix = [ordered]@{
     categorias = @($porCat.GetEnumerator() | Sort-Object { -$_.Value.n } | ForEach-Object { [ordered]@{ nombre=$_.Key; venta=R0 $_.Value.n; ventaPrevMtd=R0 $_.Value.pn } })
-    skus = @($skus.GetEnumerator() | Sort-Object { -$_.Value.n } | Select-Object -First 25 | ForEach-Object {
+    skus = @($skus.GetEnumerator() | Sort-Object { -$_.Value.t } | Select-Object -First 25 | ForEach-Object {
         $a=$_.Key; $info=$catArt[$a]
-        [ordered]@{ codigo=$a; nombre=$(if ($info) { [string]$info.descripcion } else { $a }); proveedor=$(if ($info) { [string]$info.prov } else { '' }); venta=R0 $_.Value.n; ventaPrevMtd=R0 $_.Value.pn; margen=R4 (Div ($_.Value.n-$_.Value.c) $_.Value.n); unidades=R0 $_.Value.u; stockDigip=$(if ($stockDigip.ContainsKey($a)) { R0 $stockDigip[$a] } else { 0 }) } })
+        [ordered]@{ codigo=$a; nombre=$(if ($info) { [string]$info.descripcion } else { $a }); proveedor=$(if ($info) { [string]$info.prov } else { '' }); venta=R0 $_.Value.t; ventaPrevMtd=R0 $_.Value.pn; margen=R4 (Div ($_.Value.n-$_.Value.c) $_.Value.n); unidades=R0 $_.Value.u; stockDigip=$(if ($stockDigip.ContainsKey($a)) { R0 $stockDigip[$a] } else { 0 }) } })
     skusActivos = @($skus.Values | Where-Object { $_.n -gt 0 }).Count
 }
 
