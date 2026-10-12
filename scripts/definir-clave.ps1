@@ -16,8 +16,13 @@ los datos cifrados son publicos, asi que una contrasena corta se podria adivinar
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$Clave = "",   # solo para pruebas; en el uso normal dejar vacio y escribirla cuando la pide
-    [switch]$NoPortapapeles
+    [switch]$NoPortapapeles,
+    # -Personal: define la contrasena PERSONAL de Gisela (campo "clavePersonal"), que protege sus
+    # tableros personales (Director Comercial y objetivos). Tiene que ser distinta de la del equipo.
+    [switch]$Personal
 )
+$campo = if ($Personal) { 'clavePersonal' } else { 'claveTableros' }
+$queClave = if ($Personal) { 'tu contrasena PERSONAL (solo para vos, distinta de la del equipo)' } else { 'la contrasena de los tableros' }
 $ErrorActionPreference = "Stop"
 if (-not (Test-Path $ConfigPath)) { throw "No encuentro $ConfigPath" }
 
@@ -29,7 +34,7 @@ function Leer-Oculto([string]$mensaje) {
 
 if ($Clave) { $c1 = $Clave; $c2 = $Clave }
 else {
-    $c1 = Leer-Oculto "Elegi la contrasena de los tableros (minimo 12 caracteres)"
+    $c1 = Leer-Oculto "Elegi $queClave (una frase de 3 o mas palabras, minimo 16 caracteres)"
     $c2 = Leer-Oculto "Escribila de nuevo"
 }
 if ($c1 -ne $c2) { throw "Las dos contrasenas no coinciden. No se guardo nada." }
@@ -40,14 +45,15 @@ if ($c1 -notmatch '^[A-Za-z0-9 _.,;:!?@#%&*+=/()\[\]{}~^|-]+$') { throw "Tiene c
 
 $utf8 = New-Object System.Text.UTF8Encoding $false
 $cfg = [System.IO.File]::ReadAllText($ConfigPath, $utf8) | ConvertFrom-Json
-if ($cfg.PSObject.Properties.Name -contains 'claveTableros') { $cfg.claveTableros = $c1 }
-else { $cfg | Add-Member -NotePropertyName claveTableros -NotePropertyValue $c1 }
+if ($Personal -and $cfg.claveTableros -and $c1 -eq [string]$cfg.claveTableros) { throw "Tiene que ser distinta de la contrasena de los tableros del equipo. No se guardo nada." }
+if ($cfg.PSObject.Properties.Name -contains $campo) { $cfg.$campo = $c1 }
+else { $cfg | Add-Member -NotePropertyName $campo -NotePropertyValue $c1 }
 $json = ConvertTo-Json -InputObject $cfg -Depth 5
 [System.IO.File]::WriteAllText($ConfigPath, $json, $utf8)
 if (-not $NoPortapapeles) { Set-Clipboard -Value $json }
 
 Write-Host ""
-Write-Host "Listo: la contrasena quedo guardada en $ConfigPath (no se sube a GitHub)."
+Write-Host "Listo: $queClave quedo guardada en $ConfigPath (no se sube a GitHub)."
 Write-Host "Ya esta copiado al portapapeles el contenido completo de ese archivo."
 Write-Host "Falta un paso: en GitHub, Settings > Secrets and variables > Actions > PANEL_CONFIG > Update,"
 Write-Host "pegar (Ctrl+V) y guardar. Despues avisale a Claude para activar la proteccion."

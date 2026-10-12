@@ -199,7 +199,7 @@ function renderTodo(){ const l=loadTodo(); $('#tList').innerHTML = l.map((x,i)=>
   document.querySelectorAll('#tList button').forEach(b=>b.onclick=()=>{ const l=loadTodo(); l.splice(b.dataset.d,1); saveTodo(l); renderTodo(); }); }
 function addTodo(){ const v=$('#tIn').value.trim(); if(!v) return; const l=loadTodo(); l.push({t:v,ok:false}); saveTodo(l); $('#tIn').value=''; renderTodo(); }
 
-cargarDatos('./data.json').then(data=>{
+cargarDatos('./data.json', { personal: true }).then(data=>{
   D = data;
   const g = new Date(D.generadoEn);
   $('#meta').innerHTML = `Actualizado <b>${g.toLocaleDateString('es-AR')} ${g.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</b><br>Mes <b>${D.periodo.mes}</b> al ${fdate(D.periodo.corte)} · ${D.periodo.habilesTransc}/${D.periodo.habilesTotal} días hábiles<br><span class="esc"><button data-e="eq">Equilibrio</button><button data-e="ideal">Ideal</button></span>`;

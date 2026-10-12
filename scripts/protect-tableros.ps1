@@ -40,6 +40,20 @@ function Resolver-Clave {
     }
     return ""
 }
+# Tableros personales de Gisela (12/10/2026: "que solamente yo pueda entrar"): se cifran con su
+# contrasena personal ("clavePersonal" en panel-config.json o DASHBOARD_PASSWORD_PERSONAL), distinta
+# de la del equipo. Si todavia no la definio, siguen con la clave comun (ver definir-clave.ps1 -Personal).
+$PERSONALES = @("director","objetivos")
+function Resolver-ClavePersonal {
+    if ($env:DASHBOARD_PASSWORD_PERSONAL) { return $env:DASHBOARD_PASSWORD_PERSONAL }
+    if ($ConfigPath -and (Test-Path $ConfigPath)) {
+        try {
+            $cfg = Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($cfg.clavePersonal) { return [string]$cfg.clavePersonal }
+        } catch { }
+    }
+    return ""
+}
 
 function Concatenar([byte[]]$a, [byte[]]$b) {
     $r = New-Object byte[] ($a.Length + $b.Length)
@@ -58,7 +72,7 @@ function Trozo([byte[]]$src, [int]$desde, [int]$largo) {
 $script:CacheLlaves = @{}
 $script:SalCorrida = $null
 function Derivar([string]$clave, [byte[]]$sal, [int]$iter) {
-    $ck = [Convert]::ToBase64String($sal) + "|" + $iter
+    $ck = [Convert]::ToBase64String($sal) + "|" + $iter + "|" + $clave   # hay dos claves posibles (comun y personal)
     if ($script:CacheLlaves.ContainsKey($ck)) { return ,$script:CacheLlaves[$ck] }
     $kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes($clave, $sal, $iter, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
     try { $k = $kdf.GetBytes(64) } finally { $kdf.Dispose() }
@@ -117,7 +131,7 @@ if ($Modo -eq "Estado") {
         $plano = Test-Path (Join-Path $d "data.json"); $enc = Test-Path (Join-Path $d "data.enc.json")
         Write-Log ("{0,-18} data.json: {1,-3} | data.enc.json: {2,-3}" -f $t, $(if ($plano) { "si" } else { "no" }), $(if ($enc) { "si" } else { "no" }))
     }
-    Write-Log ("Contrasena configurada: " + $(if ($clave) { "si" } else { "no" }))
+    Write-Log ("Contrasena configurada: " + $(if ($clave) { "si" } else { "no" }) + " | contrasena personal (" + ($PERSONALES -join ', ') + "): " + $(if (Resolver-ClavePersonal) { "si" } else { "no" }))
     return
 }
 if (-not $clave) {
@@ -126,25 +140,36 @@ if (-not $clave) {
 }
 if ($clave.Length -lt 12) { throw "La contrasena es muy corta (minimo 12 caracteres): los datos cifrados son publicos y se podria adivinar." }
 
+$clavePersonal = Resolver-ClavePersonal
+if ($clavePersonal -and $clavePersonal.Length -lt 12) { throw "La contrasena personal es muy corta (minimo 12 caracteres)." }
+if ($clavePersonal -and $clavePersonal -eq $clave) { throw "La contrasena personal no puede ser igual a la de los tableros del equipo." }
+
 foreach ($t in $Tableros) {
     $d = Join-Path $DocsDir $t
     $pPlano = Join-Path $d "data.json"; $pEnc = Join-Path $d "data.enc.json"
+    $esPersonal = $PERSONALES -contains $t
+    $k = $clave; if ($esPersonal -and $clavePersonal) { $k = $clavePersonal }
     if ($Modo -eq "Cifrar") {
         if (-not (Test-Path $pPlano)) { Write-Log "$t : sin data.json nuevo, se deja como esta."; continue }
         $bytes = [System.IO.File]::ReadAllBytes($pPlano)
-        $sobre = Cifrar-Bytes $bytes $clave
+        $sobre = Cifrar-Bytes $bytes $k
         $json = ConvertTo-Json -InputObject $sobre -Compress
         # comprobar que se puede descifrar y que da exactamente lo mismo antes de borrar el original
-        $vuelta = Descifrar-Sobre ($json | ConvertFrom-Json) $clave
+        $vuelta = Descifrar-Sobre ($json | ConvertFrom-Json) $k
         if ($vuelta.Length -ne $bytes.Length -or [Convert]::ToBase64String($vuelta) -ne [Convert]::ToBase64String($bytes)) { throw "$t : la verificacion del cifrado fallo, no se borra data.json." }
         [System.IO.File]::WriteAllText($pEnc, $json, $utf8)
         Remove-Item $pPlano -Force
-        Write-Log "$t : cifrado OK ($($bytes.Length) bytes -> data.enc.json), data.json borrado."
+        $cual = if ($esPersonal -and $clavePersonal) { "clave personal" } elseif ($esPersonal) { "clave del equipo: FALTA definir la clave personal" } else { "clave del equipo" }
+        Write-Log "$t : cifrado OK ($($bytes.Length) bytes -> data.enc.json, $cual), data.json borrado."
     } else {
         if (Test-Path $pPlano) { Write-Log "$t : ya existe data.json, no se pisa."; continue }
         if (-not (Test-Path $pEnc)) { Write-Log "$t : no hay data.enc.json para descifrar."; continue }
         $sobre = [System.IO.File]::ReadAllText($pEnc, $utf8) | ConvertFrom-Json
-        $plano = Descifrar-Sobre $sobre $clave
+        try { $plano = Descifrar-Sobre $sobre $k }
+        catch {
+            # transicion: un tablero personal que todavia esta cifrado con la clave del equipo
+            if ($esPersonal -and $k -ne $clave) { $plano = Descifrar-Sobre $sobre $clave } else { throw }
+        }
         [System.IO.File]::WriteAllBytes($pPlano, $plano)
         Write-Log "$t : descifrado a data.json ($($plano.Length) bytes)."
     }

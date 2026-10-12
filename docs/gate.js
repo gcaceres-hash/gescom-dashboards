@@ -19,9 +19,11 @@
   }
   function unir(a, b) { var r = new Uint8Array(a.length + b.length); r.set(a, 0); r.set(b, a.length); return r; }
 
-  function leerGuardada() { try { return sessionStorage.getItem(CLAVE_SESION) || ''; } catch (e) { return ''; } }
-  function guardar(c) { try { sessionStorage.setItem(CLAVE_SESION, c); } catch (e) { /* sin almacenamiento: se vuelve a pedir */ } }
-  function olvidar() { try { sessionStorage.removeItem(CLAVE_SESION); } catch (e) { /* nada */ } }
+  // Los tableros personales usan su propia clave de sesion (cargarDatos(url, { personal: true })),
+  // asi la contrasena personal no pisa la del equipo ni al reves.
+  function leerGuardada(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function guardar(k, c) { try { sessionStorage.setItem(k, c); } catch (e) { /* sin almacenamiento: se vuelve a pedir */ } }
+  function olvidar(k) { try { sessionStorage.removeItem(k); } catch (e) { /* nada */ } }
 
   async function descifrar(sobre, clave) {
     if (!window.crypto || !crypto.subtle) throw new Error('Este navegador no permite descifrar (se necesita https).');
@@ -58,15 +60,15 @@
     document.head.appendChild(s);
   }
 
-  function pedirClave(sobre, mensajeInicial) {
+  function pedirClave(sobre, mensajeInicial, sesion, personal) {
     estilos();
     return new Promise(function (resolver) {
       var velo = document.createElement('div');
       velo.id = 'gate-velo';
       velo.innerHTML =
         '<form id="gate-caja" autocomplete="off">' +
-        '<h1>Tablero protegido</h1>' +
-        '<p>Ingresá la contraseña para ver los datos.</p>' +
+        (personal ? '<h1>Tablero personal</h1><p>Ingresá tu contraseña personal (no es la de los tableros del equipo).</p>'
+                  : '<h1>Tablero protegido</h1><p>Ingresá la contraseña para ver los datos.</p>') +
         '<label for="gate-clave">Contraseña</label>' +
         '<input id="gate-clave" type="password" autocomplete="current-password" required>' +
         '<button id="gate-ok" type="submit">Ingresar</button>' +
@@ -84,7 +86,7 @@
         boton.disabled = true; boton.textContent = 'Descifrando…'; msg.textContent = '';
         try {
           var datos = await descifrar(sobre, clave);
-          guardar(clave);
+          guardar(sesion, clave);
           velo.remove();
           resolver(datos);
         } catch (e) {
@@ -96,7 +98,9 @@
     });
   }
 
-  window.cargarDatos = async function (url) {
+  window.cargarDatos = async function (url, opciones) {
+    var personal = !!(opciones && opciones.personal);
+    var sesion = personal ? CLAVE_SESION + '-personal' : CLAVE_SESION;
     var base = String(url).split('?')[0];
     var r = await fetch(base.replace(/data\.json$/, 'data.enc.json') + '?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) {
@@ -106,11 +110,11 @@
       return plano.json();
     }
     var sobre = await r.json();
-    var guardada = leerGuardada();
+    var guardada = leerGuardada(sesion);
     if (guardada) {
       try { return await descifrar(sobre, guardada); }
-      catch (e) { if (e.claveIncorrecta) olvidar(); else throw e; }
+      catch (e) { if (e.claveIncorrecta) olvidar(sesion); else throw e; }
     }
-    return pedirClave(sobre, guardada ? 'La contraseña cambió: ingresá la nueva.' : '');
+    return pedirClave(sobre, guardada ? 'La contraseña cambió: ingresá la nueva.' : '', sesion, personal);
   };
 })();
