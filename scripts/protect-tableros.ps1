@@ -151,6 +151,9 @@ foreach ($t in $Tableros) {
     $k = $clave; if ($esPersonal -and $clavePersonal) { $k = $clavePersonal }
     if ($Modo -eq "Cifrar") {
         if (-not (Test-Path $pPlano)) { Write-Log "$t : sin data.json nuevo, se deja como esta."; continue }
+        # desde el 12/10/2026 la clave personal existe: un tablero personal NUNCA se cifra con la clave del equipo
+        # (si falta, por ejemplo en un secret desactualizado, no se publica nada nuevo).
+        if ($esPersonal -and -not $clavePersonal) { Write-Log "$t : AVISO falta la clave personal (clavePersonal): no se cifra ni se publica."; continue }
         $bytes = [System.IO.File]::ReadAllBytes($pPlano)
         $sobre = Cifrar-Bytes $bytes $k
         $json = ConvertTo-Json -InputObject $sobre -Compress
@@ -159,7 +162,7 @@ foreach ($t in $Tableros) {
         if ($vuelta.Length -ne $bytes.Length -or [Convert]::ToBase64String($vuelta) -ne [Convert]::ToBase64String($bytes)) { throw "$t : la verificacion del cifrado fallo, no se borra data.json." }
         [System.IO.File]::WriteAllText($pEnc, $json, $utf8)
         Remove-Item $pPlano -Force
-        $cual = if ($esPersonal -and $clavePersonal) { "clave personal" } elseif ($esPersonal) { "clave del equipo: FALTA definir la clave personal" } else { "clave del equipo" }
+        $cual = if ($esPersonal) { "clave personal" } else { "clave del equipo" }
         Write-Log "$t : cifrado OK ($($bytes.Length) bytes -> data.enc.json, $cual), data.json borrado."
     } else {
         if (Test-Path $pPlano) { Write-Log "$t : ya existe data.json, no se pisa."; continue }
