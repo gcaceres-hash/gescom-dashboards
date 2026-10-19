@@ -198,16 +198,17 @@ function renderPlata(p){
     {t:'Valor al costo', n:1, f:r=>plata(r.costo)}
   ], p.topVencidos || []);
   const q = p.liquidaciones;
-  if (q && q.ventas) {
-    document.getElementById('liqTitulo').textContent = `Vencidos que salieron como liquidación · cliente ${q.cliente} · código ${q.vendedor}`;
+  if (q && q.ventas && q.ventas.length) {
+    document.getElementById('liqTitulo').textContent = `Vendido por debajo del costo con el código ${q.vendedor}`;
     tabla('tblLiq', [
       {t:'Fecha', k:'fecha'},
-      {t:'Qué se le vendió', k:'detalle', desc:1},
+      {t:'Cliente', k:'cliente', desc:1},
+      {t:'Qué se vendió', k:'detalle', desc:1},
       {t:'Costo', n:1, f:r=>plata(r.costo)},
       {t:'Facturado neto', n:1, f:r=>plata(r.neto)},
       {t:'Recupero', n:1, f:r=>Math.round(r.recupero*100)+'%'},
       {t:'Sin cobrar', n:1, f:r=>r.saldo ? plata(r.saldo) : '—'}
-    ], q.ventas, {fecha:'Total', detalle:'', costo:q.costo, neto:q.netoFacturado, recupero:q.netoFacturado/q.costo, saldo:q.saldoSinCobrar});
+    ], q.ventas, {fecha:'Total', cliente:'', detalle:'', costo:q.costo, neto:q.netoFacturado, recupero:q.netoFacturado/q.costo, saldo:q.saldoSinCobrar});
   } else {
     document.getElementById('wrapLiq').style.display = 'none';
   }
