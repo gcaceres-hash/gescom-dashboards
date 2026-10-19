@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combo Cobertura Softys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#070f0e; --surface:#0f1a19; --surface-2:#142120;
+    --ink:#e9f4f2; --ink-2:#9fb9b5; --ink-3:#61807b;
+    --hair:#1f3330; --border:rgba(233,244,242,0.10);
+    --accent:#3fd6c3; --accent-dim:#14544c;
+    --good-ink:#4bd07a; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+  .aviso{margin:14px 0 0;padding:10px 14px;border:1px solid #5a4510;background:rgba(250,178,25,.08);color:var(--warning);font-size:12.5px;line-height:1.5;border-radius:4px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);margin:16px 0 22px;}
+  .board .cell{background:var(--bg);padding:18px 20px;min-width:0;}
+  .board .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;color:var(--ink);}
+  .board .value.accent{color:var(--accent);}
+  .board .value small{font-size:14px;color:var(--ink-3);font-weight:500;}
+  .board .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.45;}
+  .bar{height:8px;background:var(--hair);border-radius:4px;overflow:hidden;margin-top:10px;}
+  .bar > span{display:block;height:100%;background:var(--accent);}
+
+  .dias{border:1px solid var(--hair);padding:14px 16px;margin-bottom:24px;}
+  .dias h3,.sec h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:0 0 12px;font-weight:600;}
+  .dias-grid{display:flex;gap:6px;align-items:flex-end;overflow-x:auto;padding-bottom:4px;}
+  .dia{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:42px;}
+  .dia .cols{display:flex;gap:3px;align-items:flex-end;height:90px;}
+  .dia .c{width:12px;border-radius:2px 2px 0 0;min-height:2px;}
+  .dia .c.r{background:var(--accent);} .dia .c.k{background:var(--warning);}
+  .dia .n{font-size:10.5px;color:var(--ink-2);font-family:"IBM Plex Mono",monospace;}
+  .dia .f{font-size:10px;color:var(--ink-3);}
+  .leyenda{display:flex;gap:14px;font-size:11.5px;color:var(--ink-3);margin-top:8px;}
+  .leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+
+  .mode-tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--hair);}
+  .mode-tab{font-family:"IBM Plex Mono",monospace;background:none;border:none;color:var(--ink-3);padding:10px 4px;margin-right:22px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .mode-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+  .ctrl-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .ctrl-group label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);}
+  .search, select.sel{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:inherit;}
+  .search{width:220px;max-width:100%;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 10px;font-size:11.5px;cursor:pointer;}
+  .chip.active{border-color:var(--accent);color:var(--ink);background:var(--surface-2);}
+  .hint{font-size:11.5px;color:var(--ink-3);margin:0 0 12px;}
+
+  .table-wrap{border:1px solid var(--hair);overflow-x:auto;}
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px;min-width:820px;}
+  table.t th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--hair);white-space:nowrap;}
+  table.t td{padding:9px 12px;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:middle;}
+  table.t .num{text-align:right;font-variant-numeric:tabular-nums;}
+  table.t td.nom{color:var(--ink);font-weight:600;white-space:nowrap;}
+  table.t td.nom .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  table.t tr.fila{cursor:pointer;}
+  table.t tr.fila:hover td{background:var(--surface);}
+  table.t tr.total td{background:var(--surface);color:var(--ink);font-weight:600;border-bottom:none;}
+  .mini{display:inline-block;width:70px;height:6px;background:var(--hair);border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:8px;}
+  .mini > span{display:block;height:100%;background:var(--accent);}
+  .tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:3px;border:1px solid var(--hair);white-space:nowrap;}
+  .tag.ok{color:var(--good-ink);border-color:var(--good-ink);}
+  .tag.pend{color:var(--ink-3);}
+  .tag.nunca{color:var(--accent);}
+  .tag.recup{color:var(--warning);}
+  .good{color:var(--good-ink);} .warn{color:var(--warning);} .crit{color:var(--critical);}
+  .empty-note{color:var(--ink-3);font-size:12.5px;font-style:italic;padding:14px;}
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+  @media (max-width: 900px){ body{padding:22px 16px 50px;} .board{grid-template-columns:repeat(2,minmax(0,1fr));} .meta{text-align:left;} .board .value{font-size:22px;} }
+</style>
+<link rel="stylesheet" href="../tema-claro.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Combo Cobertura Softys</h1></div>
+      <div class="sub" id="subText">Seguimiento del combo y de los clientes que vamos recuperando — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">
+      Combo en Gescom: <b id="comboText">—</b><br>
+      Lanzado: <b id="inicioText">—</b><br>
+      Datos al: <b id="fechaText">—</b>
+    </div>
+  </header>
+  <div class="aviso" id="aviso" style="display:none"></div>
+
+  <div class="board" id="kpis"></div>
+
+  <div class="dias">
+    <h3>Día por día</h3>
+    <div class="dias-grid" id="dias"></div>
+    <div class="leyenda"><span><i style="background:var(--accent)"></i>Clientes recuperados</span><span><i style="background:var(--warning)"></i>Combos vendidos</span></div>
+  </div>
+
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab active" data-modo="vendedor" role="tab">Por vendedor</button>
+    <button class="mode-tab" data-modo="clientes" role="tab">Clientes objetivo</button>
+  </div>
+
+  <div id="vistaVendedor">
+    <p class="hint">La meta de cada vendedor son los clientes del objetivo total repartidos según cuántos clientes objetivo tiene en su cartera. Tocá un vendedor para ver sus clientes.</p>
+    <div class="table-wrap"><table class="t"><thead id="headVend"></thead><tbody id="bodyVend"></tbody></table></div>
+  </div>
+
+  <div id="vistaClientes" style="display:none">
+    <div class="controls">
+      <div class="ctrl-group"><label for="selVend">Vendedor</label><select class="sel" id="selVend"></select></div>
+      <div class="ctrl-group"><label for="buscar">Cliente</label><input class="search" id="buscar" type="text" placeholder="nombre o código..."></div>
+      <div class="ctrl-group"><label>Grupo</label><div class="chips" id="chipsGrupo"></div></div>
+      <div class="ctrl-group"><label>Estado</label><div class="chips" id="chipsEstado"></div></div>
+    </div>
+    <p class="hint" id="hintCli"></p>
+    <div class="table-wrap"><table class="t"><thead id="headCli"></thead><tbody id="bodyCli"></tbody></table></div>
+  </div>
+
+  <footer>
+    <div><b>Clientes objetivo</b> (foto fija al día del lanzamiento, dentro de la cartera de cada vendedor): <b>Nunca Softys</b> = compraron algo en los 90 días anteriores pero ninguna vez Softys; <b>Recuperar</b> = compraron Softys el mes anterior y todavía no en el mes del lanzamiento. <b>Recuperado</b> = cliente objetivo con al menos una factura de Softys desde el lanzamiento, con o sin combo. <b>Combos vendidos</b> = cantidad del combo en facturas desde el lanzamiento, por el vendedor que cargó el pedido. <b>Fuera del objetivo</b> = combos vendidos a clientes que ya compraban Softys (la regla es ofrecerlo solo a los clientes objetivo). <b>Cobertura Softys</b> = clientes de la cartera que compraron Softys en el mes ÷ cartera. Se excluyen los códigos 1176, 43, 16 y 37.</div>
+    <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom). Se actualiza sola varias veces por día, o pedile a Claude que la actualice.</div>
+  </footer>
+</div>
+
+<script>
+let DATA = null, modo = 'vendedor', vendSel = '', grupoSel = 'todos', estadoSel = 'todos', filtro = '';
+const nf = n => Math.round(n || 0).toLocaleString('es-AR');
+const pct = (n, d = 0) => ((n || 0) * 100).toLocaleString('es-AR', {maximumFractionDigits: d, minimumFractionDigits: d}) + '%';
+const fecha = s => s ? s.slice(0,10).split('-').reverse().join('/') : '—';
+const corta = s => { const p = s.split('-'); return p[2] + '/' + p[1]; };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const div = (a, b) => b ? a / b : 0;
+const vendNombre = cod => { const v = DATA.vendedores.find(x => x.codigo === cod); return v ? v.nombre : 'Vendedor ' + cod; };
+
+function render(){
+  const d = DATA, t = d.totales;
+  document.getElementById('comboText').textContent = d.combo;
+  document.getElementById('inicioText').textContent = fecha(d.inicio);
+  document.getElementById('fechaText').textContent = new Date(d.generatedAt).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
+  const av = document.getElementById('aviso');
+  if (d.fuenteCombos === 'sin ventas') { av.style.display = ''; av.textContent = `Todavía no hay facturas del combo ${d.combo}. Los clientes recuperados ya se cuentan (cualquier compra de Softys de un cliente objetivo); los combos aparecen cuando salga la primera venta.`; }
+  else if (d.fuenteCombos === 'articulos') { av.style.display = ''; av.textContent = `La base todavía no informa el combo ${d.combo} como combo: los combos se cuentan por las ventas que traen 1 Higienol Balanced + 10 TF Normal. A confirmar.`; }
+
+  const metaPct = d.coberturaLanzamiento.pct + d.objetivoPuntos / 100;
+  const avance = div(t.recuperados, d.objetivoClientes);
+  document.getElementById('kpis').innerHTML = `
+    <div class="cell"><div class="label">Clientes recuperados</div><div class="value accent">${nf(t.recuperados)} <small>/ ${nf(d.objetivoClientes)}</small></div>
+      <div class="bar"><span style="width:${Math.min(100, avance*100)}%"></span></div>
+      <div class="foot">${pct(avance)} de la meta · ${nf(t.recuperadosNunca)} nunca habían comprado Softys, ${nf(t.recuperadosRecuperar)} volvieron</div></div>
+    <div class="cell"><div class="label">Cobertura Softys ${esc(d.coberturaMes.mes.split('-').reverse().join('/'))}</div><div class="value">${pct(d.coberturaMes.pct, 1)}</div>
+      <div class="foot">${nf(d.coberturaMes.compradores)} de ${nf(d.cartera)} clientes · al lanzar ${pct(d.coberturaLanzamiento.pct, 1)} · meta ${pct(metaPct, 1)} (+${d.objetivoPuntos} puntos)</div></div>
+    <div class="cell"><div class="label">Combos vendidos</div><div class="value">${nf(t.combosVendidos)}</div>
+      <div class="foot">en ${nf(t.ventasConCombo)} facturas a ${nf(t.clientesConCombo)} clientes · ${nf(t.recuperadosConCombo)} recuperados llevaron combo</div></div>
+    <div class="cell"><div class="label">Combos fuera del objetivo</div><div class="value ${t.combosFueraObjetivo ? 'warn' : ''}">${nf(t.combosFueraObjetivo)}</div>
+      <div class="foot">vendidos a clientes que ya compraban Softys · ${nf(t.objetivo)} clientes objetivo (${nf(t.objetivoNunca)} nunca, ${nf(t.objetivoRecuperar)} a recuperar)</div></div>`;
+
+  const max = Math.max(1, ...d.dias.map(x => Math.max(x.recuperados, x.combos)));
+  document.getElementById('dias').innerHTML = d.dias.map(x => `
+    <div class="dia" title="${fecha(x.fecha)}: ${x.recuperados} recuperados, ${x.combos} combos">
+      <div class="n">${x.recuperados}·${x.combos}</div>
+      <div class="cols"><div class="c r" style="height:${x.recuperados/max*90}px"></div><div class="c k" style="height:${x.combos/max*90}px"></div></div>
+      <div class="f">${corta(x.fecha)}</div></div>`).join('');
+
+  renderVend(); renderCli();
+}
+
+function renderVend(){
+  const rows = DATA.vendedores;
+  document.getElementById('headVend').innerHTML = `<tr><th>Vendedor</th><th class="num">Nunca Softys</th><th class="num">A recuperar</th><th class="num">Meta</th><th class="num">Recuperados</th><th>Avance</th><th class="num">Combos vendidos</th><th class="num">Clientes con combo</th><th class="num">Fuera del objetivo</th></tr>`;
+  const sum = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
+  const fila = (r, total) => {
+    const rec = r.recuperadosNunca + r.recuperadosRecuperar, a = div(rec, r.meta);
+    return `<tr class="${total ? 'total' : 'fila'}" ${total ? '' : `data-v="${esc(r.codigo)}"`}>
+      <td class="nom">${esc(r.nombre)}${total ? '' : `<span class="code">${esc(r.codigo)}</span>`}</td>
+      <td class="num">${nf(r.objetivoNunca)}</td><td class="num">${nf(r.objetivoRecuperar)}</td><td class="num">${nf(r.meta)}</td>
+      <td class="num ${a >= 1 ? 'good' : ''}">${nf(rec)}</td>
+      <td><span class="mini"><span style="width:${Math.min(100, a*100)}%"></span></span>${pct(a)}</td>
+      <td class="num">${nf(r.combosVendidos)}</td><td class="num">${nf(r.clientesConCombo)}</td>
+      <td class="num ${r.combosFueraObjetivo ? 'warn' : ''}">${nf(r.combosFueraObjetivo)}</td></tr>`;
+  };
+  const tot = {nombre:'Total', objetivoNunca:sum('objetivoNunca'), objetivoRecuperar:sum('objetivoRecuperar'), meta:DATA.objetivoClientes,
+    recuperadosNunca:sum('recuperadosNunca'), recuperadosRecuperar:sum('recuperadosRecuperar'), combosVendidos:sum('combosVendidos'),
+    clientesConCombo:sum('clientesConCombo'), combosFueraObjetivo:sum('combosFueraObjetivo')};
+  document.getElementById('bodyVend').innerHTML = rows.map(r => fila(r)).join('') + fila(tot, true);
+  document.querySelectorAll('#bodyVend tr.fila').forEach(tr => tr.onclick = () => { vendSel = tr.dataset.v; document.getElementById('selVend').value = vendSel; setModo('clientes'); renderCli(); });
+}
+
+function renderCli(){
+  const sel = document.getElementById('selVend');
+  if (!sel.options.length) sel.innerHTML = `<option value="">Todos</option>` + DATA.vendedores.map(v => `<option value="${esc(v.codigo)}">${esc(v.nombre)}</option>`).join('');
+  const chip = (id, opts, cur, fn) => { document.getElementById(id).innerHTML = opts.map(([k, l]) => `<button class="chip ${k === cur ? 'active' : ''}" data-k="${k}">${l}</button>`).join('');
+    document.querySelectorAll('#' + id + ' .chip').forEach(b => b.onclick = () => { fn(b.dataset.k); renderCli(); }); };
+  chip('chipsGrupo', [['todos','Todos'],['nunca','Nunca Softys'],['recuperar','A recuperar']], grupoSel, k => grupoSel = k);
+  chip('chipsEstado', [['todos','Todos'],['pend','Pendientes'],['ok','Recuperados']], estadoSel, k => estadoSel = k);
+  const q = filtro.trim().toLowerCase();
+  const rows = DATA.clientes.filter(c => (!vendSel || c.vendedor === vendSel) && (grupoSel === 'todos' || c.grupo === grupoSel)
+    && (estadoSel === 'todos' || (estadoSel === 'ok') === c.recuperado) && (!q || c.nombre.toLowerCase().includes(q) || c.codigo.includes(q)));
+  const rec = rows.filter(c => c.recuperado).length;
+  document.getElementById('hintCli').textContent = `${nf(rows.length)} clientes · ${nf(rec)} recuperados · ${nf(rows.length - rec)} pendientes`;
+  document.getElementById('headCli').innerHTML = `<tr><th>Cliente</th><th>Localidad</th><th>Vendedor</th><th>Grupo</th><th>Última compra Softys</th><th>Estado</th><th class="num">Combos</th></tr>`;
+  document.getElementById('bodyCli').innerHTML = rows.length ? rows.slice(0, 600).map(c => `<tr>
+      <td class="nom">${esc(c.nombre)}<span class="code">${esc(c.codigo)}</span></td><td>${esc(c.localidad)}</td><td>${esc(vendNombre(c.vendedor))}</td>
+      <td><span class="tag ${c.grupo === 'nunca' ? 'nunca' : 'recup'}">${c.grupo === 'nunca' ? 'Nunca Softys' : 'A recuperar'}</span></td>
+      <td>${c.ultimaSoftys ? fecha(c.ultimaSoftys) : '—'}</td>
+      <td>${c.recuperado ? `<span class="tag ok">Recuperado ${fecha(c.fechaRecupero).slice(0,5)}</span>` : '<span class="tag pend">Pendiente</span>'}</td>
+      <td class="num">${c.combos ? nf(c.combos) : ''}</td></tr>`).join('')
+    + (rows.length > 600 ? `<tr><td colspan="7" class="empty-note">Mostrando 600 de ${nf(rows.length)}: elegí un vendedor o buscá un cliente.</td></tr>` : '')
+    : `<tr><td colspan="7" class="empty-note">No hay clientes con esos filtros.</td></tr>`;
+}
+
+function setModo(m){
+  modo = m;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.modo === m));
+  document.getElementById('vistaVendedor').style.display = m === 'vendedor' ? '' : 'none';
+  document.getElementById('vistaClientes').style.display = m === 'clientes' ? '' : 'none';
+}
+document.querySelectorAll('.mode-tab').forEach(b => b.onclick = () => setModo(b.dataset.modo));
+document.getElementById('selVend').onchange = e => { vendSel = e.target.value; renderCli(); };
+document.getElementById('buscar').oninput = e => { filtro = e.target.value; renderCli(); };
+
+fetch('./data.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(d => { DATA = d; render(); })
+  .catch(err => {
+    document.getElementById('kpis').innerHTML = `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${esc(err.message)}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>
+</body>
+</html>
