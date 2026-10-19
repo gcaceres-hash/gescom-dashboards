@@ -65,6 +65,31 @@
   .linkout a:hover{border-color:var(--ink-2);color:var(--ink);}
 
   footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+
+  /* Plata en juego por vencimientos */
+  .plata{display:none;}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:13px 14px;min-width:0;}
+  .kpi .l{font-size:11.5px;color:var(--ink-2);line-height:1.35;}
+  .kpi .v{font-size:22px;font-weight:700;margin-top:6px;}
+  .kpi .s{font-size:11.5px;color:var(--ink-3);margin-top:3px;}
+  .kpi.bad .v{color:var(--bad-ink);}
+  .kpi.warn .v{color:var(--warn-ink);}
+  .tbl-wrap{border:1px solid var(--hair);border-radius:8px;overflow-x:auto;margin-bottom:14px;}
+  .tbl-wrap h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin:0;padding:11px 14px;border-bottom:1px solid var(--hair);font-weight:600;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{padding:7px 14px;text-align:left;border-bottom:1px solid var(--hair);white-space:nowrap;}
+  th{color:var(--ink-3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;}
+  td.desc{white-space:normal;min-width:180px;}
+  tr:last-child td{border-bottom:0;}
+  tr.tot td{font-weight:700;}
+  .nota{font-size:11.5px;color:var(--ink-3);line-height:1.6;margin-top:4px;}
+  @media (max-width:640px){
+    body{padding:20px 16px 48px;}
+    .kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .kpi .v{font-size:19px;}
+  }
 </style>
 <link rel="stylesheet" href="../tema-claro.css">
 </head>
@@ -79,6 +104,16 @@
       Generado: <b id="generadoText">—</b>
     </div>
   </header>
+
+  <section class="plata" id="plata">
+    <div class="sec-title"><span class="chip bad"></span><h2>Plata en juego por vencimientos</h2></div>
+    <div class="kpis" id="plataKpis"></div>
+    <div class="tbl-wrap"><h3>Por vencer, según los días que quedan para despachar</h3><table id="tblTramos"></table></div>
+    <div class="tbl-wrap"><h3>Lo que más plata pone en riesgo</h3><table id="tblRiesgo"></table></div>
+    <div class="tbl-wrap"><h3>Lo que ya está vencido</h3><table id="tblVencidos"></table></div>
+    <div class="tbl-wrap" id="wrapLiq"><h3 id="liqTitulo">Vencidos que salieron como liquidación</h3><table id="tblLiq"></table></div>
+    <div class="nota" id="plataNota"></div>
+  </section>
 
   <section>
     <div class="sec-title"><span class="chip good"></span><h2>Funcionando bien</h2></div>
@@ -115,9 +150,74 @@ function renderCards(containerId, items, cls){
     </div>`).join('');
 }
 
+const nf = new Intl.NumberFormat('es-AR');
+function plata(v){
+  const a = Math.abs(v);
+  if (a >= 1e6) return '$' + (v/1e6).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'M';
+  if (a >= 1e3) return '$' + Math.round(v/1e3).toLocaleString('es-AR') + 'K';
+  return '$' + Math.round(v).toLocaleString('es-AR');
+}
+function tabla(id, cols, rows, totRow){
+  const head = '<tr>' + cols.map(c => `<th class="${c.n?'n':''}">${c.t}</th>`).join('') + '</tr>';
+  const fila = (r, cls) => `<tr class="${cls||''}">` + cols.map(c => `<td class="${c.n?'n':''}${c.desc?' desc':''}">${c.f ? c.f(r) : (r[c.k] ?? '')}</td>`).join('') + '</tr>';
+  document.getElementById(id).innerHTML = head + rows.map(r => fila(r)).join('') + (totRow ? fila(totRow,'tot') : '');
+}
+function renderPlata(p){
+  if (!p) return;
+  document.getElementById('plata').style.display = 'block';
+  const t = p.porVencer || [];
+  const t15 = t[0] || {costo:0,enRiesgo:0};
+  const resto = t.slice(1).reduce((s,x)=>s+x.enRiesgo,0);
+  const kpis = [
+    {c:'bad',  l:'Ya vencido en el depósito', v:plata(p.vencido.costo), s:`${nf.format(p.vencido.unidades)} unidades · ${p.vencido.lotes} lotes`},
+    {c:'bad',  l:'Puede vencerse sin venderse en 15 días', v:plata(t15.enRiesgo), s:`de ${plata(t15.costo)} que vence en ese plazo`},
+    {c:'warn', l:'En riesgo a más de 15 días', v:plata(resto), s:'mercadería que no rota'},
+    {c:'bad',  l:'Total en juego', v:plata(p.totalEnRiesgo), s:'vencido + lo que no llega a venderse'}
+  ];
+  document.getElementById('plataKpis').innerHTML = kpis.map(k => `<div class="kpi ${k.c}"><div class="l">${k.l}</div><div class="v">${k.v}</div><div class="s">${k.s}</div></div>`).join('');
+  const sum = (a,k) => a.reduce((s,x)=>s+(x[k]||0),0);
+  tabla('tblTramos', [
+    {t:'Tramo', k:'tramo'},
+    {t:'Unidades', n:1, f:r=>nf.format(r.unidades)},
+    {t:'Valor al costo', n:1, f:r=>plata(r.costo)},
+    {t:'No llega a venderse', n:1, f:r=>plata(r.enRiesgo)}
+  ], t, {tramo:'Total', unidades:sum(t,'unidades'), costo:sum(t,'costo'), enRiesgo:sum(t,'enRiesgo')});
+  tabla('tblRiesgo', [
+    {t:'Artículo', k:'descripcion', desc:1},
+    {t:'Vence', k:'vence'},
+    {t:'Días', n:1, k:'dias'},
+    {t:'Stock', n:1, f:r=>nf.format(r.unidades)},
+    {t:'Venta 30 d', n:1, f:r=>nf.format(r.venta30)},
+    {t:'Sin vender', n:1, f:r=>nf.format(r.sinVender)},
+    {t:'En riesgo', n:1, f:r=>plata(r.costo)}
+  ], p.topRiesgo || []);
+  tabla('tblVencidos', [
+    {t:'Artículo', k:'descripcion', desc:1},
+    {t:'Venció', k:'vence'},
+    {t:'Unidades', n:1, f:r=>nf.format(r.unidades)},
+    {t:'Valor al costo', n:1, f:r=>plata(r.costo)}
+  ], p.topVencidos || []);
+  const q = p.liquidaciones;
+  if (q && q.ventas) {
+    document.getElementById('liqTitulo').textContent = `Vencidos que salieron como liquidación · cliente ${q.cliente} · código ${q.vendedor}`;
+    tabla('tblLiq', [
+      {t:'Fecha', k:'fecha'},
+      {t:'Qué se le vendió', k:'detalle', desc:1},
+      {t:'Costo', n:1, f:r=>plata(r.costo)},
+      {t:'Facturado neto', n:1, f:r=>plata(r.neto)},
+      {t:'Recupero', n:1, f:r=>Math.round(r.recupero*100)+'%'},
+      {t:'Sin cobrar', n:1, f:r=>r.saldo ? plata(r.saldo) : '—'}
+    ], q.ventas, {fecha:'Total', detalle:'', costo:q.costo, neto:q.netoFacturado, recupero:q.netoFacturado/q.costo, saldo:q.saldoSinCobrar});
+  } else {
+    document.getElementById('wrapLiq').style.display = 'none';
+  }
+  document.getElementById('plataNota').textContent = p.criterio || '';
+}
+
 cargarDatos('./data.json')
   .then(d => {
     document.getElementById('generadoText').textContent = new Date(d.generadoEn).toLocaleString('es-AR');
+    renderPlata(d.perdidas);
     renderCards('bienList', d.bien, 'good');
     renderCards('atencionList', d.atencion, 'bad');
     renderCards('vigilarList', d.vigilar, 'warn');
