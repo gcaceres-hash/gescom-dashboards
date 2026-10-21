@@ -6,6 +6,7 @@ Objetivo: subir 9 puntos la cobertura de Softys (~300 clientes nuevos sobre la c
 Clientes objetivo (foto fija al dia del lanzamiento, de la cartera de vendedores reales):
   - "Nunca Softys": compraron algo en los 90 dias anteriores al lanzamiento pero ninguna vez Softys.
   - "Recuperar": compraron Softys el mes anterior al lanzamiento y no en el mes del lanzamiento.
+  - "Sin compras": no compraron nada en los 90 dias anteriores (clientes a reactivar).
 Recuperado = cliente objetivo con al menos una factura de Softys (proveedor 150) desde el lanzamiento,
 con combo o sin combo.
 
@@ -14,8 +15,13 @@ cargo el pedido. Si la base todavia no trae ninguna fila del combo, se buscan la
 los dos articulos del combo en la proporcion del combo (1 Balanced + 10 TF Normal) y se avisa en el
 tablero que el conteo esta "detectado por articulos".
 
+Regla del combo (pedido de Gisela, 21/10/2026): solo para clientes SIN compras de Softys en los 90 dias
+anteriores al lanzamiento ("Nunca Softys" y "Sin compras"). "Fuera del objetivo" = combo vendido a un
+cliente que compro Softys en esos 90 dias (incluye a los de "Recuperar": esos se recuperan con venta normal).
+
 Reglas: cartera = clientes activos con vendedor asignado; se excluyen los vendedores 1176, 43, 16 y 37.
-El objetivo de cada vendedor es los 300 clientes repartidos segun cuantos clientes objetivo tiene.
+El objetivo de cada vendedor es los 300 clientes repartidos segun cuantos clientes "Nunca Softys" y
+"Recuperar" tiene (los "Sin compras" suman al avance pero no a la meta).
 #>
 param(
     [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
@@ -64,11 +70,11 @@ $ultSoftys = @{}
 foreach ($x in (Invoke-PanelSql "SELECT v.cliente, MAX(v.fecha) f FROM ventas v JOIN venta_items i ON i.venta_id = v.id WHERE v.tipo IN ('VEN','DEB') AND v.fecha >= '$desde90' AND v.fecha < '$Inicio' AND i.articulo IN ($SOFTYS) GROUP BY v.cliente")) { $ultSoftys[[string]$x.cliente] = ([string]$x.f).Substring(0, 10) }
 $objetivo = @{}
 foreach ($k in $cartera.Keys) {
-    if (-not $compro90.ContainsKey($k)) { continue }
+    if (-not $compro90.ContainsKey($k)) { $objetivo[$k] = "sinCompras"; continue }
     if (-not $ultSoftys.ContainsKey($k)) { $objetivo[$k] = "nunca" }
     elseif ($ultSoftys[$k] -ge $mesAnt -and $ultSoftys[$k] -lt $mesIni) { $objetivo[$k] = "recuperar" }
 }
-Write-Log ("Clientes objetivo: {0} (nunca Softys {1}, recuperar {2})" -f $objetivo.Count, @($objetivo.Values | Where-Object { $_ -eq 'nunca' }).Count, @($objetivo.Values | Where-Object { $_ -eq 'recuperar' }).Count)
+Write-Log ("Clientes objetivo: {0} (nunca Softys {1}, recuperar {2}, sin compras {3})" -f $objetivo.Count, @($objetivo.Values | Where-Object { $_ -eq 'nunca' }).Count, @($objetivo.Values | Where-Object { $_ -eq 'recuperar' }).Count, @($objetivo.Values | Where-Object { $_ -eq 'sinCompras' }).Count)
 
 # --- 3) compras de Softys desde el lanzamiento ---
 $softysDesde = @{}
@@ -95,21 +101,23 @@ $comboCli = @{}
 foreach ($f in $filasCombo) { $k = [string]$f.cliente; if (-not $comboCli[$k]) { $comboCli[$k] = 0 }; $comboCli[$k] += [double]$f.q }
 
 # --- 5) por vendedor ---
-$totalObj = [math]::Max(1, $objetivo.Count)
+$totalObj = [math]::Max(1, @($objetivo.Values | Where-Object { $_ -ne 'sinCompras' }).Count)
+# el combo es solo para quien no compro Softys en los 90 dias previos al lanzamiento
+function Fuera-Objetivo([string]$cli) { return $ultSoftys.ContainsKey($cli) }
 $vend = @{}
 function VendRow($cod) {
     if (-not $vend.ContainsKey($cod)) {
-        $vend[$cod] = [ordered]@{ codigo = $cod; nombre = $(if ($vendNom[$cod]) { $vendNom[$cod] } else { "Vendedor $cod" }); cartera = 0; objetivoNunca = 0; objetivoRecuperar = 0
-            recuperadosNunca = 0; recuperadosRecuperar = 0; recuperadosConCombo = 0; combosVendidos = 0; ventasConCombo = 0; clientesConCombo = 0; combosFueraObjetivo = 0; meta = 0 }
+        $vend[$cod] = [ordered]@{ codigo = $cod; nombre = $(if ($vendNom[$cod]) { $vendNom[$cod] } else { "Vendedor $cod" }); cartera = 0; objetivoNunca = 0; objetivoRecuperar = 0; objetivoSinCompras = 0
+            recuperadosNunca = 0; recuperadosRecuperar = 0; recuperadosSinCompras = 0; recuperadosConCombo = 0; combosVendidos = 0; ventasConCombo = 0; clientesConCombo = 0; combosFueraObjetivo = 0; meta = 0 }
     }
     return $vend[$cod]
 }
 foreach ($k in $cartera.Keys) { $r = VendRow ([string]$cartera[$k].vendedor); $r.cartera++ }
 foreach ($k in $objetivo.Keys) {
     $r = VendRow ([string]$cartera[$k].vendedor)
-    if ($objetivo[$k] -eq 'nunca') { $r.objetivoNunca++ } else { $r.objetivoRecuperar++ }
+    switch ($objetivo[$k]) { 'nunca' { $r.objetivoNunca++ } 'recuperar' { $r.objetivoRecuperar++ } default { $r.objetivoSinCompras++ } }
     if ($softysDesde.ContainsKey($k)) {
-        if ($objetivo[$k] -eq 'nunca') { $r.recuperadosNunca++ } else { $r.recuperadosRecuperar++ }
+        switch ($objetivo[$k]) { 'nunca' { $r.recuperadosNunca++ } 'recuperar' { $r.recuperadosRecuperar++ } default { $r.recuperadosSinCompras++ } }
         if ($comboCli.ContainsKey($k)) { $r.recuperadosConCombo++ }
     }
 }
@@ -119,11 +127,11 @@ foreach ($f in $filasCombo) {
     $r = VendRow $cod; $r.combosVendidos += [double]$f.q; $r.ventasConCombo++
     $k = [string]$f.cliente
     if (-not $cliPorVend[$cod]) { $cliPorVend[$cod] = @{} }; $cliPorVend[$cod][$k] = $true
-    if (-not $objetivo.ContainsKey($k)) { $r.combosFueraObjetivo += [double]$f.q }
+    if (Fuera-Objetivo $k) { $r.combosFueraObjetivo += [double]$f.q }
 }
 foreach ($cod in $cliPorVend.Keys) { $vend[$cod].clientesConCombo = $cliPorVend[$cod].Count }
 foreach ($r in $vend.Values) { $r.meta = [math]::Round($ObjetivoClientes * ($r.objetivoNunca + $r.objetivoRecuperar) / $totalObj) }
-$vendOut = @($vend.Values | Where-Object { $_.objetivoNunca + $_.objetivoRecuperar + $_.combosVendidos -gt 0 } | Sort-Object { -($_.objetivoNunca + $_.objetivoRecuperar) })
+$vendOut = @($vend.Values | Where-Object { $_.objetivoNunca + $_.objetivoRecuperar + $_.objetivoSinCompras + $_.combosVendidos -gt 0 } | Sort-Object { -($_.objetivoNunca + $_.objetivoRecuperar) })
 
 # --- 6) clientes objetivo (lista para trabajar) ---
 $clientes = @($objetivo.Keys | ForEach-Object {
@@ -165,15 +173,23 @@ $out = [ordered]@{
         objetivo = $objetivo.Count
         objetivoNunca = @($objetivo.Values | Where-Object { $_ -eq 'nunca' }).Count
         objetivoRecuperar = @($objetivo.Values | Where-Object { $_ -eq 'recuperar' }).Count
+        objetivoSinCompras = @($objetivo.Values | Where-Object { $_ -eq 'sinCompras' }).Count
         recuperados = $recup.Count
         recuperadosNunca = @($recup | Where-Object { $objetivo[$_] -eq 'nunca' }).Count
         recuperadosRecuperar = @($recup | Where-Object { $objetivo[$_] -eq 'recuperar' }).Count
+        recuperadosSinCompras = @($recup | Where-Object { $objetivo[$_] -eq 'sinCompras' }).Count
         recuperadosConCombo = @($recup | Where-Object { $comboCli.ContainsKey($_) }).Count
         combosVendidos = [double](($filasCombo | Measure-Object q -Sum).Sum)
         ventasConCombo = @($filasCombo).Count
         clientesConCombo = @($comboCli.Keys).Count
-        combosFueraObjetivo = [double](($filasCombo | Where-Object { -not $objetivo.ContainsKey([string]$_.cliente) } | Measure-Object q -Sum).Sum)
+        combosFueraObjetivo = [double](($filasCombo | Where-Object { Fuera-Objetivo ([string]$_.cliente) } | Measure-Object q -Sum).Sum)
     }
+    combosFuera = @($filasCombo | Where-Object { Fuera-Objetivo ([string]$_.cliente) } | ForEach-Object {
+        $c = $cartera[[string]$_.cliente]
+        [ordered]@{ fecha = $_.fecha; vendedor = [string]$_.vendedor; cliente = [string]$_.cliente
+            nombre = $(if ($c) { ([string]$c.razon_social).Trim() } else { "" }); localidad = $(if ($c) { ([string]$c.localidad).Trim() } else { "" })
+            ultimaSoftys = $ultSoftys[[string]$_.cliente]; combos = [double]$_.q }
+    })
     vendedores = $vendOut
     dias = $dias
     clientes = $clientes

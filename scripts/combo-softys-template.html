@@ -51,7 +51,7 @@
   .leyenda{display:flex;gap:14px;font-size:11.5px;color:var(--ink-3);margin-top:8px;}
   .leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
 
-  .mode-tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--hair);}
+  .mode-tabs{display:flex;flex-wrap:wrap;gap:0 6px;margin-bottom:18px;border-bottom:1px solid var(--hair);}
   .mode-tab{font-family:"IBM Plex Mono",monospace;background:none;border:none;color:var(--ink-3);padding:10px 4px;margin-right:22px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
   .mode-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
@@ -117,6 +117,12 @@
   <div class="mode-tabs" role="tablist">
     <button class="mode-tab active" data-modo="vendedor" role="tab">Por vendedor</button>
     <button class="mode-tab" data-modo="clientes" role="tab">Clientes objetivo</button>
+    <button class="mode-tab" data-modo="fuera" role="tab">Combos fuera del objetivo</button>
+  </div>
+
+  <div id="vistaFuera" style="display:none">
+    <p class="hint">Combos vendidos a clientes que compraron Softys en los 90 días anteriores al lanzamiento. La regla: el combo es solo para clientes sin compras de Softys en esos 90 días.</p>
+    <div class="table-wrap"><table class="t"><thead id="headFuera"></thead><tbody id="bodyFuera"></tbody></table></div>
   </div>
 
   <div id="vistaVendedor">
@@ -136,7 +142,7 @@
   </div>
 
   <footer>
-    <div><b>Clientes objetivo</b> (foto fija al día del lanzamiento, dentro de la cartera de cada vendedor): <b>Nunca Softys</b> = compraron algo en los 90 días anteriores pero ninguna vez Softys; <b>Recuperar</b> = compraron Softys el mes anterior y todavía no en el mes del lanzamiento. <b>Recuperado</b> = cliente objetivo con al menos una factura de Softys desde el lanzamiento, con o sin combo. <b>Combos vendidos</b> = cantidad del combo en facturas desde el lanzamiento, por el vendedor que cargó el pedido. <b>Fuera del objetivo</b> = combos vendidos a clientes que ya compraban Softys (la regla es ofrecerlo solo a los clientes objetivo). <b>Cobertura Softys</b> = clientes de la cartera que compraron Softys en el mes ÷ cartera. Se excluyen los códigos 1176, 43, 16 y 37.</div>
+    <div><b>Regla del combo:</b> solo para clientes <b>sin compras de Softys en los 90 días anteriores al lanzamiento</b>. <b>Clientes objetivo</b> (foto fija al día del lanzamiento, dentro de la cartera de cada vendedor): <b>Nunca Softys</b> = compraron algo en esos 90 días pero ninguna vez Softys (pueden llevar combo); <b>Sin compras</b> = no compraron nada en esos 90 días, clientes a reactivar (pueden llevar combo; suman al avance pero no a la meta); <b>A recuperar</b> = compraron Softys el mes anterior y todavía no en el mes del lanzamiento (se recuperan con venta normal, sin combo). <b>Recuperado</b> = cliente objetivo con al menos una factura de Softys desde el lanzamiento. <b>Combos vendidos</b> = cantidad del combo en facturas desde el lanzamiento, por el vendedor que cargó el pedido. <b>Fuera del objetivo</b> = combos vendidos a clientes que compraron Softys en los 90 días previos. <b>Cobertura Softys</b> = clientes de la cartera que compraron Softys en el mes ÷ cartera. Se excluyen los códigos 1176, 43, 16 y 37.</div>
     <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom). Se actualiza sola varias veces por día, o pedile a Claude que la actualice.</div>
   </footer>
 </div>
@@ -165,13 +171,13 @@ function render(){
   document.getElementById('kpis').innerHTML = `
     <div class="cell"><div class="label">Clientes recuperados</div><div class="value accent">${nf(t.recuperados)} <small>/ ${nf(d.objetivoClientes)}</small></div>
       <div class="bar"><span style="width:${Math.min(100, avance*100)}%"></span></div>
-      <div class="foot">${pct(avance)} de la meta · ${nf(t.recuperadosNunca)} nunca habían comprado Softys, ${nf(t.recuperadosRecuperar)} volvieron</div></div>
+      <div class="foot">${pct(avance)} de la meta · ${nf(t.recuperadosNunca)} nunca habían comprado Softys, ${nf(t.recuperadosRecuperar)} volvieron, ${nf(t.recuperadosSinCompras || 0)} reactivados</div></div>
     <div class="cell"><div class="label">Cobertura Softys ${esc(d.coberturaMes.mes.split('-').reverse().join('/'))}</div><div class="value">${pct(d.coberturaMes.pct, 1)}</div>
       <div class="foot">${nf(d.coberturaMes.compradores)} de ${nf(d.cartera)} clientes · al lanzar ${pct(d.coberturaLanzamiento.pct, 1)} · meta ${pct(metaPct, 1)} (+${d.objetivoPuntos} puntos)</div></div>
     <div class="cell"><div class="label">Combos vendidos</div><div class="value">${nf(t.combosVendidos)}</div>
       <div class="foot">en ${nf(t.ventasConCombo)} facturas a ${nf(t.clientesConCombo)} clientes · ${nf(t.recuperadosConCombo)} recuperados llevaron combo</div></div>
     <div class="cell"><div class="label">Combos fuera del objetivo</div><div class="value ${t.combosFueraObjetivo ? 'warn' : ''}">${nf(t.combosFueraObjetivo)}</div>
-      <div class="foot">vendidos a clientes que ya compraban Softys · ${nf(t.objetivo)} clientes objetivo (${nf(t.objetivoNunca)} nunca, ${nf(t.objetivoRecuperar)} a recuperar)</div></div>`;
+      <div class="foot">de ${nf(t.combosVendidos)}: a clientes con Softys en los 90 días previos · pueden llevar combo ${nf(t.objetivoNunca + (t.objetivoSinCompras || 0))} clientes (${nf(t.objetivoNunca)} nunca Softys, ${nf(t.objetivoSinCompras || 0)} sin compras)</div></div>`;
 
   const max = Math.max(1, ...d.dias.map(x => Math.max(x.recuperados, x.combos)));
   document.getElementById('dias').innerHTML = d.dias.map(x => `
@@ -180,25 +186,35 @@ function render(){
       <div class="cols"><div class="c r" style="height:${x.recuperados/max*90}px"></div><div class="c k" style="height:${x.combos/max*90}px"></div></div>
       <div class="f">${corta(x.fecha)}</div></div>`).join('');
 
-  renderVend(); renderCli();
+  renderVend(); renderCli(); renderFuera();
+}
+
+function renderFuera(){
+  const rows = (DATA.combosFuera || []).slice().sort((a, b) => vendNombre(a.vendedor).localeCompare(vendNombre(b.vendedor)) || a.fecha.localeCompare(b.fecha));
+  document.getElementById('headFuera').innerHTML = `<tr><th>Fecha</th><th>Vendedor</th><th>Cliente</th><th>Localidad</th><th>Última compra Softys antes del combo</th><th class="num">Combos</th></tr>`;
+  document.getElementById('bodyFuera').innerHTML = rows.length ? rows.map(r => `<tr>
+      <td>${fecha(r.fecha)}</td><td>${esc(vendNombre(r.vendedor))}</td>
+      <td class="nom">${esc(r.nombre)}<span class="code">${esc(r.cliente)}</span></td><td>${esc(r.localidad)}</td>
+      <td>${fecha(r.ultimaSoftys)}</td><td class="num">${nf(r.combos)}</td></tr>`).join('')
+    : `<tr><td colspan="6" class="empty-note">Ningún combo fuera del objetivo.</td></tr>`;
 }
 
 function renderVend(){
   const rows = DATA.vendedores;
-  document.getElementById('headVend').innerHTML = `<tr><th>Vendedor</th><th class="num">Nunca Softys</th><th class="num">A recuperar</th><th class="num">Meta</th><th class="num">Recuperados</th><th>Avance</th><th class="num">Combos vendidos</th><th class="num">Clientes con combo</th><th class="num">Fuera del objetivo</th></tr>`;
+  document.getElementById('headVend').innerHTML = `<tr><th>Vendedor</th><th class="num">Nunca Softys</th><th class="num">A recuperar</th><th class="num">Sin compras</th><th class="num">Meta</th><th class="num">Recuperados</th><th>Avance</th><th class="num">Combos vendidos</th><th class="num">Clientes con combo</th><th class="num">Fuera del objetivo</th></tr>`;
   const sum = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
   const fila = (r, total) => {
-    const rec = r.recuperadosNunca + r.recuperadosRecuperar, a = div(rec, r.meta);
+    const rec = r.recuperadosNunca + r.recuperadosRecuperar + (r.recuperadosSinCompras || 0), a = div(rec, r.meta);
     return `<tr class="${total ? 'total' : 'fila'}" ${total ? '' : `data-v="${esc(r.codigo)}"`}>
       <td class="nom">${esc(r.nombre)}${total ? '' : `<span class="code">${esc(r.codigo)}</span>`}</td>
-      <td class="num">${nf(r.objetivoNunca)}</td><td class="num">${nf(r.objetivoRecuperar)}</td><td class="num">${nf(r.meta)}</td>
+      <td class="num">${nf(r.objetivoNunca)}</td><td class="num">${nf(r.objetivoRecuperar)}</td><td class="num">${nf(r.objetivoSinCompras)}</td><td class="num">${nf(r.meta)}</td>
       <td class="num ${a >= 1 ? 'good' : ''}">${nf(rec)}</td>
       <td><span class="mini"><span style="width:${Math.min(100, a*100)}%"></span></span>${pct(a)}</td>
       <td class="num">${nf(r.combosVendidos)}</td><td class="num">${nf(r.clientesConCombo)}</td>
       <td class="num ${r.combosFueraObjetivo ? 'warn' : ''}">${nf(r.combosFueraObjetivo)}</td></tr>`;
   };
-  const tot = {nombre:'Total', objetivoNunca:sum('objetivoNunca'), objetivoRecuperar:sum('objetivoRecuperar'), meta:DATA.objetivoClientes,
-    recuperadosNunca:sum('recuperadosNunca'), recuperadosRecuperar:sum('recuperadosRecuperar'), combosVendidos:sum('combosVendidos'),
+  const tot = {nombre:'Total', objetivoNunca:sum('objetivoNunca'), objetivoRecuperar:sum('objetivoRecuperar'), objetivoSinCompras:sum('objetivoSinCompras'), meta:DATA.objetivoClientes,
+    recuperadosNunca:sum('recuperadosNunca'), recuperadosRecuperar:sum('recuperadosRecuperar'), recuperadosSinCompras:sum('recuperadosSinCompras'), combosVendidos:sum('combosVendidos'),
     clientesConCombo:sum('clientesConCombo'), combosFueraObjetivo:sum('combosFueraObjetivo')};
   document.getElementById('bodyVend').innerHTML = rows.map(r => fila(r)).join('') + fila(tot, true);
   document.querySelectorAll('#bodyVend tr.fila').forEach(tr => tr.onclick = () => { vendSel = tr.dataset.v; document.getElementById('selVend').value = vendSel; setModo('clientes'); renderCli(); });
@@ -209,7 +225,7 @@ function renderCli(){
   if (!sel.options.length) sel.innerHTML = `<option value="">Todos</option>` + DATA.vendedores.map(v => `<option value="${esc(v.codigo)}">${esc(v.nombre)}</option>`).join('');
   const chip = (id, opts, cur, fn) => { document.getElementById(id).innerHTML = opts.map(([k, l]) => `<button class="chip ${k === cur ? 'active' : ''}" data-k="${k}">${l}</button>`).join('');
     document.querySelectorAll('#' + id + ' .chip').forEach(b => b.onclick = () => { fn(b.dataset.k); renderCli(); }); };
-  chip('chipsGrupo', [['todos','Todos'],['nunca','Nunca Softys'],['recuperar','A recuperar']], grupoSel, k => grupoSel = k);
+  chip('chipsGrupo', [['todos','Todos'],['nunca','Nunca Softys'],['sinCompras','Sin compras 90 días'],['recuperar','A recuperar (sin combo)']], grupoSel, k => grupoSel = k);
   chip('chipsEstado', [['todos','Todos'],['pend','Pendientes'],['ok','Recuperados']], estadoSel, k => estadoSel = k);
   const q = filtro.trim().toLowerCase();
   const rows = DATA.clientes.filter(c => (!vendSel || c.vendedor === vendSel) && (grupoSel === 'todos' || c.grupo === grupoSel)
@@ -219,7 +235,7 @@ function renderCli(){
   document.getElementById('headCli').innerHTML = `<tr><th>Cliente</th><th>Localidad</th><th>Vendedor</th><th>Grupo</th><th>Última compra Softys</th><th>Estado</th><th class="num">Combos</th></tr>`;
   document.getElementById('bodyCli').innerHTML = rows.length ? rows.slice(0, 600).map(c => `<tr>
       <td class="nom">${esc(c.nombre)}<span class="code">${esc(c.codigo)}</span></td><td>${esc(c.localidad)}</td><td>${esc(vendNombre(c.vendedor))}</td>
-      <td><span class="tag ${c.grupo === 'nunca' ? 'nunca' : 'recup'}">${c.grupo === 'nunca' ? 'Nunca Softys' : 'A recuperar'}</span></td>
+      <td><span class="tag ${c.grupo === 'recuperar' ? 'recup' : 'nunca'}">${c.grupo === 'nunca' ? 'Nunca Softys · combo' : c.grupo === 'sinCompras' ? 'Sin compras · combo' : 'A recuperar · sin combo'}</span></td>
       <td>${c.ultimaSoftys ? fecha(c.ultimaSoftys) : '—'}</td>
       <td>${c.recuperado ? `<span class="tag ok">Recuperado ${fecha(c.fechaRecupero).slice(0,5)}</span>` : '<span class="tag pend">Pendiente</span>'}</td>
       <td class="num">${c.combos ? nf(c.combos) : ''}</td></tr>`).join('')
@@ -232,6 +248,7 @@ function setModo(m){
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.modo === m));
   document.getElementById('vistaVendedor').style.display = m === 'vendedor' ? '' : 'none';
   document.getElementById('vistaClientes').style.display = m === 'clientes' ? '' : 'none';
+  document.getElementById('vistaFuera').style.display = m === 'fuera' ? '' : 'none';
 }
 document.querySelectorAll('.mode-tab').forEach(b => b.onclick = () => setModo(b.dataset.modo));
 document.getElementById('selVend').onchange = e => { vendSel = e.target.value; renderCli(); };
