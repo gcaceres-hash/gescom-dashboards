@@ -5,7 +5,7 @@ Objetivo: subir 9 puntos la cobertura de Softys (~300 clientes nuevos sobre la c
 
 Clientes objetivo (foto fija al dia del lanzamiento, de la cartera de vendedores reales):
   - "Nunca Softys": compraron algo en los 90 dias anteriores al lanzamiento pero ninguna vez Softys.
-  - "Recuperar": compraron Softys el mes anterior al lanzamiento y no en el mes del lanzamiento.
+  - "Recuperar": compraron Softys en los 90 dias anteriores, pero no en el mes del lanzamiento.
   - "Sin compras": no compraron nada en los 90 dias anteriores (clientes a reactivar).
 Recuperado = cliente objetivo con al menos una factura de Softys (proveedor 150) desde el lanzamiento,
 con combo o sin combo.
@@ -15,9 +15,9 @@ cargo el pedido. Si la base todavia no trae ninguna fila del combo, se buscan la
 los dos articulos del combo en la proporcion del combo (1 Balanced + 10 TF Normal) y se avisa en el
 tablero que el conteo esta "detectado por articulos".
 
-Regla del combo (pedido de Gisela, 21/10/2026): solo para clientes SIN compras de Softys en los 90 dias
-anteriores al lanzamiento ("Nunca Softys" y "Sin compras"). "Fuera del objetivo" = combo vendido a un
-cliente que compro Softys en esos 90 dias (incluye a los de "Recuperar": esos se recuperan con venta normal).
+Regla del combo (Gisela, 21/10/2026): se puede vender a los tres grupos (no compradores de Softys,
+clientes sin compras y los que compraron Softys antes pero no en el mes del lanzamiento). "Fuera del
+objetivo" = combo vendido a un cliente que ya habia comprado Softys en el mes del lanzamiento antes de lanzar.
 
 Reglas: cartera = clientes activos con vendedor asignado; se excluyen los vendedores 1176, 43, 16 y 37.
 El objetivo de cada vendedor es los 300 clientes repartidos segun cuantos clientes "Nunca Softys" y
@@ -72,7 +72,7 @@ $objetivo = @{}
 foreach ($k in $cartera.Keys) {
     if (-not $compro90.ContainsKey($k)) { $objetivo[$k] = "sinCompras"; continue }
     if (-not $ultSoftys.ContainsKey($k)) { $objetivo[$k] = "nunca" }
-    elseif ($ultSoftys[$k] -ge $mesAnt -and $ultSoftys[$k] -lt $mesIni) { $objetivo[$k] = "recuperar" }
+    elseif ($ultSoftys[$k] -lt $mesIni) { $objetivo[$k] = "recuperar" }
 }
 Write-Log ("Clientes objetivo: {0} (nunca Softys {1}, recuperar {2}, sin compras {3})" -f $objetivo.Count, @($objetivo.Values | Where-Object { $_ -eq 'nunca' }).Count, @($objetivo.Values | Where-Object { $_ -eq 'recuperar' }).Count, @($objetivo.Values | Where-Object { $_ -eq 'sinCompras' }).Count)
 
@@ -102,8 +102,8 @@ foreach ($f in $filasCombo) { $k = [string]$f.cliente; if (-not $comboCli[$k]) {
 
 # --- 5) por vendedor ---
 $totalObj = [math]::Max(1, @($objetivo.Values | Where-Object { $_ -ne 'sinCompras' }).Count)
-# el combo es solo para quien no compro Softys en los 90 dias previos al lanzamiento
-function Fuera-Objetivo([string]$cli) { return $ultSoftys.ContainsKey($cli) }
+# fuera del objetivo: el cliente ya habia comprado Softys en el mes del lanzamiento antes de lanzar
+function Fuera-Objetivo([string]$cli) { return ($ultSoftys.ContainsKey($cli) -and $ultSoftys[$cli] -ge $mesIni) }
 $vend = @{}
 function VendRow($cod) {
     if (-not $vend.ContainsKey($cod)) {

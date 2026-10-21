@@ -121,7 +121,7 @@
   </div>
 
   <div id="vistaFuera" style="display:none">
-    <p class="hint">Combos vendidos a clientes que compraron Softys en los 90 días anteriores al lanzamiento. La regla: el combo es solo para clientes sin compras de Softys en esos 90 días.</p>
+    <p class="hint">Combos vendidos a clientes que ya habían comprado Softys en octubre antes del lanzamiento. La regla: el combo es para clientes que no compran Softys (nunca, sin compras en 90 días, o que compraron antes pero no en octubre).</p>
     <div class="table-wrap"><table class="t"><thead id="headFuera"></thead><tbody id="bodyFuera"></tbody></table></div>
   </div>
 
@@ -142,7 +142,7 @@
   </div>
 
   <footer>
-    <div><b>Regla del combo:</b> solo para clientes <b>sin compras de Softys en los 90 días anteriores al lanzamiento</b>. <b>Clientes objetivo</b> (foto fija al día del lanzamiento, dentro de la cartera de cada vendedor): <b>Nunca Softys</b> = compraron algo en esos 90 días pero ninguna vez Softys (pueden llevar combo); <b>Sin compras</b> = no compraron nada en esos 90 días, clientes a reactivar (pueden llevar combo; suman al avance pero no a la meta); <b>A recuperar</b> = compraron Softys el mes anterior y todavía no en el mes del lanzamiento (se recuperan con venta normal, sin combo). <b>Recuperado</b> = cliente objetivo con al menos una factura de Softys desde el lanzamiento. <b>Combos vendidos</b> = cantidad del combo en facturas desde el lanzamiento, por el vendedor que cargó el pedido. <b>Fuera del objetivo</b> = combos vendidos a clientes que compraron Softys en los 90 días previos. <b>Cobertura Softys</b> = clientes de la cartera que compraron Softys en el mes ÷ cartera. Se excluyen los códigos 1176, 43, 16 y 37.</div>
+    <div><b>Clientes objetivo</b> (foto fija al día del lanzamiento, dentro de la cartera de cada vendedor; los tres grupos pueden llevar el combo): <b>Nunca Softys</b> = compraron algo en los 90 días anteriores pero ninguna vez Softys; <b>A recuperar</b> = compraron Softys en esos 90 días pero todavía no en el mes del lanzamiento; <b>Sin compras</b> = no compraron nada en esos 90 días, clientes a reactivar (suman al avance pero no a la meta). <b>Recuperado</b> = cliente objetivo con al menos una factura de Softys desde el lanzamiento. <b>Combos vendidos</b> = cantidad del combo en facturas desde el lanzamiento, por el vendedor que cargó el pedido. <b>Fuera del objetivo</b> = combos vendidos a clientes que ya habían comprado Softys en el mes del lanzamiento. <b>Cobertura Softys</b> = clientes de la cartera que compraron Softys en el mes ÷ cartera. Se excluyen los códigos 1176, 43, 16 y 37.</div>
     <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom). Se actualiza sola varias veces por día, o pedile a Claude que la actualice.</div>
   </footer>
 </div>
@@ -177,7 +177,7 @@ function render(){
     <div class="cell"><div class="label">Combos vendidos</div><div class="value">${nf(t.combosVendidos)}</div>
       <div class="foot">en ${nf(t.ventasConCombo)} facturas a ${nf(t.clientesConCombo)} clientes · ${nf(t.recuperadosConCombo)} recuperados llevaron combo</div></div>
     <div class="cell"><div class="label">Combos fuera del objetivo</div><div class="value ${t.combosFueraObjetivo ? 'warn' : ''}">${nf(t.combosFueraObjetivo)}</div>
-      <div class="foot">de ${nf(t.combosVendidos)}: a clientes con Softys en los 90 días previos · pueden llevar combo ${nf(t.objetivoNunca + (t.objetivoSinCompras || 0))} clientes (${nf(t.objetivoNunca)} nunca Softys, ${nf(t.objetivoSinCompras || 0)} sin compras)</div></div>`;
+      <div class="foot">de ${nf(t.combosVendidos)}: a clientes que ya compraban Softys en el mes · ${nf(t.objetivo)} clientes objetivo (${nf(t.objetivoNunca)} nunca Softys, ${nf(t.objetivoRecuperar)} a recuperar, ${nf(t.objetivoSinCompras || 0)} sin compras)</div></div>`;
 
   const max = Math.max(1, ...d.dias.map(x => Math.max(x.recuperados, x.combos)));
   document.getElementById('dias').innerHTML = d.dias.map(x => `
@@ -225,7 +225,7 @@ function renderCli(){
   if (!sel.options.length) sel.innerHTML = `<option value="">Todos</option>` + DATA.vendedores.map(v => `<option value="${esc(v.codigo)}">${esc(v.nombre)}</option>`).join('');
   const chip = (id, opts, cur, fn) => { document.getElementById(id).innerHTML = opts.map(([k, l]) => `<button class="chip ${k === cur ? 'active' : ''}" data-k="${k}">${l}</button>`).join('');
     document.querySelectorAll('#' + id + ' .chip').forEach(b => b.onclick = () => { fn(b.dataset.k); renderCli(); }); };
-  chip('chipsGrupo', [['todos','Todos'],['nunca','Nunca Softys'],['sinCompras','Sin compras 90 días'],['recuperar','A recuperar (sin combo)']], grupoSel, k => grupoSel = k);
+  chip('chipsGrupo', [['todos','Todos'],['nunca','Nunca Softys'],['recuperar','A recuperar'],['sinCompras','Sin compras 90 días']], grupoSel, k => grupoSel = k);
   chip('chipsEstado', [['todos','Todos'],['pend','Pendientes'],['ok','Recuperados']], estadoSel, k => estadoSel = k);
   const q = filtro.trim().toLowerCase();
   const rows = DATA.clientes.filter(c => (!vendSel || c.vendedor === vendSel) && (grupoSel === 'todos' || c.grupo === grupoSel)
@@ -235,7 +235,7 @@ function renderCli(){
   document.getElementById('headCli').innerHTML = `<tr><th>Cliente</th><th>Localidad</th><th>Vendedor</th><th>Grupo</th><th>Última compra Softys</th><th>Estado</th><th class="num">Combos</th></tr>`;
   document.getElementById('bodyCli').innerHTML = rows.length ? rows.slice(0, 600).map(c => `<tr>
       <td class="nom">${esc(c.nombre)}<span class="code">${esc(c.codigo)}</span></td><td>${esc(c.localidad)}</td><td>${esc(vendNombre(c.vendedor))}</td>
-      <td><span class="tag ${c.grupo === 'recuperar' ? 'recup' : 'nunca'}">${c.grupo === 'nunca' ? 'Nunca Softys · combo' : c.grupo === 'sinCompras' ? 'Sin compras · combo' : 'A recuperar · sin combo'}</span></td>
+      <td><span class="tag ${c.grupo === 'recuperar' ? 'recup' : 'nunca'}">${c.grupo === 'nunca' ? 'Nunca Softys' : c.grupo === 'sinCompras' ? 'Sin compras 90 días' : 'A recuperar'}</span></td>
       <td>${c.ultimaSoftys ? fecha(c.ultimaSoftys) : '—'}</td>
       <td>${c.recuperado ? `<span class="tag ok">Recuperado ${fecha(c.fechaRecupero).slice(0,5)}</span>` : '<span class="tag pend">Pendiente</span>'}</td>
       <td class="num">${c.combos ? nf(c.combos) : ''}</td></tr>`).join('')
