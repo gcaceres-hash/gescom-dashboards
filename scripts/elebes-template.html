@@ -1,0 +1,454 @@
+<title>ELEBES · El Chirlo Mayorista</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0a0e0f; --surface:#12181a; --surface-2:#171f21;
+    --ink:#eef2f0; --ink-2:#9fb0ab; --ink-3:#64726e;
+    --hair:#263030; --border:rgba(238,242,240,0.10);
+    --cyan:#3fc1c9; --cyan-dim:#1d5558;
+    --good:#0ca30c; --good-ink:#4bd07a; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .mono{font-family:"IBM Plex Mono","IBM Plex Sans",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+
+  .month-tabs{display:flex;gap:6px;margin:18px 0 4px;flex-wrap:wrap;}
+  .month-tab{font-family:"IBM Plex Mono",monospace;border:1px solid var(--hair);background:var(--surface);color:var(--ink-2);border-radius:4px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;text-transform:uppercase;}
+  .month-tab:hover{color:var(--ink);}
+  .month-tab.active{background:var(--cyan);border-color:var(--cyan);color:#fff;font-weight:700;}
+  .month-tab .badge{font-size:9.5px;opacity:.8;margin-left:5px;}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin:14px 0 18px;}
+  .board .cell{background:var(--surface);padding:18px 20px;}
+  .board .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;letter-spacing:-0.01em;}
+  .board .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.5;}
+  .up{color:var(--good-ink);font-weight:600;} .down{color:var(--critical);font-weight:600;}
+
+  .goal{border:1px solid var(--hair);background:var(--surface);padding:16px 20px;margin-bottom:30px;}
+  .goal-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-bottom:12px;}
+  .goal-top b{color:var(--ink);}
+  .goal-track{position:relative;height:14px;background:var(--surface-2);border-radius:4px;}
+  .goal-fill{position:absolute;left:0;top:0;height:100%;background:var(--cyan);border-radius:4px;}
+  .goal-proj{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:repeating-linear-gradient(135deg,var(--cyan-dim) 0 4px,transparent 4px 8px);border:1px solid var(--cyan-dim);}
+  .goal-mark{position:absolute;top:-5px;width:2px;height:24px;background:var(--ink);}
+  .goal-mark.hoy{background:var(--ink-3);}
+  .goal-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);margin-top:12px;}
+  .goal-legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid currentColor;}
+  .chip.good{color:var(--good-ink);} .chip.warning{color:var(--warning);} .chip.critical{color:var(--critical);}
+
+  section{margin-bottom:34px;}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+  h2{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2);margin:0;}
+  .sec-head .n{color:var(--ink-3);font-size:11.5px;}
+  .panel{border:1px solid var(--hair);background:var(--surface);padding:16px 18px;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:34px;}
+  .two > section{margin-bottom:0;min-width:0;}
+
+  svg{display:block;}
+  svg text{font-family:"IBM Plex Sans",sans-serif;}
+  .axis text{fill:var(--ink-3);font-size:10.5px;}
+  .grid line{stroke:var(--hair);}
+  .bar{fill:var(--cyan);}
+  .bar.off{fill:var(--cyan-dim);}
+  .hit{fill:transparent;}
+  .col:hover .bar{opacity:.75;}
+  .ref{stroke:var(--ink-2);stroke-width:1.5;stroke-dasharray:4 4;}
+  .ref-label{fill:var(--ink-2);font-size:10.5px;}
+
+  .hbar-row{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;padding:5px 0;font-size:12.5px;}
+  .hbar-row .name{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hbar-track{display:block;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;}
+  .hbar-fill{display:block;height:100%;background:var(--cyan);border-radius:4px;}
+  .hbar-val{text-align:right;}
+
+  .tbl-head, .trow{display:grid;grid-template-columns:22px 1fr 110px 170px 90px 110px;gap:12px;align-items:center;padding:10px 14px;}
+  .tbl-head{padding-top:0;padding-bottom:8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--hair);}
+  .tbl-head span[data-key]{cursor:pointer;user-select:none;} .tbl-head span.sorted{color:var(--cyan);}
+  .num{text-align:right;}
+  .tlist{border:1px solid var(--hair);border-top:none;background:var(--surface);}
+  .trow{border-bottom:1px solid var(--hair);font-size:13px;}
+  .trow.clickable{cursor:pointer;} .trow.clickable:hover{background:var(--surface-2);}
+  .trow.open{background:var(--surface-2);}
+  .trow .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trow .name small{color:var(--ink-3);font-weight:400;margin-left:6px;font-size:11px;}
+  .chev{color:var(--ink-3);font-size:10px;transition:transform .15s;} .trow.open .chev{transform:rotate(90deg);color:var(--cyan);}
+  .share{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);}
+  .share .hbar-track{flex:1;height:6px;}
+  .mg{display:inline-flex;align-items:center;gap:5px;justify-content:flex-end;width:100%;font-weight:600;font-size:12.5px;}
+  .mg .sw{width:7px;height:7px;border-radius:50%;}
+  .mg.good{color:var(--good-ink);} .mg.good .sw{background:var(--good-ink);}
+  .mg.warning{color:var(--warning);} .mg.warning .sw{background:var(--warning);}
+  .mg.serious{color:var(--serious);} .mg.serious .sw{background:var(--serious);}
+  .mg.critical{color:var(--critical);} .mg.critical .sw{background:var(--critical);}
+  .expand{padding:12px 14px 16px 48px;background:var(--surface-2);border-bottom:1px solid var(--hair);}
+  .expand h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:0 0 8px;font-weight:600;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);}
+  .legend .sw{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+  .search{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;width:260px;max-width:100%;}
+  .search:focus{outline:1px solid var(--cyan);outline-offset:-1px;}
+  .hint{font-size:11.5px;color:var(--ink-3);}
+
+  #tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.5;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.18);display:none;z-index:10;}
+  #tip b{font-family:"IBM Plex Mono",monospace;}
+
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+
+  @media (max-width: 900px){
+    body{padding:20px 16px 40px;}
+    .board{grid-template-columns:repeat(2,1fr);}
+    .board .value{font-size:22px;}
+    .two{grid-template-columns:1fr;gap:34px;}
+    .tbl-head, .trow{grid-template-columns:18px 1fr 80px 70px;gap:8px;padding-left:10px;padding-right:10px;}
+    .tbl-head span:nth-child(4), .trow > :nth-child(4), .tbl-head span:nth-child(6), .trow > :nth-child(6){display:none;}
+    .hbar-row{grid-template-columns:100px 1fr 100px;}
+    .expand{padding-left:20px;}
+    .meta{text-align:left;}
+  }
+</style>
+<link rel="stylesheet" href="../tema-claro.css">
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>ELEBES · El Chirlo Mayorista</h1></div>
+      <div class="sub">Venta, margen y ritmo contra el objetivo del local (Dux Software)</div>
+    </div>
+    <div class="meta">
+      Período: <b id="periodoText">—</b><br>
+      Datos al <b id="generadoText">—</b>
+    </div>
+  </header>
+
+  <div class="month-tabs" id="monthTabs"></div>
+  <div class="board" id="kpiRow"></div>
+  <div class="goal" id="goal"></div>
+
+  <section>
+    <div class="sec-head"><h2>Venta por día</h2><div class="n" id="diarioNota"></div></div>
+    <div class="panel"><svg id="chartDiario" width="100%" height="230" role="img" aria-label="Venta diaria del mes"></svg></div>
+  </section>
+
+  <div class="two">
+    <section>
+      <div class="sec-head"><h2>Día de la semana</h2><div class="n">venta promedio por día abierto</div></div>
+      <div class="panel"><svg id="chartSemana" width="100%" height="190" role="img" aria-label="Venta promedio por día de la semana"></svg></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>Horario</h2><div class="n">tickets por hora de registro</div></div>
+      <div class="panel"><svg id="chartHoras" width="100%" height="190" role="img" aria-label="Tickets por hora"></svg></div>
+    </section>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Rubros</h2>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--critical)"></span>Margen &lt;15%</span>
+        <span><span class="sw" style="background:var(--serious)"></span>15–25%</span>
+        <span><span class="sw" style="background:var(--warning)"></span>25–32%</span>
+        <span><span class="sw" style="background:var(--good-ink)"></span>&gt;32%</span>
+      </div>
+    </div>
+    <div class="hint" style="margin-bottom:10px">click en un rubro → subrubros</div>
+    <div class="tbl-head" id="rubrosHead">
+      <span></span><span data-key="nombre">Rubro</span><span data-key="venta" class="num sorted">Venta</span><span>Participación</span><span data-key="margen" class="num">Margen</span><span data-key="ganancia" class="num">Ganancia</span>
+    </div>
+    <div class="tlist" id="rubrosList"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Productos más vendidos</h2><div class="n">top 30 del mes por venta</div></div>
+    <div class="toolbar"><input class="search" id="prodSearch" type="text" placeholder="Buscar producto o rubro…"></div>
+    <div class="tbl-head">
+      <span>#</span><span>Producto</span><span class="num">Venta</span><span class="num">Unidades</span><span class="num">Margen</span><span class="num">Ganancia</span>
+    </div>
+    <div class="tlist" id="prodList"></div>
+  </section>
+
+  <div class="two">
+    <section>
+      <div class="sec-head"><h2>Marcas</h2><div class="n">top 15 por venta · margen</div></div>
+      <div class="panel" id="marcasList"></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>Formas de pago</h2><div class="n">venta · tickets</div></div>
+      <div class="panel" id="pagosList"></div>
+      <div class="sec-head" style="margin-top:22px"><h2>Quién factura</h2><div class="n">vendedor cargado en Dux · tickets</div></div>
+      <div class="panel" id="vendList"></div>
+    </section>
+  </div>
+
+  <footer>
+    <div><b>Metodología:</b> Venta = Total con IVA del Detalle de ventas de Dux (es lo que Dux compara contra el objetivo de $45M del mes). Margen = Ganancia ÷ Venta sin IVA; la Ganancia la calcula Dux como venta sin IVA − costo total del renglón. Ticket = comprobante distinto; las notas de crédito restan venta y no cuentan como ticket. Proyección = venta a la fecha ÷ días corridos × días del mes (mismo criterio que el inicio de Dux).</div>
+    <div style="margin-top:6px" id="fuenteText"></div>
+  </footer>
+</div>
+<div id="tip"></div>
+
+<script src="../gate.js"></script>
+<script>
+let DATA = null, MESES = [], mesKey = null;
+const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'];
+const MESES_NOMBRE = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtM(n){
+  const a = Math.abs(n);
+  if (a >= 1e6) return '$' + (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M';
+  if (a >= 1e3) return '$' + (n/1e3).toLocaleString('es-AR',{maximumFractionDigits:0}) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n, d=1){ return (n*100).toLocaleString('es-AR',{maximumFractionDigits:d}) + '%'; }
+function fmtInt(n){ return Math.round(n).toLocaleString('es-AR'); }
+function nombreMes(k){ const [y,m] = k.split('-'); return MESES_NOMBRE[+m-1] + ' ' + y; }
+function fecha(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function margen(o){ return o.ventaSinIva ? o.ganancia / o.ventaSinIva : 0; }
+function nivel(m){ return m < .15 ? 'critical' : m < .25 ? 'serious' : m < .32 ? 'warning' : 'good'; }
+function mgChip(o){ const m = margen(o); return `<span class="mg ${nivel(m)}"><span class="sw"></span>${fmtPct(m)}</span>`; }
+function M(){ return DATA.meses[mesKey]; }
+function mesAnterior(){ return MESES.filter(k => k < mesKey).pop() || null; }
+
+// Dia de corte: el ultimo dia con datos si el mes esta en curso, o el ultimo dia del mes si cerro.
+function diaCorte(m){ return m.cerrado ? m.diasDelMes : fecha(m.periodoHasta).getDate(); }
+function ventaHastaDia(m, dia){ return m.diario.filter(d => fecha(d.fecha).getDate() <= dia).reduce((s,d) => s + d.venta, 0); }
+function diasAbiertos(k, desde = 1){ // lunes a sabado
+  const [y,mm] = k.split('-').map(Number), n = new Date(y, mm, 0).getDate(); let c = 0;
+  for (let d = desde; d <= n; d++) if (new Date(y, mm-1, d).getDay() !== 0) c++;
+  return c;
+}
+
+const tip = document.getElementById('tip');
+function moveTip(e){
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 14, y = e.clientY - h - 10;
+  if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+  if (y < 8) y = e.clientY + 16;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function bindTips(svg, fn){
+  svg.querySelectorAll('[data-i]').forEach(el => {
+    el.addEventListener('mouseenter', e => { tip.innerHTML = fn(+el.dataset.i); tip.style.display = 'block'; moveTip(e); });
+    el.addEventListener('mousemove', moveTip);
+    el.addEventListener('mouseleave', () => tip.style.display = 'none');
+  });
+}
+
+function renderTabs(){
+  document.getElementById('monthTabs').innerHTML = MESES.map(k =>
+    `<button class="month-tab ${k===mesKey?'active':''}" data-mes="${k}">${nombreMes(k)}${DATA.meses[k].cerrado?'':'<span class="badge">● en curso</span>'}</button>`).join('');
+  document.querySelectorAll('.month-tab').forEach(b => b.addEventListener('click', () => { mesKey = b.dataset.mes; openRubro = null; renderAll(); }));
+}
+
+function renderKPIs(){
+  const m = M(), t = m.totales, corte = diaCorte(m), prevKey = mesAnterior();
+  let comp = '';
+  if (prevKey){
+    const prev = ventaHastaDia(DATA.meses[prevKey], corte), v = (t.venta - prev) / (prev || 1);
+    comp = `<span class="${v>=0?'up':'down'}">${v>=0?'▲':'▼'} ${fmtPct(Math.abs(v),0)}</span> vs ${nombreMes(prevKey).split(' ')[0]} ${m.cerrado ? 'completo' : 'al día ' + corte}`;
+  }
+  const proy = m.cerrado ? t.venta : t.venta / corte * m.diasDelMes;
+  const cells = [
+    { label: m.cerrado ? 'Venta del mes' : 'Venta a la fecha', value: fmtM(t.venta), foot: fmtMoney(t.venta) + (comp ? '<br>' + comp : '') },
+    { label: m.cerrado ? 'Cierre vs objetivo' : 'Proyección de cierre', value: fmtM(proy), foot: `${fmtPct(proy/DATA.objetivoMes,0)} del objetivo de ${fmtM(DATA.objetivoMes)}` },
+    { label: 'Tickets', value: fmtInt(t.tickets), foot: `ticket promedio ${fmtMoney(t.tickets ? t.venta / t.tickets : 0)}<br>${fmtInt(t.tickets / Math.max(1,t.diasConVenta))} tickets por día abierto` },
+    { label: 'Margen', value: fmtPct(margen(t)), foot: `ganancia ${fmtM(t.ganancia)} sobre ${fmtM(t.ventaSinIva)} sin IVA` }
+  ];
+  document.getElementById('kpiRow').innerHTML = cells.map(c =>
+    `<div class="cell"><div class="label">${c.label}</div><div class="value mono">${c.value}</div><div class="foot">${c.foot}</div></div>`).join('');
+}
+
+function renderGoal(){
+  const m = M(), t = m.totales, obj = DATA.objetivoMes, corte = diaCorte(m);
+  const esperado = obj * corte / m.diasDelMes;
+  const proy = m.cerrado ? t.venta : t.venta / corte * m.diasDelMes;
+  const escala = Math.max(obj, proy, t.venta) * 1.04;
+  const pct = x => Math.min(100, x / escala * 100).toFixed(2) + '%';
+  const ritmo = t.venta / esperado;
+  const estado = m.cerrado
+    ? (t.venta >= obj ? ['good','✓ Objetivo cumplido'] : ['critical','✕ No llegó al objetivo'])
+    : (ritmo >= 1 ? ['good','✓ Adelantado'] : ritmo >= .95 ? ['warning','◐ Apenas atrasado'] : ['critical','▼ Atrasado']);
+  const faltan = Math.max(0, obj - t.venta);
+  const abiertosRest = m.cerrado ? 0 : diasAbiertos(mesKey, corte + 1);
+  document.getElementById('goal').innerHTML = `
+    <div class="goal-top">
+      <span>Objetivo del mes <b class="mono">${fmtMoney(obj)}</b> · ${m.cerrado ? 'cerró en' : 'llevás'} <b class="mono">${fmtPct(t.venta/obj,0)}</b>${m.cerrado ? '' : ` · al día ${corte} tendrías que llevar <b class="mono">${fmtM(esperado)}</b>`}</span>
+      <span class="chip ${estado[0]}">${estado[1]}</span>
+    </div>
+    <div class="goal-track" role="img" aria-label="Avance contra el objetivo: ${fmtPct(t.venta/obj,0)}">
+      ${m.cerrado ? '' : `<div class="goal-proj" style="width:${pct(proy)}" title="Proyección ${fmtMoney(proy)}"></div>`}
+      <div class="goal-fill" style="width:${pct(t.venta)}" title="Venta ${fmtMoney(t.venta)}"></div>
+      ${m.cerrado ? '' : `<div class="goal-mark hoy" style="left:${pct(esperado)}" title="Ritmo esperado hoy ${fmtMoney(esperado)}"></div>`}
+      <div class="goal-mark" style="left:${pct(obj)}" title="Objetivo ${fmtMoney(obj)}"></div>
+    </div>
+    <div class="goal-legend">
+      <span><span class="sw" style="background:var(--cyan)"></span>Venta ${m.cerrado ? 'del mes' : 'a la fecha'}</span>
+      ${m.cerrado ? '' : `<span><span class="sw" style="background:repeating-linear-gradient(135deg,var(--cyan-dim) 0 3px,transparent 3px 6px);border:1px solid var(--cyan-dim)"></span>Proyección ${fmtM(proy)}</span>
+      <span><span class="sw" style="background:var(--ink-3);width:3px"></span>Ritmo esperado hoy</span>`}
+      <span><span class="sw" style="background:var(--ink);width:3px"></span>Objetivo</span>
+      ${m.cerrado || !faltan ? '' : `<span>Faltan <b class="mono" style="color:var(--ink)">${fmtM(faltan)}</b>: ${fmtM(faltan / Math.max(1, abiertosRest))} por día en los ${abiertosRest} días abiertos que quedan</span>`}
+    </div>`;
+}
+
+function ejes(max, n = 4){
+  const paso = Math.pow(10, Math.floor(Math.log10(max / n)));
+  const p = [1,2,2.5,5,10].map(x => x * paso).find(c => max / c <= n) || paso * 10;
+  const out = []; for (let v = 0; v < max + p; v += p) out.push(v);
+  return out;
+}
+
+function barChart(svg, items, opts){
+  const W = svg.clientWidth || 800, H = +svg.getAttribute('height');
+  const ml = 46, mr = 8, mt = 14, mb = 22, iw = W - ml - mr, ih = H - mt - mb;
+  const ticks = ejes(Math.max(1, opts.ref || 0, ...items.map(d => d.v))), top = ticks[ticks.length-1];
+  const y = v => mt + ih - v / top * ih;
+  const bw = iw / items.length, gap = Math.min(6, Math.max(2, bw * .25)), w = Math.max(2, bw - gap);
+  let s = '<g class="grid">' + ticks.map(t => `<line x1="${ml}" x2="${W-mr}" y1="${y(t)}" y2="${y(t)}"/>`).join('') + '</g>';
+  s += '<g class="axis">' + ticks.map(t => `<text x="${ml-6}" y="${y(t)+3.5}" text-anchor="end">${opts.fmtAxis(t)}</text>`).join('');
+  items.forEach((d,i) => { if (opts.showLabel(i, d)) s += `<text x="${ml + i*bw + bw/2}" y="${H-6}" text-anchor="middle">${d.label}</text>`; });
+  s += '</g>';
+  items.forEach((d,i) => {
+    const x = ml + i*bw + gap/2, h = Math.max(0, mt + ih - y(d.v)), r = Math.min(4, w/2, h), yy = mt + ih - h;
+    const path = h > 0 ? `M${x},${mt+ih} V${yy+r} Q${x},${yy} ${x+r},${yy} H${x+w-r} Q${x+w},${yy} ${x+w},${yy+r} V${mt+ih} Z` : '';
+    s += `<g class="col">${path ? `<path class="bar ${d.off?'off':''}" d="${path}"/>` : ''}<rect class="hit" data-i="${i}" x="${ml + i*bw}" y="${mt}" width="${bw}" height="${ih}"/></g>`;
+  });
+  if (opts.ref){
+    s += `<line class="ref" x1="${ml}" x2="${W-mr}" y1="${y(opts.ref)}" y2="${y(opts.ref)}" pointer-events="none"/>`;
+    s += `<text class="ref-label" x="${W-mr}" y="${y(opts.ref)-5}" text-anchor="end" pointer-events="none">${opts.refLabel}</text>`;
+  }
+  svg.innerHTML = s;
+  bindTips(svg, i => opts.tip(items[i]));
+}
+
+function renderDiario(){
+  const m = M(), [yy,mm] = mesKey.split('-').map(Number), corte = diaCorte(m);
+  const porDia = {}; m.diario.forEach(d => porDia[fecha(d.fecha).getDate()] = d);
+  const items = [];
+  for (let d = 1; d <= m.diasDelMes; d++){
+    const f = new Date(yy, mm-1, d), r = porDia[d];
+    items.push({ label: String(d), v: r ? r.venta : 0, r, f, off: f.getDay() === 6, futuro: !m.cerrado && d > corte });
+  }
+  const ref = DATA.objetivoMes / diasAbiertos(mesKey);
+  document.getElementById('diarioNota').textContent = `línea punteada: ${fmtM(ref)} por día abierto (lunes a sábado) para llegar al objetivo · sábados en tono suave`;
+  barChart(document.getElementById('chartDiario'), items, {
+    ref, refLabel: 'ritmo necesario ' + fmtM(ref), fmtAxis: fmtM,
+    showLabel: (i, d) => d.f.getDay() === 1 || i === 0,
+    tip: d => d.r
+      ? `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><b>${fmtMoney(d.r.venta)}</b><div>${fmtInt(d.r.tickets)} tickets · ticket prom. ${fmtMoney(d.r.venta/Math.max(1,d.r.tickets))}</div><div>margen ${fmtPct(margen(d.r))}</div>`
+      : `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><div>${d.futuro ? 'todavía no llegó' : 'sin ventas'}</div>`
+  });
+}
+
+function renderSemana(){
+  const m = M(), acc = Array.from({length:7}, () => ({ v:0, t:0, n:0 }));
+  m.diario.forEach(d => { const w = fecha(d.fecha).getDay(); acc[w].v += d.venta; acc[w].t += d.tickets; acc[w].n++; });
+  const items = [1,2,3,4,5,6,0].map(w => ({ label: DIAS[w], v: acc[w].n ? acc[w].v / acc[w].n : 0, a: acc[w] }));
+  barChart(document.getElementById('chartSemana'), items, {
+    fmtAxis: fmtM, showLabel: () => true,
+    tip: d => d.a.n ? `<div>${d.label} · promedio de ${d.a.n} día${d.a.n>1?'s':''}</div><b>${fmtMoney(d.v)}</b><div>${fmtInt(d.a.t/d.a.n)} tickets por día</div>` : `<div>${d.label}</div><div>sin ventas este mes</div>`
+  });
+}
+
+function renderHoras(){
+  const m = M(), porH = {}; m.horas.forEach(h => porH[h.hora] = h);
+  const hs = m.horas.filter(h => h.tickets > 0).map(h => h.hora);
+  const desde = Math.min(...hs, 8), hasta = Math.max(...hs, 18), items = [];
+  for (let h = desde; h <= hasta; h++){ const r = porH[h]; items.push({ label: h + 'h', v: r ? r.tickets : 0, r, h }); }
+  barChart(document.getElementById('chartHoras'), items, {
+    fmtAxis: fmtInt, showLabel: i => i % 2 === 0,
+    tip: d => `<div>${d.h}:00 a ${d.h}:59</div><b>${fmtInt(d.v)} tickets</b>${d.r ? `<div>${fmtMoney(d.r.venta)} de venta</div>` : ''}`
+  });
+}
+
+let openRubro = null, sortKey = 'venta', sortDir = -1;
+function renderRubros(){
+  const m = M(), tot = m.totales.venta || 1;
+  const rows = m.rubros.map(r => ({ ...r, margen: margen(r) }));
+  rows.sort((a,b) => typeof a[sortKey] === 'string' ? sortDir * a[sortKey].localeCompare(b[sortKey]) : sortDir * (a[sortKey] - b[sortKey]));
+  document.querySelectorAll('#rubrosHead span[data-key]').forEach(s => s.classList.toggle('sorted', s.dataset.key === sortKey));
+  const max = Math.max(1, ...rows.map(r => r.venta));
+  document.getElementById('rubrosList').innerHTML = rows.map(r => {
+    const open = openRubro === r.nombre;
+    let h = `<div class="trow clickable ${open?'open':''}" data-r="${esc(r.nombre)}">
+      <span class="chev">▸</span><span class="name">${esc(r.nombre)}</span>
+      <span class="num mono">${fmtM(r.venta)}</span>
+      <span class="share"><span class="hbar-track"><span class="hbar-fill" style="width:${(Math.max(0,r.venta)/max*100).toFixed(1)}%"></span></span>${fmtPct(r.venta/tot,0)}</span>
+      <span>${mgChip(r)}</span><span class="num mono">${fmtM(r.ganancia)}</span></div>`;
+    if (open){
+      const sm = Math.max(1, ...r.subrubros.map(s => s.venta));
+      h += `<div class="expand"><h3>subrubros · venta · margen</h3>${r.subrubros.map(s => `
+        <div class="hbar-row"><span class="name" title="${esc(s.nombre)}">${esc(s.nombre)}</span><span class="hbar-track"><span class="hbar-fill" style="width:${(Math.max(0,s.venta)/sm*100).toFixed(1)}%"></span></span><span class="hbar-val mono">${fmtM(s.venta)} · ${fmtPct(margen(s),0)}</span></div>`).join('')}</div>`;
+    }
+    return h;
+  }).join('') + `<div class="trow" style="border-bottom:none"><span></span><span class="name" style="color:var(--ink-2)">TOTAL</span><span class="num mono">${fmtM(m.totales.venta)}</span><span></span><span>${mgChip(m.totales)}</span><span class="num mono">${fmtM(m.totales.ganancia)}</span></div>`;
+  document.querySelectorAll('#rubrosList .trow.clickable').forEach(el => el.addEventListener('click', () => {
+    openRubro = openRubro === el.dataset.r ? null : el.dataset.r; renderRubros();
+  }));
+}
+document.querySelectorAll('#rubrosHead span[data-key]').forEach(s => s.addEventListener('click', () => {
+  const k = s.dataset.key; if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === 'nombre' ? 1 : -1; } renderRubros();
+}));
+
+let prodTerm = '';
+function renderProductos(){
+  const rows = M().productos.map((p,i) => ({ ...p, pos: i+1 })).filter(p => !prodTerm || (p.nombre + ' ' + p.rubro + ' ' + p.codigo).toLowerCase().includes(prodTerm));
+  document.getElementById('prodList').innerHTML = rows.length ? rows.map(p => `
+    <div class="trow"><span class="mono" style="color:var(--ink-3);font-size:11.5px">${p.pos}</span>
+      <span class="name" title="${esc(p.nombre)}">${esc(p.nombre)}<small>${esc(p.rubro)}</small></span>
+      <span class="num mono">${fmtM(p.venta)}</span><span class="num mono">${fmtInt(p.unidades)}</span>
+      <span>${mgChip(p)}</span><span class="num mono">${fmtM(p.ganancia)}</span></div>`).join('')
+    : `<div class="trow"><span></span><span class="hint">Ningún producto del top 30 coincide.</span></div>`;
+}
+document.getElementById('prodSearch').addEventListener('input', e => { prodTerm = e.target.value.trim().toLowerCase(); renderProductos(); });
+
+function hbars(id, rows, extra){
+  const max = Math.max(1, ...rows.map(r => r.venta));
+  document.getElementById(id).innerHTML = rows.map(r => `
+    <div class="hbar-row"><span class="name" title="${esc(r.nombre)}">${esc(r.nombre)}</span>
+      <span class="hbar-track"><span class="hbar-fill" style="width:${(Math.max(0,r.venta)/max*100).toFixed(1)}%"></span></span>
+      <span class="hbar-val mono">${fmtM(r.venta)} · ${extra(r)}</span></div>`).join('');
+}
+
+function renderAll(){
+  const m = M();
+  document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
+  renderTabs(); renderKPIs(); renderGoal(); renderDiario(); renderSemana(); renderHoras(); renderRubros(); renderProductos();
+  hbars('marcasList', m.marcas, r => fmtPct(margen(r),0));
+  hbars('pagosList', m.pagos, r => fmtInt(r.tickets) + ' tk');
+  hbars('vendList', m.vendedores, r => fmtInt(r.tickets) + ' tk');
+}
+
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (DATA) { renderDiario(); renderSemana(); renderHoras(); } }, 150); });
+
+cargarDatos('./data.json')
+  .then(data => {
+    DATA = data;
+    MESES = Object.keys(DATA.meses).sort();
+    mesKey = MESES.includes(DATA.mesActual) ? DATA.mesActual : MESES[MESES.length-1];
+    const g = new Date(DATA.generadoEn);
+    document.getElementById('generadoText').textContent = g.toLocaleDateString('es-AR') + ' ' + g.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('fuenteText').textContent = 'Fuente: ' + DATA.fuente + '. Foto fija: se actualiza cuando Claude procesa un exporte nuevo de Dux.';
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('kpiRow').innerHTML = `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer data.json (${esc(err.message)}). Si esto persiste, avisale a Claude.</div></div>`;
+  });
+</script>
