@@ -105,9 +105,13 @@ foreach ($r in $renglones) {
     if ($esNC) { $m.ncVenta += $venta }
     $tk = $r.Comprobante
     $cli = if ($r.Cliente) { $r.Cliente } else { "SIN CLIENTE" }
-    if (-not $esNC -and [math]::Abs($cobrado) -lt 0.01 -and $venta -gt 0) {
-        if (-not $m.sinCobrar.ContainsKey($cli)) { $m.sinCobrar[$cli] = @{ venta = 0.0; tickets = @{}; ultima = $fecha } }
-        $sc = $m.sinCobrar[$cli]; $sc.venta += $venta; $sc.tickets[$tk] = 1; if ($fecha -gt $sc.ultima) { $sc.ultima = $fecha }
+    # Saldo por ticket (venta - cobrado) para la alerta de cierre: si queda algo sin cobrar al final del dia.
+    if (-not $esNC) {
+        if (-not $m.sinCobrar.ContainsKey($tk)) {
+            $m.sinCobrar[$tk] = @{ venta = 0.0; cobrado = 0.0; cliente = $cli; fecha = $fecha; hora = ""; vendedor = [string]$r.Vendedor }
+            if ($r.'Fecha Registro' -match ' (\d{1,2}:\d{2})') { $m.sinCobrar[$tk].hora = $Matches[1] }
+        }
+        $m.sinCobrar[$tk].venta += $venta; $m.sinCobrar[$tk].cobrado += $cobrado
     }
     $dia = Sumar $m.dias $fecha.ToString("yyyy-MM-dd") $venta $sinIva $gan $cant $desc $cobrado
     $hora = 0; if ($r.'Fecha Registro' -match ' (\d{1,2}):') { $hora = [int]$Matches[1] }
@@ -166,10 +170,21 @@ foreach ($mk in ($meses.Keys | Sort-Object)) {
         $p.codigo = $partes[0]; $p.nombre = $partes[1]; $p.rubro = $m.prods[$partes[0] + "|" + $partes[1]].rubro
         $p
     }
-    $sinCobrar = @(foreach ($c in $m.sinCobrar.Keys) {
-        $e = $m.sinCobrar[$c]; [ordered]@{ cliente = $c; venta = R2 $e.venta; tickets = $e.tickets.Count; ultima = $e.ultima.ToString("yyyy-MM-dd") }
-    }) | Sort-Object { -$_.venta }
-    $totalSinCobrar = 0.0; foreach ($e in $m.sinCobrar.Values) { $totalSinCobrar += $e.venta }
+    # Tickets con saldo pendiente (mas de $100 para no contar redondeos ni vueltos).
+    $pendTickets = @(foreach ($tk in $m.sinCobrar.Keys) {
+        $e = $m.sinCobrar[$tk]; $saldo = $e.venta - $e.cobrado
+        if ($saldo -gt 100) { [ordered]@{ fecha = $e.fecha.ToString("yyyy-MM-dd"); hora = $e.hora; comprobante = $tk; cliente = $e.cliente; vendedor = $e.vendedor
+                                          venta = R2 $e.venta; cobrado = R2 $e.cobrado; saldo = R2 $saldo } }
+    }) | Sort-Object { $_.fecha + " " + $_.hora }
+    $porCli = @{}
+    foreach ($p in $pendTickets) {
+        if (-not $porCli.ContainsKey($p.cliente)) { $porCli[$p.cliente] = @{ venta = 0.0; tickets = 0; ultima = $p.fecha } }
+        $c = $porCli[$p.cliente]; $c.venta += $p.saldo; $c.tickets++; if ($p.fecha -gt $c.ultima) { $c.ultima = $p.fecha }
+    }
+    $sinCobrar = @(foreach ($c in $porCli.Keys) { [ordered]@{ cliente = $c; venta = R2 $porCli[$c].venta; tickets = $porCli[$c].tickets; ultima = $porCli[$c].ultima } }) | Sort-Object { -$_.venta }
+    $totalSinCobrar = 0.0; foreach ($p in $pendTickets) { $totalSinCobrar += $p.saldo }
+    $pendDia = @{}; foreach ($p in $pendTickets) { $pendDia[$p.fecha] = [double]$pendDia[$p.fecha] + $p.saldo }
+    foreach ($d in $diario) { $d.sinCobrar = R2 ([double]$pendDia[$d.fecha]) }
     $horas = foreach ($h in ($m.horas.Keys | Sort-Object { [int]$_ })) {
         $e = $m.horas[$h]; [ordered]@{ hora = [int]$h; venta = R2 $e.venta; tickets = $e.tickets.Count }
     }
@@ -184,6 +199,7 @@ foreach ($mk in ($meses.Keys | Sort-Object)) {
         cobros = [ordered]@{ efectivo = R2 $m.cobro.efectivo; cuenta = R2 $m.cobro.cuenta; tarjeta = R2 $m.cobro.tarjeta; cheque = R2 $m.cobro.cheque
                              total = R2 ($m.cobro.efectivo + $m.cobro.cuenta + $m.cobro.tarjeta + $m.cobro.cheque); sinCobrar = R2 $totalSinCobrar }
         sinCobrar = @($sinCobrar | Select-Object -First 15)
+        pendientes = @($pendTickets)
         productosDescuento = @($prodsDesc)
         rubrosDescuento = Lista $m.rubros 0 "descuento"
         diario = @($diario)

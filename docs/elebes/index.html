@@ -71,6 +71,14 @@
   .ref{stroke:var(--ink-2);stroke-width:1.5;stroke-dasharray:4 4;}
   .ref-label{fill:var(--ink-2);font-size:10.5px;}
 
+  .trow > *, .sc-row > *, .hbar-row > *, .tbl-head > *{min-width:0;}
+  .alerta{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--hair);border-left:4px solid var(--good-ink);background:var(--surface);padding:12px 16px;margin-top:14px;font-size:13px;line-height:1.55;}
+  .alerta.mal{border-left-color:var(--critical);}
+  .alerta .ico{font-size:16px;line-height:1.3;}
+  .alerta.mal .ico, .alerta.mal b.t{color:var(--critical);}
+  .alerta.ok .ico, .alerta.ok b.t{color:var(--good-ink);}
+  .alerta .det{color:var(--ink-2);font-size:12px;}
+  .pend-dot{fill:var(--critical);}
   .split{display:flex;height:26px;border-radius:4px;overflow:hidden;gap:2px;}
   .split > div{height:100%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;}
   .sc-row{display:grid;grid-template-columns:1fr 100px 70px 70px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--hair);font-size:12.5px;}
@@ -125,6 +133,8 @@
     .tbl-head span:nth-child(4), .trow > :nth-child(4), .tbl-head span:nth-child(6), .trow > :nth-child(6){display:none;}
     .hbar-row{grid-template-columns:100px 1fr 100px;}
     .expand{padding-left:20px;}
+    .sc-row{grid-template-columns:minmax(0,1fr) 78px 44px;padding-left:10px;padding-right:10px;}
+    .sc-row > :nth-child(4){display:none;}
     .meta{text-align:left;}
   }
 </style>
@@ -143,6 +153,7 @@
   </header>
 
   <div class="month-tabs" id="monthTabs"></div>
+  <div class="alerta" id="alertaCierre" role="status"></div>
   <div class="board" id="kpiRow"></div>
   <div class="goal" id="goal"></div>
 
@@ -164,7 +175,7 @@
       <div class="panel" id="descRubroList"></div>
     </section>
     <section>
-      <div class="sec-head"><h2>Ventas sin cobrar</h2><div class="n" id="sinCobrarNota"></div></div>
+      <div class="sec-head"><h2>Tickets sin cobrar</h2><div class="n" id="sinCobrarNota"></div></div>
       <div class="tlist" id="sinCobrarList" style="border-top:1px solid var(--hair)"></div>
     </section>
   </div>
@@ -373,11 +384,33 @@ function renderPlata(){
   hbarsBy('descProdList', m.productosDescuento.slice(0,10), 'descuento', r => dl(r));
   hbarsBy('descRubroList', m.rubrosDescuento, 'descuento', r => dl(r));
 
-  document.getElementById('sinCobrarNota').textContent = 'ventas sin ningún cobro registrado, por cliente';
-  document.getElementById('sinCobrarList').innerHTML = m.sinCobrar.length
-    ? `<div class="sc-row head"><span>Cliente</span><span class="num">Monto</span><span class="num">Tickets</span><span class="num">Última</span></div>` +
-      m.sinCobrar.map(s => `<div class="sc-row"><span class="name" title="${esc(s.cliente)}">${esc(s.cliente)}</span><span class="num mono">${fmtMoney(s.venta)}</span><span class="num mono">${s.tickets}</span><span class="num mono">${s.ultima.slice(8)}/${s.ultima.slice(5,7)}</span></div>`).join('')
+  const pend = (m.pendientes || []).slice().reverse();
+  document.getElementById('sinCobrarNota').textContent = 'saldo que quedó sin cobrar al cerrar cada venta · más nuevos arriba';
+  document.getElementById('sinCobrarList').innerHTML = pend.length
+    ? `<div class="sc-row head"><span>Cliente · comprobante</span><span class="num">Saldo</span><span class="num">Día</span><span class="num">Hora</span></div>` +
+      pend.map(p => `<div class="sc-row"><span class="name" title="${esc(p.cliente)} · ${esc(p.comprobante)} · facturó ${esc(p.vendedor||'—')}">${esc(p.cliente)}<br><small class="mono" style="color:var(--ink-3);font-weight:400">${esc(p.comprobante)} · ${esc(p.vendedor||'—')}</small></span><span class="num mono">${fmtMoney(p.saldo)}</span><span class="num mono">${p.fecha.slice(8)}/${p.fecha.slice(5,7)}</span><span class="num mono">${esc(p.hora||'')}</span></div>`).join('')
     : `<div class="sc-row"><span class="hint">Todas las ventas del mes tienen cobro registrado.</span></div>`;
+}
+
+// Alerta de cierre: el ultimo dia completo de los datos (si el exporte se bajo a mitad del dia, ese dia todavia no cerro).
+function renderAlerta(){
+  const el = document.getElementById('alertaCierre'), m = M();
+  const gen = DATA.generadoEn.slice(0,10);
+  const cerrados = m.diario.filter(d => d.fecha < gen);
+  if (!cerrados.length){ el.style.display = 'none'; return; }
+  el.style.display = '';
+  const ult = cerrados[cerrados.length-1], f = fecha(ult.fecha);
+  const diaTxt = `${DIAS[f.getDay()]} ${f.getDate()}/${f.getMonth()+1}`;
+  const tks = (m.pendientes || []).filter(p => p.fecha === ult.fecha);
+  const otros = cerrados.filter(d => d.sinCobrar > 0 && d.fecha !== ult.fecha);
+  const otrosTxt = otros.length ? `<div class="det">En el mes cerraron con saldo pendiente: ${otros.map(d => { const x = fecha(d.fecha); return `${x.getDate()}/${x.getMonth()+1} (${fmtM(d.sinCobrar)})`; }).join(', ')}.</div>` : '';
+  if (ult.sinCobrar > 0){
+    el.className = 'alerta mal';
+    el.innerHTML = `<span class="ico">⚠</span><div><b class="t">Cierre del ${diaTxt}: quedaron ${fmtMoney(ult.sinCobrar)} sin cobrar</b> en ${tks.length} ticket${tks.length===1?'':'s'}: ${tks.map(p => `${esc(p.cliente)} ${fmtMoney(p.saldo)} (${esc(p.comprobante)}, ${esc(p.hora)})`).join(' · ')}.${otrosTxt}</div>`;
+  } else {
+    el.className = 'alerta ok';
+    el.innerHTML = `<span class="ico">✓</span><div><b class="t">Cierre del ${diaTxt}: todo cobrado.</b> Ingresaron ${fmtMoney(ult.cobrado||0)} de ${fmtMoney(ult.venta)} vendidos.${otrosTxt}</div>`;
+  }
 }
 
 function hbarsBy(id, rows, key, extra){
@@ -409,7 +442,8 @@ function barChart(svg, items, opts){
   items.forEach((d,i) => {
     const x = ml + i*bw + gap/2, h = Math.max(0, mt + ih - y(d.v)), r = Math.min(4, w/2, h), yy = mt + ih - h;
     const path = h > 0 ? `M${x},${mt+ih} V${yy+r} Q${x},${yy} ${x+r},${yy} H${x+w-r} Q${x+w},${yy} ${x+w},${yy+r} V${mt+ih} Z` : '';
-    s += `<g class="col">${path ? `<path class="bar ${d.off?'off':''}" d="${path}"/>` : ''}<rect class="hit" data-i="${i}" x="${ml + i*bw}" y="${mt}" width="${bw}" height="${ih}"/></g>`;
+    const dot = d.alert ? `<circle class="pend-dot" cx="${x + w/2}" cy="${yy - 7}" r="4"/>` : '';
+    s += `<g class="col">${path ? `<path class="bar ${d.off?'off':''}" d="${path}"/>` : ''}${dot}<rect class="hit" data-i="${i}" x="${ml + i*bw}" y="${mt}" width="${bw}" height="${ih}"/></g>`;
   });
   if (opts.ref){
     s += `<line class="ref" x1="${ml}" x2="${W-mr}" y1="${y(opts.ref)}" y2="${y(opts.ref)}" pointer-events="none"/>`;
@@ -425,15 +459,15 @@ function renderDiario(){
   const items = [];
   for (let d = 1; d <= m.diasDelMes; d++){
     const f = new Date(yy, mm-1, d), r = porDia[d];
-    items.push({ label: String(d), v: r ? r.venta : 0, r, f, off: f.getDay() === 6, futuro: !m.cerrado && d > corte });
+    items.push({ label: String(d), v: r ? r.venta : 0, r, f, off: f.getDay() === 6, futuro: !m.cerrado && d > corte, alert: r && r.sinCobrar > 0 });
   }
   const ref = DATA.objetivoMes / diasAbiertos(mesKey);
-  document.getElementById('diarioNota').textContent = `línea punteada: ${fmtM(ref)} por día abierto (lunes a sábado) para llegar al objetivo · sábados en tono suave`;
+  document.getElementById('diarioNota').textContent = `línea punteada: ${fmtM(ref)} por día abierto (lunes a sábado) para llegar al objetivo · sábados en tono suave · punto rojo: el día cerró con algo sin cobrar`;
   barChart(document.getElementById('chartDiario'), items, {
     ref, refLabel: 'ritmo necesario ' + fmtM(ref), fmtAxis: fmtM,
     showLabel: (i, d) => d.f.getDay() === 1 || i === 0,
     tip: d => d.r
-      ? `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><b>${fmtMoney(d.r.venta)}</b><div>${fmtInt(d.r.tickets)} tickets · ticket prom. ${fmtMoney(d.r.venta/Math.max(1,d.r.tickets))}</div><div>margen ${fmtPct(margen(d.r))} · descuentos ${fmtMoney(d.r.descuento||0)}</div><div>ingresó ${fmtMoney(d.r.cobrado||0)}</div>`
+      ? `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><b>${fmtMoney(d.r.venta)}</b><div>${fmtInt(d.r.tickets)} tickets · ticket prom. ${fmtMoney(d.r.venta/Math.max(1,d.r.tickets))}</div><div>margen ${fmtPct(margen(d.r))} · descuentos ${fmtMoney(d.r.descuento||0)}</div><div>ingresó ${fmtMoney(d.r.cobrado||0)}</div>${d.r.sinCobrar > 0 ? `<div style="color:var(--critical);font-weight:600">⚠ quedó ${fmtMoney(d.r.sinCobrar)} sin cobrar</div>` : ''}`
       : `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><div>${d.futuro ? 'todavía no llegó' : 'sin ventas'}</div>`
   });
 }
@@ -511,7 +545,7 @@ function hbars(id, rows, extra){
 function renderAll(){
   const m = M();
   document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
-  renderTabs(); renderKPIs(); renderGoal(); renderPlata(); renderDiario(); renderSemana(); renderHoras(); renderRubros(); renderProductos();
+  renderTabs(); renderAlerta(); renderKPIs(); renderGoal(); renderPlata(); renderDiario(); renderSemana(); renderHoras(); renderRubros(); renderProductos();
   hbars('marcasList', m.marcas, r => fmtPct(margen(r),0));
   hbars('pagosList', m.pagos, r => fmtInt(r.tickets) + ' tk');
   hbars('vendList', m.vendedores, r => fmtInt(r.tickets) + ' tk');
