@@ -71,9 +71,9 @@ $renglones = foreach ($p in $porArchivo) { $p.Filas | Where-Object { $duenoDia[$
 Write-Log "Renglones unicos: $(@($renglones).Count)"
 
 # --- 2. Agregar por mes ---
-function Sumar($tabla, [string]$clave, [double]$venta, [double]$sinIva, [double]$gan, [double]$cant) {
-    if (-not $tabla.ContainsKey($clave)) { $tabla[$clave] = @{ venta = 0.0; sinIva = 0.0; gan = 0.0; cant = 0.0; tickets = @{} } }
-    $e = $tabla[$clave]; $e.venta += $venta; $e.sinIva += $sinIva; $e.gan += $gan; $e.cant += $cant
+function Sumar($tabla, [string]$clave, [double]$venta, [double]$sinIva, [double]$gan, [double]$cant, [double]$desc = 0, [double]$cobrado = 0) {
+    if (-not $tabla.ContainsKey($clave)) { $tabla[$clave] = @{ venta = 0.0; sinIva = 0.0; gan = 0.0; cant = 0.0; desc = 0.0; cobrado = 0.0; tickets = @{} } }
+    $e = $tabla[$clave]; $e.venta += $venta; $e.sinIva += $sinIva; $e.gan += $gan; $e.cant += $cant; $e.desc += $desc; $e.cobrado += $cobrado
     return $e
 }
 $meses = @{}
@@ -82,7 +82,8 @@ foreach ($r in $renglones) {
     $mk = $fecha.ToString("yyyy-MM")
     if (-not $meses.ContainsKey($mk)) {
         $meses[$mk] = @{ dias = @{}; horas = @{}; rubros = @{}; sub = @{}; prods = @{}; marcas = @{}; pagos = @{}; vend = @{}; tickets = @{}; clientes = @{}
-                         venta = 0.0; sinIva = 0.0; costo = 0.0; gan = 0.0; cant = 0.0; ncVenta = 0.0; desde = $fecha; hasta = $fecha }
+                         venta = 0.0; sinIva = 0.0; costo = 0.0; gan = 0.0; cant = 0.0; ncVenta = 0.0; desde = $fecha; hasta = $fecha
+                         desc = 0.0; bruto = 0.0; ticketsDesc = @{}; renglonesDesc = 0; cobro = @{ efectivo = 0.0; cuenta = 0.0; tarjeta = 0.0; cheque = 0.0 }; sinCobrar = @{} }
     }
     $m = $meses[$mk]
     $esNC = $r.Comprobante -match '^NC'
@@ -90,37 +91,53 @@ foreach ($r in $renglones) {
     $venta = Num $r.'Total Con Iva'; $sinIva = Num $r.'Total Sin IVA'; $costo = Num $r.'Costo Total'; $gan = Num $r.Ganancia; $cant = Num $r.Cantidad
     if ($esNC -and $venta -gt 0) { $signo = -1.0 }
     $venta *= $signo; $sinIva *= $signo; $costo *= $signo; $gan *= $signo; $cant *= $signo
+    # Descuento en $ = precio de lista x cantidad x % desc. (sin IVA; da igual a lista - "Total Sin IVA").
+    # Las notas de credito no suman descuento: son correcciones posteriores.
+    $desc = 0.0
+    if (-not $esNC) { $desc = (Num $r.'Precio Uni') * $cant * (Num $r.'% Desc.') / 100 }
+    # Plata que ingreso con la venta: Dux la reparte en efectivo / tarjeta / cheque / cuenta (Mercado Pago entra por "Cuenta").
+    $ef = (Num $r.'Cobro Efectivo') * $signo; $cu = (Num $r.'Cobro Cuenta') * $signo; $tj = (Num $r.'Cobro Tarjeta') * $signo; $ch = (Num $r.'Cobro Cheque') * $signo
+    $cobrado = $ef + $cu + $tj + $ch
     if ($fecha -lt $m.desde) { $m.desde = $fecha }; if ($fecha -gt $m.hasta) { $m.hasta = $fecha }
     $m.venta += $venta; $m.sinIva += $sinIva; $m.costo += $costo; $m.gan += $gan; $m.cant += $cant
+    $m.desc += $desc; $m.bruto += $sinIva + $desc
+    $m.cobro.efectivo += $ef; $m.cobro.cuenta += $cu; $m.cobro.tarjeta += $tj; $m.cobro.cheque += $ch
     if ($esNC) { $m.ncVenta += $venta }
     $tk = $r.Comprobante
-    $dia = Sumar $m.dias $fecha.ToString("yyyy-MM-dd") $venta $sinIva $gan $cant
+    $cli = if ($r.Cliente) { $r.Cliente } else { "SIN CLIENTE" }
+    if (-not $esNC -and [math]::Abs($cobrado) -lt 0.01 -and $venta -gt 0) {
+        if (-not $m.sinCobrar.ContainsKey($cli)) { $m.sinCobrar[$cli] = @{ venta = 0.0; tickets = @{}; ultima = $fecha } }
+        $sc = $m.sinCobrar[$cli]; $sc.venta += $venta; $sc.tickets[$tk] = 1; if ($fecha -gt $sc.ultima) { $sc.ultima = $fecha }
+    }
+    $dia = Sumar $m.dias $fecha.ToString("yyyy-MM-dd") $venta $sinIva $gan $cant $desc $cobrado
     $hora = 0; if ($r.'Fecha Registro' -match ' (\d{1,2}):') { $hora = [int]$Matches[1] }
-    $h = Sumar $m.horas ([string]$hora) $venta $sinIva $gan $cant
+    $h = Sumar $m.horas ([string]$hora) $venta $sinIva $gan $cant $desc $cobrado
     $rub = if ($r.Rubro) { $r.Rubro } else { "SIN RUBRO" }
     $sr = if ($r.'Sub Rubro') { $r.'Sub Rubro' } else { "SIN SUBRUBRO" }
-    $null = Sumar $m.rubros $rub $venta $sinIva $gan $cant
-    $null = Sumar $m.sub ($rub + "|" + $sr) $venta $sinIva $gan $cant
+    $null = Sumar $m.rubros $rub $venta $sinIva $gan $cant $desc $cobrado
+    $null = Sumar $m.sub ($rub + "|" + $sr) $venta $sinIva $gan $cant $desc $cobrado
     $pk = $r.'Código Producto' + "|" + $r.Producto
-    $pr = Sumar $m.prods $pk $venta $sinIva $gan $cant
+    $pr = Sumar $m.prods $pk $venta $sinIva $gan $cant $desc $cobrado
     $pr.rubro = $rub
     $marca = if ($r.Marca) { $r.Marca } else { "SIN MARCA" }
-    $null = Sumar $m.marcas $marca $venta $sinIva $gan $cant
-    $pago = if ($r.'Forma Pago') { $r.'Forma Pago' } elseif ((Num $r.'Cobro Cuenta') -ne 0) { "CUENTA CORRIENTE" } else { "SIN DATO" }
-    $pg = Sumar $m.pagos $pago $venta $sinIva $gan $cant
-    $vd = Sumar $m.vend $(if ($r.Vendedor) { $r.Vendedor } else { "SIN VENDEDOR" }) $venta $sinIva $gan $cant
+    $null = Sumar $m.marcas $marca $venta $sinIva $gan $cant $desc $cobrado
+    $pago = if ($r.'Forma Pago') { $r.'Forma Pago' } elseif ([math]::Abs($cobrado) -lt 0.01) { "SIN COBRAR" } else { "SIN DATO" }
+    $pg = Sumar $m.pagos $pago $venta $sinIva $gan $cant $desc $cobrado
+    $vd = Sumar $m.vend $(if ($r.Vendedor) { $r.Vendedor } else { "SIN VENDEDOR" }) $venta $sinIva $gan $cant $desc $cobrado
     if (-not $esNC) {
         $m.tickets[$tk] = 1; $dia.tickets[$tk] = 1; $h.tickets[$tk] = 1; $pg.tickets[$tk] = 1; $vd.tickets[$tk] = 1
+        if ($desc -gt 0) { $m.ticketsDesc[$tk] = 1; $m.renglonesDesc++ }
         if ($r.Cliente -and $r.Cliente -ne "CONSUMIDOR FINAL") { $m.clientes[$r.Cliente] = 1 }
     }
 }
 
-function Lista($tabla, [int]$top = 0) {
+function Lista($tabla, [int]$top = 0, [string]$orden = "venta") {
     $l = foreach ($k in $tabla.Keys) {
         $e = $tabla[$k]
-        [ordered]@{ nombre = $k; venta = R2 $e.venta; ventaSinIva = R2 $e.sinIva; ganancia = R2 $e.gan; unidades = R2 $e.cant; tickets = $e.tickets.Count }
+        [ordered]@{ nombre = $k; venta = R2 $e.venta; ventaSinIva = R2 $e.sinIva; ganancia = R2 $e.gan; unidades = R2 $e.cant; tickets = $e.tickets.Count
+                    descuento = R2 $e.desc; cobrado = R2 $e.cobrado }
     }
-    $l = @($l | Sort-Object { -$_.venta })
+    $l = @($l | Where-Object { $orden -ne "descuento" -or $_.descuento -gt 0 } | Sort-Object { -$_[$orden] })
     if ($top -gt 0 -and $l.Count -gt $top) { $l = $l[0..($top - 1)] }
     return , $l
 }
@@ -142,8 +159,17 @@ foreach ($mk in ($meses.Keys | Sort-Object)) {
         $p
     }
     $diario = foreach ($d in ($m.dias.Keys | Sort-Object)) {
-        $e = $m.dias[$d]; [ordered]@{ fecha = $d; venta = R2 $e.venta; ganancia = R2 $e.gan; ventaSinIva = R2 $e.sinIva; tickets = $e.tickets.Count }
+        $e = $m.dias[$d]; [ordered]@{ fecha = $d; venta = R2 $e.venta; ganancia = R2 $e.gan; ventaSinIva = R2 $e.sinIva; tickets = $e.tickets.Count; descuento = R2 $e.desc; cobrado = R2 $e.cobrado }
     }
+    $prodsDesc = foreach ($p in (Lista $m.prods 15 "descuento")) {
+        $partes = $p.nombre.Split("|", 2)
+        $p.codigo = $partes[0]; $p.nombre = $partes[1]; $p.rubro = $m.prods[$partes[0] + "|" + $partes[1]].rubro
+        $p
+    }
+    $sinCobrar = @(foreach ($c in $m.sinCobrar.Keys) {
+        $e = $m.sinCobrar[$c]; [ordered]@{ cliente = $c; venta = R2 $e.venta; tickets = $e.tickets.Count; ultima = $e.ultima.ToString("yyyy-MM-dd") }
+    }) | Sort-Object { -$_.venta }
+    $totalSinCobrar = 0.0; foreach ($e in $m.sinCobrar.Values) { $totalSinCobrar += $e.venta }
     $horas = foreach ($h in ($m.horas.Keys | Sort-Object { [int]$_ })) {
         $e = $m.horas[$h]; [ordered]@{ hora = [int]$h; venta = R2 $e.venta; tickets = $e.tickets.Count }
     }
@@ -153,7 +179,13 @@ foreach ($mk in ($meses.Keys | Sort-Object)) {
         cerrado = ($fin -lt $hoy)
         diasDelMes = $fin.Day
         totales = [ordered]@{ venta = R2 $m.venta; ventaSinIva = R2 $m.sinIva; costo = R2 $m.costo; ganancia = R2 $m.gan; unidades = R2 $m.cant
-                              tickets = $m.tickets.Count; diasConVenta = $m.dias.Count; clientesIdentificados = $m.clientes.Count; notasCredito = R2 $m.ncVenta }
+                              tickets = $m.tickets.Count; diasConVenta = $m.dias.Count; clientesIdentificados = $m.clientes.Count; notasCredito = R2 $m.ncVenta
+                              descuento = R2 $m.desc; ventaBrutaSinIva = R2 $m.bruto; ticketsConDescuento = $m.ticketsDesc.Count; renglonesConDescuento = $m.renglonesDesc }
+        cobros = [ordered]@{ efectivo = R2 $m.cobro.efectivo; cuenta = R2 $m.cobro.cuenta; tarjeta = R2 $m.cobro.tarjeta; cheque = R2 $m.cobro.cheque
+                             total = R2 ($m.cobro.efectivo + $m.cobro.cuenta + $m.cobro.tarjeta + $m.cobro.cheque); sinCobrar = R2 $totalSinCobrar }
+        sinCobrar = @($sinCobrar | Select-Object -First 15)
+        productosDescuento = @($prodsDesc)
+        rubrosDescuento = Lista $m.rubros 0 "descuento"
         diario = @($diario)
         horas = @($horas)
         rubros = @($rubros)

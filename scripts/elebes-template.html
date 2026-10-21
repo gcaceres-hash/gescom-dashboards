@@ -9,7 +9,7 @@
     --bg:#0a0e0f; --surface:#12181a; --surface-2:#171f21;
     --ink:#eef2f0; --ink-2:#9fb0ab; --ink-3:#64726e;
     --hair:#263030; --border:rgba(238,242,240,0.10);
-    --cyan:#3fc1c9; --cyan-dim:#1d5558;
+    --cyan:#3fc1c9; --cyan-dim:#1d5558; --violet:#9b86e8;
     --good:#0ca30c; --good-ink:#4bd07a; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
   }
   *{box-sizing:border-box;}
@@ -71,6 +71,11 @@
   .ref{stroke:var(--ink-2);stroke-width:1.5;stroke-dasharray:4 4;}
   .ref-label{fill:var(--ink-2);font-size:10.5px;}
 
+  .split{display:flex;height:26px;border-radius:4px;overflow:hidden;gap:2px;}
+  .split > div{height:100%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;}
+  .sc-row{display:grid;grid-template-columns:1fr 100px 70px 70px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--hair);font-size:12.5px;}
+  .sc-row.head{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);padding-top:10px;}
+  .sc-row .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
   .hbar-row{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;padding:5px 0;font-size:12.5px;}
   .hbar-row .name{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .hbar-track{display:block;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;}
@@ -142,6 +147,29 @@
   <div class="goal" id="goal"></div>
 
   <section>
+    <div class="sec-head"><h2>Descuentos y plata que ingresa</h2><div class="n">descuento sobre precio de lista sin IVA · cobros registrados en cada venta</div></div>
+    <div class="board" id="plataRow" style="margin-top:0"></div>
+    <div class="panel">
+      <div class="goal-top" style="margin-bottom:8px"><span>Cómo entró la plata de la venta del mes</span><span class="mono" id="cobroPct"></span></div>
+      <div class="split" id="cobroSplit"></div>
+      <div class="goal-legend" id="cobroLegend"></div>
+    </div>
+  </section>
+
+  <div class="two">
+    <section>
+      <div class="sec-head"><h2>Dónde va el descuento</h2><div class="n">productos con más $ descontados · % sobre su lista</div></div>
+      <div class="panel" id="descProdList"></div>
+      <div class="sec-head" style="margin-top:22px"><h2>Por rubro</h2><div class="n">$ descontados · % sobre su lista</div></div>
+      <div class="panel" id="descRubroList"></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>Ventas sin cobrar</h2><div class="n" id="sinCobrarNota"></div></div>
+      <div class="tlist" id="sinCobrarList" style="border-top:1px solid var(--hair)"></div>
+    </section>
+  </div>
+
+  <section>
     <div class="sec-head"><h2>Venta por día</h2><div class="n" id="diarioNota"></div></div>
     <div class="panel"><svg id="chartDiario" width="100%" height="230" role="img" aria-label="Venta diaria del mes"></svg></div>
   </section>
@@ -197,7 +225,7 @@
   </div>
 
   <footer>
-    <div><b>Metodología:</b> Venta = Total con IVA del Detalle de ventas de Dux (es lo que Dux compara contra el objetivo de $45M del mes). Margen = Ganancia ÷ Venta sin IVA; la Ganancia la calcula Dux como venta sin IVA − costo total del renglón. Ticket = comprobante distinto; las notas de crédito restan venta y no cuentan como ticket. Proyección = venta a la fecha ÷ días corridos × días del mes (mismo criterio que el inicio de Dux).</div>
+    <div><b>Metodología:</b> Venta = Total con IVA del Detalle de ventas de Dux (es lo que Dux compara contra el objetivo de $45M del mes). Margen = Ganancia ÷ Venta sin IVA; la Ganancia la calcula Dux como venta sin IVA − costo total del renglón. Ticket = comprobante distinto; las notas de crédito restan venta y no cuentan como ticket. Proyección = venta a la fecha ÷ días corridos × días del mes (mismo criterio que el inicio de Dux). Descuento = precio de lista × cantidad × % de descuento del renglón, sin IVA (las notas de crédito no suman). Plata que ingresó = cobros que Dux registra en cada venta (efectivo, tarjeta, cheque y cuenta; Mercado Pago entra como cuenta). Sin cobrar = ventas sin ningún cobro registrado; si se cobraron después, figuran en Tesorería → Cobranzas de Dux, no acá.</div>
     <div style="margin-top:6px" id="fuenteText"></div>
   </footer>
 </div>
@@ -308,6 +336,59 @@ function renderGoal(){
     </div>`;
 }
 
+function renderPlata(){
+  const m = M(), t = m.totales, c = m.cobros;
+  const lista = t.ventaBrutaSinIva || 1, pctDesc = t.descuento / lista;
+  const prevKey = mesAnterior(), corte = diaCorte(m);
+  let compDesc = '';
+  if (prevKey){
+    const pm = DATA.meses[prevKey];
+    const pd = pm.diario.filter(d => fecha(d.fecha).getDate() <= corte).reduce((s,d) => s + (d.descuento||0), 0);
+    if (pd) { const v = (t.descuento - pd) / pd; compDesc = `<br><span class="${v<=0?'up':'down'}">${v>=0?'▲':'▼'} ${fmtPct(Math.abs(v),0)}</span> vs ${nombreMes(prevKey).split(' ')[0]} ${m.cerrado ? 'completo' : 'al día ' + corte}`; }
+  }
+  const cells = [
+    { label:'Descuentos otorgados', value: fmtM(t.descuento), foot: `${fmtPct(pctDesc)} del precio de lista · ${fmtInt(t.ticketsConDescuento)} tickets (${fmtPct(t.ticketsConDescuento/Math.max(1,t.tickets),0)})${compDesc}` },
+    { label:'Plata que ingresó', value: fmtM(c.total), foot: `${fmtMoney(c.total)}<br>${fmtPct(c.total/Math.max(1,t.venta),0)} de la venta del mes` },
+    { label:'Efectivo / Mercado Pago', value: `${fmtPct(c.efectivo/Math.max(1,c.total),0)} / ${fmtPct((c.cuenta+c.tarjeta+c.cheque)/Math.max(1,c.total),0)}`, foot: `efectivo ${fmtM(c.efectivo)} · MP y cuenta ${fmtM(c.cuenta + c.tarjeta + c.cheque)}` },
+    { label:'Vendido sin cobrar', value: fmtM(c.sinCobrar), foot: `${fmtPct(c.sinCobrar/Math.max(1,t.venta),1)} de la venta · ${fmtInt(m.sinCobrar.length)} cliente${m.sinCobrar.length===1?'':'s'} en la lista` }
+  ];
+  document.getElementById('plataRow').innerHTML = cells.map(x =>
+    `<div class="cell"><div class="label">${x.label}</div><div class="value mono">${x.value}</div><div class="foot">${x.foot}</div></div>`).join('');
+
+  const partes = [
+    { n:'Efectivo', v:c.efectivo, col:'var(--cyan)' },
+    { n:'Mercado Pago / cuenta', v:c.cuenta, col:'var(--violet)' },
+    { n:'Tarjeta', v:c.tarjeta, col:'var(--cyan-dim)' },
+    { n:'Cheque', v:c.cheque, col:'var(--ink-2)' },
+    { n:'Sin cobrar', v:c.sinCobrar, col:'var(--hair)', dark:true }
+  ].filter(p => p.v > 0);
+  const tot = partes.reduce((s,p) => s + p.v, 0) || 1;
+  document.getElementById('cobroPct').textContent = fmtM(c.total) + ' ingresados de ' + fmtM(t.venta) + ' vendidos';
+  document.getElementById('cobroSplit').innerHTML = partes.map(p =>
+    `<div style="width:${(p.v/tot*100).toFixed(2)}%;background:${p.col};${p.dark?'color:var(--ink-2)':''}" title="${p.n}: ${fmtMoney(p.v)}">${p.v/tot > .08 ? fmtPct(p.v/tot,0) : ''}</div>`).join('');
+  document.getElementById('cobroLegend').innerHTML = partes.map(p =>
+    `<span><span class="sw" style="background:${p.col};${p.dark?'border:1px solid var(--border)':''}"></span>${p.n} <b class="mono" style="color:var(--ink)">${fmtM(p.v)}</b></span>`).join('');
+
+  const dl = (o) => fmtPct(o.descuento / Math.max(1, o.ventaSinIva + o.descuento));
+  hbarsBy('descProdList', m.productosDescuento.slice(0,10), 'descuento', r => dl(r));
+  hbarsBy('descRubroList', m.rubrosDescuento, 'descuento', r => dl(r));
+
+  document.getElementById('sinCobrarNota').textContent = 'ventas sin ningún cobro registrado, por cliente';
+  document.getElementById('sinCobrarList').innerHTML = m.sinCobrar.length
+    ? `<div class="sc-row head"><span>Cliente</span><span class="num">Monto</span><span class="num">Tickets</span><span class="num">Última</span></div>` +
+      m.sinCobrar.map(s => `<div class="sc-row"><span class="name" title="${esc(s.cliente)}">${esc(s.cliente)}</span><span class="num mono">${fmtMoney(s.venta)}</span><span class="num mono">${s.tickets}</span><span class="num mono">${s.ultima.slice(8)}/${s.ultima.slice(5,7)}</span></div>`).join('')
+    : `<div class="sc-row"><span class="hint">Todas las ventas del mes tienen cobro registrado.</span></div>`;
+}
+
+function hbarsBy(id, rows, key, extra){
+  const max = Math.max(1, ...rows.map(r => r[key]));
+  document.getElementById(id).innerHTML = rows.length ? rows.map(r => `
+    <div class="hbar-row"><span class="name" title="${esc(r.nombre)}">${esc(r.nombre)}</span>
+      <span class="hbar-track"><span class="hbar-fill" style="width:${(Math.max(0,r[key])/max*100).toFixed(1)}%"></span></span>
+      <span class="hbar-val mono">${fmtM(r[key])} · ${extra(r)}</span></div>`).join('')
+    : `<div class="hint">Sin descuentos este mes.</div>`;
+}
+
 function ejes(max, n = 4){
   const paso = Math.pow(10, Math.floor(Math.log10(max / n)));
   const p = [1,2,2.5,5,10].map(x => x * paso).find(c => max / c <= n) || paso * 10;
@@ -352,7 +433,7 @@ function renderDiario(){
     ref, refLabel: 'ritmo necesario ' + fmtM(ref), fmtAxis: fmtM,
     showLabel: (i, d) => d.f.getDay() === 1 || i === 0,
     tip: d => d.r
-      ? `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><b>${fmtMoney(d.r.venta)}</b><div>${fmtInt(d.r.tickets)} tickets · ticket prom. ${fmtMoney(d.r.venta/Math.max(1,d.r.tickets))}</div><div>margen ${fmtPct(margen(d.r))}</div>`
+      ? `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><b>${fmtMoney(d.r.venta)}</b><div>${fmtInt(d.r.tickets)} tickets · ticket prom. ${fmtMoney(d.r.venta/Math.max(1,d.r.tickets))}</div><div>margen ${fmtPct(margen(d.r))} · descuentos ${fmtMoney(d.r.descuento||0)}</div><div>ingresó ${fmtMoney(d.r.cobrado||0)}</div>`
       : `<div>${DIAS[d.f.getDay()]} ${d.f.getDate()}/${mm}</div><div>${d.futuro ? 'todavía no llegó' : 'sin ventas'}</div>`
   });
 }
@@ -430,7 +511,7 @@ function hbars(id, rows, extra){
 function renderAll(){
   const m = M();
   document.getElementById('periodoText').textContent = m.periodoDesde.split('-').reverse().join('/') + ' – ' + m.periodoHasta.split('-').reverse().join('/') + (m.cerrado ? '' : ' (en curso)');
-  renderTabs(); renderKPIs(); renderGoal(); renderDiario(); renderSemana(); renderHoras(); renderRubros(); renderProductos();
+  renderTabs(); renderKPIs(); renderGoal(); renderPlata(); renderDiario(); renderSemana(); renderHoras(); renderRubros(); renderProductos();
   hbars('marcasList', m.marcas, r => fmtPct(margen(r),0));
   hbars('pagosList', m.pagos, r => fmtInt(r.tickets) + ' tk');
   hbars('vendList', m.vendedores, r => fmtInt(r.tickets) + ' tk');
