@@ -64,13 +64,16 @@ if (Test-Path $objPath) { $o = [IO.File]::ReadAllText($objPath, $u8) | ConvertFr
 if (-not $obj) { Write-Log "AVISO: no hay objetivos cargados para $mes (se muestra sin objetivo)." }
 
 # ---------------- datos ----------------
+# Costo = precio_costo x cantidad, SIN el factor: cuando se vende por bulto (factor > 1) Gescom ya guarda
+# el costo del bulto entero en precio_costo. Multiplicar por el factor inflaba el costo (23/10: Softys
+# daba -7,6% por 5 renglones de toallitas en bulto del 22/10). El factor si va en las unidades (u).
 Write-Log "Venta diaria..."
 $diario = Invoke-PanelSql "SELECT v.fecha AS f, SUM($SIGNO * v.total) AS n FROM ventas v WHERE v.fecha >= '$($iniPrev2.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL) GROUP BY v.fecha ORDER BY v.fecha"
 Write-Log "Venta por articulo (mes y mes anterior)..."
 $arts = Invoke-PanelSql @"
 SELECT substr(v.fecha,1,7) AS m, i.articulo AS a,
   SUM($SIGNO * i.neto) AS n, SUM($SIGNO * i.total) AS t,
-  SUM($SIGNO * i.precio_costo * i.cantidad * COALESCE(i.factor,1)) AS c,
+  SUM($SIGNO * i.precio_costo * i.cantidad) AS c,
   SUM(CASE WHEN v.tipo='VEN' THEN i.neto ELSE 0 END) AS nv,
   SUM(CASE WHEN v.tipo='VEN' THEN i.precio_unitario * i.cantidad ELSE 0 END) AS lv,
   SUM($SIGNO * i.cantidad * COALESCE(i.factor,1)) AS u
@@ -80,7 +83,7 @@ GROUP BY m, i.articulo
 "@
 # mismo periodo del mes anterior (para comparar margen y mix con los mismos dias)
 $artsPrevMtd = Invoke-PanelSql @"
-SELECT i.articulo AS a, SUM($SIGNO * i.neto) AS n, SUM($SIGNO * i.total) AS t, SUM($SIGNO * i.precio_costo * i.cantidad * COALESCE(i.factor,1)) AS c
+SELECT i.articulo AS a, SUM($SIGNO * i.neto) AS n, SUM($SIGNO * i.total) AS t, SUM($SIGNO * i.precio_costo * i.cantidad) AS c
 FROM ventas v JOIN venta_items i ON i.venta_id = v.id
 WHERE v.fecha >= '$($iniPrev.ToString('yyyy-MM-dd'))' AND v.fecha <= '$($cortePrev.ToString('yyyy-MM-dd'))' AND COALESCE(v.vendedor,'') NOT IN ($EXCL)
 GROUP BY i.articulo

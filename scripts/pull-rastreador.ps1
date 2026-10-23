@@ -48,7 +48,7 @@ $desde = (Get-Date).AddDays(-$Dias).ToString("yyyy-MM-dd")
 $venta = Invoke-PanelSql @"
 SELECT i.articulo AS c, a.descripcion AS d, a.empresa AS e, p.nombre AS pv,
        SUM(i.neto) AS neto, SUM(i.total) AS total, SUM(i.cantidad * COALESCE(i.factor,1)) AS uni,
-       SUM(i.precio_costo * i.cantidad * COALESCE(i.factor,1)) AS costo
+       SUM(i.precio_costo * i.cantidad) AS costo
 FROM ventas v JOIN venta_items i ON i.venta_id = v.id
 LEFT JOIN articulos a ON a.codigo = i.articulo
 LEFT JOIN proveedores p ON p.codigo = a.proveedor
