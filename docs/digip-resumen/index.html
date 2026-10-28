@@ -183,7 +183,7 @@ function renderPlata(p){
     {t:'No llega a venderse', n:1, f:r=>plata(r.enRiesgo)}
   ], t, {tramo:'Total', unidades:sum(t,'unidades'), costo:sum(t,'costo'), enRiesgo:sum(t,'enRiesgo')});
   tabla('tblRiesgo', [
-    {t:'Artículo', k:'descripcion', desc:1},
+    {t:'Artículo', desc:1, f:r=>r.descripcion + (r.detalle ? `<div class="nota">${r.detalle}</div>` : '')},
     {t:'Vence', k:'vence'},
     {t:'Días', n:1, k:'dias'},
     {t:'Stock', n:1, f:r=>nf.format(r.unidades)},

@@ -88,6 +88,26 @@ function Por-Articulo($rows, $campo) {
             costo = [math]::Round((Sum $g $campo)) }
     } | Sort-Object costo -Descending
 }
+# Variantes de un mismo producto (sabor o tamano) van en una sola fila: la clave son las 3 primeras
+# palabras de la descripcion sin sabores ni medidas (los 4 Tetratop Proteina -> TETRATOP PROTEINA ILOLAY).
+$SABORES = 'FRUTILLA','FRUT','VAINILLA','VAIN','CHOCOLATE','CHOCO','DDL','MANZ','MANZANA','UVA','CEREZA','DURAZNO','ARANDANOS','BAN','BANANA','LIMON','KW','KIWI','NARANJA'
+$MEDIDAS = 'X','GR','GRS','G','ML','CC','KG','L','CM3','U'
+function Get-Linea([string]$desc) {
+    $t = ($desc.ToUpper() -replace '[\.\/,\(\)]', ' ').Split(' ', [StringSplitOptions]::RemoveEmptyEntries) |
+        Where-Object { $_ -notmatch '\d' -and $SABORES -notcontains $_ -and $MEDIDAS -notcontains $_ }
+    return (@($t) | Select-Object -First 3) -join ' '
+}
+function Por-Linea($rows, $campo) {
+    $rows | Group-Object { Get-Linea $_.desc } | ForEach-Object {
+        $g = $_.Group; $arts = @($g | Group-Object cod)
+        $nombre = if ($arts.Count -gt 1) { "$($_.Name) ($($arts.Count) variantes)" } else { $g[0].desc }
+        $detalle = if ($arts.Count -gt 1) { ($arts | Sort-Object { -(Sum $_.Group 'unid') } | ForEach-Object { "{0} ({1:N0} u)" -f $_.Group[0].desc, (Sum $_.Group 'unid') }) -join ' · ' } else { $null }
+        [pscustomobject]@{ descripcion = $nombre; detalle = $detalle; vence = (($g | Sort-Object venc)[0].venc).ToString('dd/MM/yyyy')
+            dias = ($g | Measure-Object dias -Minimum).Minimum; unidades = Sum $g 'unid'
+            venta30 = [math]::Round((($arts | ForEach-Object { $_.Group[0].venta30 }) | Measure-Object -Sum).Sum)
+            sinVender = [math]::Round((Sum $g 'sobra')); costo = [math]::Round((Sum $g $campo)) }
+    } | Sort-Object costo -Descending
+}
 $tramos = foreach ($b in @(@{ n = "0 a 15 $dias_"; a = -9999; z = 15 }, @{ n = "16 a 30 $dias_"; a = 16; z = 30 }, @{ n = "M$($a_)s de 30 $dias_"; a = 31; z = 99999 })) {
     $x = @($pv | Where-Object { $_.dias -ge $b.a -and $_.dias -le $b.z })
     [ordered]@{ tramo = $b.n; unidades = Sum $x 'unid'; costo = [math]::Round((Sum $x 'valor')); enRiesgo = [math]::Round((Sum $x 'riesgo')) }
@@ -99,7 +119,7 @@ $perd = [ordered]@{
     porVencer     = @($tramos)
     totalEnRiesgo = $vencCosto + (($tramos | ForEach-Object { $_.enRiesgo }) | Measure-Object -Sum).Sum
     topVencidos   = @(Por-Articulo $ven 'valor' | Select-Object -First 8 | ForEach-Object { [ordered]@{ descripcion = $_.descripcion; vence = $_.vence; unidades = $_.unidades; costo = $_.costo } })
-    topRiesgo     = @(Por-Articulo @($pv | Where-Object { $_.riesgo -gt 0 }) 'riesgo' | Select-Object -First 10 | ForEach-Object { [ordered]@{ descripcion = $_.descripcion; vence = $_.vence; dias = $_.dias; unidades = $_.unidades; venta30 = $_.venta30; sinVender = $_.sinVender; costo = $_.costo } })
+    topRiesgo     = @(Por-Linea @($pv | Where-Object { $_.riesgo -gt 0 }) 'riesgo' | Select-Object -First 10 | ForEach-Object { [ordered]@{ descripcion = $_.descripcion; detalle = $_.detalle; vence = $_.vence; dias = $_.dias; unidades = $_.unidades; venta30 = $_.venta30; sinVender = $_.sinVender; costo = $_.costo } })
     criterio      = "Valor al costo sin IVA de Gescom. Los $dias_ son los que le quedan a cada lote para poder despacharse seg$($u_)n Digip. 'En riesgo' = lo que no llega a venderse antes de esa fecha al ritmo de venta de los $($u_)ltimos 30 $dias_. Quesos y fiambres por peso: Digip cuenta hormas; se valorizan con el peso promedio por horma del stock de Gescom. Liquidaciones: ventas con el c$($o_)digo 16 facturadas a menos del 80% del costo actual."
 }
 
