@@ -23,7 +23,7 @@ param(
     [string]$DocsDir = (Join-Path $PSScriptRoot "../docs"),
     [string]$ConfigPath = (Join-Path $PSScriptRoot "panel-config.json"),
     [string]$Clave = "",
-    [string[]]$Tableros = @("rentabilidad","cobranzas","digip-resumen","digip-pedidos","digip-stock","resumen-comercial","compras","proyeccion","digiorno","compras-stock","rastreador","director","elebes")
+    [string[]]$Tableros = @("rentabilidad","cobranzas","digip-resumen","digip-pedidos","digip-stock","resumen-comercial","compras","proyeccion","digiorno","compras-stock","rastreador","director","elebes","softys-ic")
 )
 $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
@@ -43,7 +43,7 @@ function Resolver-Clave {
 # Tableros personales de Gisela (12/10/2026: "que solamente yo pueda entrar"): se cifran con su
 # contrasena personal ("clavePersonal" en panel-config.json o DASHBOARD_PASSWORD_PERSONAL), distinta
 # de la del equipo. Si todavia no la definio, siguen con la clave comun (ver definir-clave.ps1 -Personal).
-$PERSONALES = @("director","objetivos")
+$PERSONALES = @("director","objetivos","softys-ic")
 function Resolver-ClavePersonal {
     if ($env:DASHBOARD_PASSWORD_PERSONAL) { return $env:DASHBOARD_PASSWORD_PERSONAL }
     if ($ConfigPath -and (Test-Path $ConfigPath)) {
