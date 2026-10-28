@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inteligencia Comercial Softys</title>
+<title>Inteligencia Comercial</title>
 <style>
   :root{ --bg:#f5f7fa; --surface:#fff; --surface-2:#eef2f6; --ink:#1f2933; --ink-2:#4a5866; --ink-3:#7b8794; --hair:#e4e8ee; --border:#d5dbe3;
     --accent:#2f6fde; --accent-soft:#e8f0fd; --red:#c2412d; --red-soft:#fdecea; --green:#1f8a4c; --green-soft:#e6f5ec; --amber:#b7791f; --amber-soft:#fff6e5;
@@ -64,6 +64,21 @@
   .pair .bar i.c{background:var(--green);}
   .note{font-size:12px;color:var(--ink-3);margin-top:8px;}
   svg text{font-family:inherit;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;border-bottom:1px solid var(--border);}
+  .tabs button{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink-3);padding:9px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;}
+  .tabs button.on{color:var(--accent);border-bottom-color:var(--accent);}
+  .tabs button .pill{margin-left:6px;}
+  .filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .filtros button{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-2);}
+  .filtros button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .rec{background:var(--surface);border:1px solid var(--hair);border-left:4px solid var(--amber);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px;}
+  .rec.alta{border-left-color:var(--red);}
+  .rec .h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
+  .rec .h b{font-size:14.5px;}
+  .rec .det{font-size:13px;color:var(--ink-2);}
+  .rec .acc{font-size:13px;margin-top:6px;}
+  .rec .acc::before{content:"Qué hacer: ";font-weight:700;color:var(--ink);}
+  .rec details{margin-top:8px;} .rec summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600;}
 </style>
 <link rel="stylesheet" href="../tema-claro.css">
 </head>
@@ -71,15 +86,16 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="kicker">Softys Argentina · uso personal</div>
-      <h1>Inteligencia Comercial Softys</h1>
-      <div class="sub">Los 9 indicadores para saber si Softys crece, si cumple el objetivo y qué lo explica: clientes, tickets, vendedores, productos, retención y devoluciones. Venta con IVA y neta de devoluciones; margen sobre el neto sin IVA.</div>
+      <div class="kicker">Softys · Georgalos · Clorox · Ilolay · uso personal</div>
+      <h1>Inteligencia Comercial</h1>
+      <div class="sub">Los 9 indicadores para saber si cada proveedor crece, si cumple el objetivo y qué lo explica: clientes, tickets, vendedores, productos, retención y devoluciones. La última solapa junta qué atacar primero. Venta con IVA y neta de devoluciones; margen sobre el neto sin IVA.</div>
     </div>
     <div class="meta" id="meta"></div>
   </header>
 
-  <div class="cards" id="cards"></div>
-  <div id="secciones"></div>
+  <nav class="tabs" id="tabs"></nav>
+  <div id="vistaProv"><div class="cards" id="cards"></div><div id="secciones"></div></div>
+  <div id="vistaRec" style="display:none"></div>
 </div>
 
 <script src="../gate.js"></script>
@@ -95,7 +111,8 @@ const fdate = s => { const p = s.split('-'); return p[2]+'/'+p[1]; };
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const fmes = m => { const [y,mm] = m.split('-'); return MESES[+mm-1] + ' ' + y; };
 const ESTADO = {g:'bien', a:'atención', r:'alerta', n:'sin datos'};
-let D, ESC = 'eq';
+let D, ESC = 'eq', CUR = 'softys';
+try { CUR = localStorage.getItem('softys-ic-tab') || 'softys'; } catch(e) {}
 try { ESC = localStorage.getItem('softys-ic-esc') || 'eq'; } catch(e) {}
 const objDe = o => o ? (ESC==='eq' ? o.objEq : o.objIdeal) : null;
 const pillVs = v => v==null || !isFinite(v) ? '—' : `<span class="pill ${v>=0?'g':'r'}">${P(v,true)}</span>`;
@@ -122,33 +139,34 @@ function barras(items, valor, etiqueta, ref, fmt){
 const IND = [
   ['crecimiento','Tasa de crecimiento','¿Estoy vendiendo más que antes?','Mensual','Ventas planas o cayendo'],
   ['cumplimiento','Cumplimiento del objetivo','¿Estoy logrando la meta?','Semanal / mensual','Menos de 90% sostenido'],
-  ['conversion','Tasa de conversión','¿Convierto los clientes que compran en compradores de Softys?','Semanal','Mucho tráfico, pocos cierres'],
-  ['ticket','Ticket promedio','¿Cuánto deja cada compra de Softys?','Semanal','Más transacciones, poco valor'],
+  ['conversion','Tasa de conversión','¿Convierto los clientes que compran en compradores de {P}?','Semanal','Mucho tráfico, pocos cierres'],
+  ['ticket','Ticket promedio','¿Cuánto deja cada compra de {P}?','Semanal','Más transacciones, poco valor'],
   ['upt','UPT · unidades por ticket','¿Cuántas unidades y artículos lleva cada cliente?','Semanal','Venta cruzada débil'],
-  ['vendedores','Ventas por vendedor','¿Cómo rinde el equipo con Softys?','Semanal / mensual','Grandes brechas sin explicación'],
+  ['vendedores','Ventas por vendedor','¿Cómo rinde el equipo con {P}?','Semanal / mensual','Grandes brechas sin explicación'],
   ['productos','Rendimiento por producto','¿Qué líneas sostienen el negocio?','Mensual','Mucha venta con bajo aporte'],
-  ['retencion','Retención','¿Cuántos clientes vuelven a comprar Softys?','Mensual','Dependencia de clientes nuevos'],
+  ['retencion','Retención','¿Cuántos clientes vuelven a comprar {P}?','Mensual','Dependencia de clientes nuevos'],
   ['devoluciones','Devoluciones','¿Qué parte de la venta se pierde?','Semanal / mensual','Aumento sostenido del indicador']
 ];
 
-function render(){
-  const A=D.actual, Pm=D.mesAnteriorMismoDia, per=D.periodo, S=D.semanas, Al=D.alertas;
+function renderProv(){
+  const X = D.proveedores[CUR], NOM = X.nombre;
+  const A=X.actual, Pm=X.mesAnteriorMismoDia, per=X.periodo, S=X.semanas, Al=X.alertas;
   const comp = S.filter(s=>s.completa), ult = comp[comp.length-1] || {};
   const objT = objDe(A), tiempo = per.habilesTransc/per.habilesTotal, av = div(A.venta,objT);
   const restantes = per.habilesTotal - per.habilesTransc;
   const varMtd = div(A.venta-Pm.venta, Pm.venta);
-  const ret = D.retencion.meses.find(r=>r.mes===per.mes) || {};
+  const ret = X.retencion.meses.find(r=>r.mes===per.mes) || {};
   const ultSem = S[S.length-1] || {};
   document.querySelectorAll('.esc button').forEach(b=>b.classList.toggle('on', b.dataset.e===ESC));
 
   const vals = {
     crecimiento: [P(varMtd,true), `vs ${fmes(per.mesAnterior)} a los mismos días hábiles (${M(Pm.venta)})`],
     cumplimiento: [P(av), `del objetivo (${M(objT)}) con el ${P(tiempo)} del mes`],
-    conversion: [P(ult.conversion), `de los clientes de la última semana llevaron Softys`],
-    ticket: [PES(ult.ticketProm), `por ticket con Softys · ${N(ult.tickets)} tickets la última semana`],
+    conversion: [P(ult.conversion), `de los clientes de la última semana llevaron ${NOM}`],
+    ticket: [PES(ult.ticketProm), `por ticket con ${NOM} · ${N(ult.tickets)} tickets la última semana`],
     upt: [N(ult.articulosPorTicket,2)+' art.', `${N(ult.upt,1)} unidades por ticket la última semana`],
-    vendedores: [N(D.vendedores.filter(v=>v.venta>0).length), `vendedores con venta Softys · el primero hace el ${P(D.vendedores[0]?.participacion)}`],
-    productos: [P(D.productos.margen), `margen del mes · ${esc(D.productos.lineas[0]?.nombre||'')} es el ${P(D.productos.lineas[0]?.pesoVenta)} de la venta`],
+    vendedores: [N(X.vendedores.filter(v=>v.venta>0).length), `vendedores con venta ${NOM} · el primero hace el ${P(X.vendedores[0]?.participacion)}`],
+    productos: [P(X.productos.margen), `margen del mes · ${esc(X.productos.lineas[0]?.nombre||'')} es el ${P(X.productos.lineas[0]?.pesoVenta)} de la venta`],
     retencion: [P(ret.tasaRetencion), `de los clientes de ${fmes(ret.mesAnterior||per.mesAnterior)} ya volvió`],
     devoluciones: [P(ult.devolucionPct), `de lo facturado volvió la última semana (rechazos + cambios)`]
   };
@@ -156,64 +174,96 @@ function render(){
 
   const B = {};
   // 1 crecimiento
-  const mRows = D.meses.map((m,i)=>{ const pr=D.meses[i-1]; const base = m.completo ? m.venta : m.proyeccion; return `<tr class="${m.completo?'':'parcial'}"><td>${fmes(m.mes)}${m.completo?'':' (al '+fdate(per.corte)+')'}</td><td>${M(m.venta)}</td><td>${m.completo?'—':M(m.proyeccion)}</td><td>${pr?pillVs(div(base-pr.venta,pr.venta)):'—'}</td><td>${P(m.margen)}</td><td>${N(m.clientes)}</td></tr>`; });
-  B.crecimiento = `<div class="kpis">${kpi('Venta del mes',M(A.venta),`al ${fdate(per.corte)} · ${per.habilesTransc} de ${per.habilesTotal} días hábiles`)}${kpi('vs mes anterior, mismos días',pillVs(varMtd),`${M(Pm.venta)} al ${fdate(per.cortePrev)}`)}${kpi('Proyección del mes',M(A.proyeccion),`al ritmo del mes · ${fmes(per.mesAnterior)} cerró en ${M(D.mesAnteriorCompleto?.venta)}`)}</div>
+  const mRows = X.meses.map((m,i)=>{ const pr=X.meses[i-1]; const base = m.completo ? m.venta : m.proyeccion; return `<tr class="${m.completo?'':'parcial'}"><td>${fmes(m.mes)}${m.completo?'':' (al '+fdate(per.corte)+')'}</td><td>${M(m.venta)}</td><td>${m.completo?'—':M(m.proyeccion)}</td><td>${pr?pillVs(div(base-pr.venta,pr.venta)):'—'}</td><td>${P(m.margen)}</td><td>${N(m.clientes)}</td></tr>`; });
+  B.crecimiento = `<div class="kpis">${kpi('Venta del mes',M(A.venta),`al ${fdate(per.corte)} · ${per.habilesTransc} de ${per.habilesTotal} días hábiles`)}${kpi('vs mes anterior, mismos días',pillVs(varMtd),`${M(Pm.venta)} al ${fdate(per.cortePrev)}`)}${kpi('Proyección del mes',M(A.proyeccion),`al ritmo del mes · ${fmes(per.mesAnterior)} cerró en ${M(X.mesAnteriorCompleto?.venta)}`)}</div>
     <div class="two"><div><h3>Venta por mes</h3>${table(['Mes','Venta','Proyección','vs mes anterior','Margen','Clientes'],mRows)}<p class="note">El mes en curso se compara con su proyección al ritmo actual. La base empieza el 03/08/2026.</p></div>
     <div><h3>Venta por semana</h3>${barras(S, s=>s.venta, s=>fdate(s.desde), null, v=>Math.round(v/1e6)+'M')}<p class="note">Barra clara: semana en curso.</p></div></div>`;
 
   // 2 cumplimiento
   const cRows = S.filter(s=>objDe(s)).map(s=>{ const o=objDe(s), c=div(s.venta,o); return filaSem(s,[M(s.venta),M(o),`<span class="${c<0.9?'red':c>=1?'green':''}">${P(c)}</span>`,`<div style="width:140px">${bar(c,0.9)}</div>`]); });
   B.cumplimiento = objT ? `<div class="kpis">${kpi('Avance del mes',P(av),`${M(A.venta)} de ${M(objT)} (${ESC==='eq'?'equilibrio':'ideal'})`)}${kpi('Tiempo transcurrido',P(tiempo),`${per.habilesTransc} de ${per.habilesTotal} días hábiles`)}${kpi('Ritmo actual / necesario',M(A.venta/per.habilesTransc)+' / '+(restantes>0?M((objT-A.venta)/restantes):'—'),`por día hábil · faltan ${M(Math.max(0,objT-A.venta))}`)}${kpi('Cierre al ritmo actual',M(A.proyeccion),pillVs(div(A.proyeccion-objT,objT))+' contra el objetivo')}</div>
-    <h3>Cumplimiento por semana (objetivo del mes repartido por día hábil)</h3>${table(['Semana','Venta','Objetivo','Cumplimiento','Línea negra = 90%'],cRows)}` : `<p class="dim">No hay objetivo de Softys cargado para ${fmes(per.mes)}.</p>`;
+    <h3>Cumplimiento por semana (objetivo del mes repartido por día hábil)</h3>${table(['Semana','Venta','Objetivo','Cumplimiento','Línea negra = 90%'],cRows)}` : `<p class="dim">No hay objetivo de ${NOM} cargado para ${fmes(per.mes)}.</p>`;
 
   // 3 conversion
   const cvRows = S.map(s=>filaSem(s,[N(s.clientesEmpresa),N(s.clientes),P(s.conversion),`<div style="width:140px">${bar(s.conversion)}</div>`]));
-  const cvVend = D.vendedores.filter(v=>v.clientesEmpresa>=20).sort((a,b)=>a.conversion-b.conversion).slice(0,8).map(v=>`<tr><td>${esc(v.codigo+' '+v.nombre)}</td><td>${N(v.clientesEmpresa)}</td><td>${N(v.clientes)}</td><td>${P(v.conversion)}</td></tr>`);
-  B.conversion = `<div class="kpis">${kpi('Conversión del mes',P(A.conversion),`${N(A.clientes)} de ${N(A.clientesEmpresa)} clientes que compraron llevaron Softys`)}${kpi('Mes anterior, mismos días',P(Pm.conversion),`${N(Pm.clientes)} de ${N(Pm.clientesEmpresa)}`)}${kpi('Última semana completa',P(ult.conversion),`${N(ult.clientes)} de ${N(ult.clientesEmpresa)}`)}</div>
-    <div class="two"><div><h3>Por semana</h3>${table(['Semana','Clientes que compraron','Llevaron Softys','Conversión',''],cvRows)}</div><div><h3>Vendedores con menor conversión este mes</h3>${table(['Vendedor','Clientes que compraron','Llevaron Softys','Conversión'],cvVend)}<p class="note">Sin registro de visitas, la conversión se mide sobre los clientes que ya compraron algo a la empresa: son los que el vendedor tuvo enfrente.</p></div></div>`;
+  const cvVend = X.vendedores.filter(v=>v.clientesEmpresa>=20).sort((a,b)=>a.conversion-b.conversion).slice(0,8).map(v=>`<tr><td>${esc(v.codigo+' '+v.nombre)}</td><td>${N(v.clientesEmpresa)}</td><td>${N(v.clientes)}</td><td>${P(v.conversion)}</td></tr>`);
+  B.conversion = `<div class="kpis">${kpi('Conversión del mes',P(A.conversion),`${N(A.clientes)} de ${N(A.clientesEmpresa)} clientes que compraron llevaron ${NOM}`)}${kpi('Mes anterior, mismos días',P(Pm.conversion),`${N(Pm.clientes)} de ${N(Pm.clientesEmpresa)}`)}${kpi('Última semana completa',P(ult.conversion),`${N(ult.clientes)} de ${N(ult.clientesEmpresa)}`)}</div>
+    <div class="two"><div><h3>Por semana</h3>${table(['Semana','Clientes que compraron','Llevaron '+NOM,'Conversión',''],cvRows)}</div><div><h3>Vendedores con menor conversión este mes</h3>${table(['Vendedor','Clientes que compraron','Llevaron '+NOM,'Conversión'],cvVend)}<p class="note">Sin registro de visitas, la conversión se mide sobre los clientes que ya compraron algo a la empresa: son los que el vendedor tuvo enfrente.</p></div></div>`;
 
   // 4 ticket
   const tRows = S.map((s,i)=>{ const p=S[i-1]; const malo = p && s.completa && s.tickets>p.tickets && s.ticketProm<p.ticketProm; return `<tr class="${malo?'flag':s.completa?'':'parcial'}"><td>${sem(s)}</td><td>${N(s.tickets)}</td><td>${PES(s.ticketProm)}</td><td>${p?pillVs(div(s.ticketProm-p.ticketProm,p.ticketProm)):'—'}</td><td>${M(s.venta)}</td></tr>`; });
-  B.ticket = `<div class="kpis">${kpi('Ticket promedio del mes',PES(A.ticketProm),`${N(A.tickets)} tickets con Softys`)}${kpi('Mes anterior, mismos días',PES(Pm.ticketProm),`${N(Pm.tickets)} tickets · ${pillVs(div(A.ticketProm-Pm.ticketProm,Pm.ticketProm))}`)}</div>
+  B.ticket = `<div class="kpis">${kpi('Ticket promedio del mes',PES(A.ticketProm),`${N(A.tickets)} tickets con ${NOM}`)}${kpi('Mes anterior, mismos días',PES(Pm.ticketProm),`${N(Pm.tickets)} tickets · ${pillVs(div(A.ticketProm-Pm.ticketProm,Pm.ticketProm))}`)}</div>
     <div class="two"><div><h3>Por semana</h3>${table(['Semana','Tickets','Ticket promedio','vs semana anterior','Venta'],tRows)}<p class="note">En rojo: semanas con más tickets pero de menor valor que la anterior.</p></div><div><h3>Ticket promedio por semana</h3>${barras(S, s=>s.ticketProm, s=>fdate(s.desde), null, v=>Math.round(v/1000)+'K')}</div></div>`;
 
   // 5 upt
   const uRows = S.map(s=>filaSem(s,[N(s.upt,1),N(s.articulosPorTicket,2),N(s.tickets)]));
-  B.upt = `<div class="kpis">${kpi('Unidades por ticket (mes)',N(A.upt,1),`mes anterior, mismos días: ${N(Pm.upt,1)}`)}${kpi('Artículos Softys distintos por ticket',N(A.articulosPorTicket,2),`mes anterior, mismos días: ${N(Pm.articulosPorTicket,2)}`)}</div>
+  B.upt = `<div class="kpis">${kpi('Unidades por ticket (mes)',N(A.upt,1),`mes anterior, mismos días: ${N(Pm.upt,1)}`)}${kpi('Artículos '+NOM+' distintos por ticket',N(A.articulosPorTicket,2),`mes anterior, mismos días: ${N(Pm.articulosPorTicket,2)}`)}</div>
     <div class="two"><div><h3>Por semana</h3>${table(['Semana','Unidades por ticket','Artículos distintos','Tickets'],uRows)}<p class="note">Las unidades son como se facturan (bultos o unidades según el artículo). Para la venta cruzada mirá los artículos distintos por ticket.</p></div><div><h3>Artículos distintos por ticket</h3>${barras(S, s=>s.articulosPorTicket, s=>fdate(s.desde), null, v=>v.toLocaleString('es-AR',{maximumFractionDigits:1}))}</div></div>`;
 
   // 6 vendedores
   const vTeam = varMtd;
-  const vRows = D.vendedores.filter(v=>v.venta!==0||v.ventaPrevMtd!==0).map(v=>{ const brecha = v.var!=null && vTeam!=null ? v.var - vTeam : null; const flag = v.venta>0 && v.ventaPrevMtd>1e6 && brecha!=null && brecha < -0.2; return `<tr class="${flag?'flag':''}"><td>${esc(v.codigo+' '+v.nombre)}</td><td>${M(v.venta)}</td><td>${M(v.ventaPrevMtd)}</td><td>${pillVs(v.var)}</td><td class="${brecha<0?'red':'green'}">${brecha==null?'—':(brecha>0?'+':'')+N(brecha*100,1)+' pp'}</td><td>${M(v.semana)}</td><td>${M(v.semanaAnt)}</td><td>${P(v.participacion)}</td><td>${P(v.conversion)}</td><td>${PES(v.ticketProm)}</td><td>${P(v.margen)}</td><td>${P(v.devolucionPct)}</td></tr>`; });
-  B.vendedores = `<p class="dim" style="margin:0 0 10px">Softys en total ${P(vTeam,true)} contra el mes pasado a los mismos días. "Brecha" = cuánto se aparta cada vendedor de ese promedio; en rojo los que quedan 20 puntos o más por debajo (con más de $1M vendido el mes pasado). Los que no tienen venta este mes suelen ser rutas reasignadas.</p>
-    ${table(['Vendedor','Venta del mes','Mes pasado (mismos días)','Var.','Brecha vs Softys','Esta semana','Semana pasada','Participación','Conversión','Ticket prom.','Margen','Devol.'],vRows)}`;
+  const vRows = X.vendedores.filter(v=>v.venta!==0||v.ventaPrevMtd!==0).map(v=>{ const brecha = v.var!=null && vTeam!=null ? v.var - vTeam : null; const flag = v.venta>0 && v.ventaPrevMtd>1e6 && brecha!=null && brecha < -0.2; return `<tr class="${flag?'flag':''}"><td>${esc(v.codigo+' '+v.nombre)}</td><td>${M(v.venta)}</td><td>${M(v.ventaPrevMtd)}</td><td>${pillVs(v.var)}</td><td class="${brecha<0?'red':'green'}">${brecha==null?'—':(brecha>0?'+':'')+N(brecha*100,1)+' pp'}</td><td>${M(v.semana)}</td><td>${M(v.semanaAnt)}</td><td>${P(v.participacion)}</td><td>${P(v.conversion)}</td><td>${PES(v.ticketProm)}</td><td>${P(v.margen)}</td><td>${P(v.devolucionPct)}</td></tr>`; });
+  B.vendedores = `<p class="dim" style="margin:0 0 10px">${NOM} en total ${P(vTeam,true)} contra el mes pasado a los mismos días. "Brecha" = cuánto se aparta cada vendedor de ese promedio; en rojo los que quedan 20 puntos o más por debajo (con más de $1M vendido el mes pasado). Los que no tienen venta este mes suelen ser rutas reasignadas.</p>
+    ${table(['Vendedor','Venta del mes','Mes pasado (mismos días)','Var.','Brecha vs '+NOM,'Esta semana','Semana pasada','Participación','Conversión','Ticket prom.','Margen','Devol.'],vRows)}`;
 
   // 7 productos
-  const lRows = D.productos.lineas.filter(l=>l.venta>0).map(l=>{ const flojo = l.pesoVenta>0.05 && l.margen < D.productos.margen-0.03; return `<tr class="${flojo?'flag':''}"><td>${esc(l.nombre)}</td><td>${M(l.venta)}</td><td>${pillVs(l.var)}</td><td>${P(l.margen)}</td><td>${M(l.contribucion)}</td><td><div class="pair">${bar(l.pesoVenta)}${bar(l.pesoContribucion,null,'c')}</div></td><td>${P(l.pesoVenta)} / ${P(l.pesoContribucion)}</td></tr>`; });
-  const kRows = D.productos.skus.slice(0,20).map(s=>`<tr><td>${esc(s.nombre)}<div class="dim" style="font-size:11.5px">${esc(s.codigo)} · ${esc(s.linea)}</div></td><td>${M(s.venta)}</td><td>${pillVs(s.var)}</td><td class="${s.margen<D.productos.margen-0.03?'red':''}">${P(s.margen)}</td><td>${P(s.pesoVenta)} / ${P(s.pesoContribucion)}</td></tr>`);
-  B.productos = `<h3>Por línea: peso en la venta (azul) contra peso en el margen (verde)</h3>${table(['Línea','Venta','vs mes pasado','Margen','Contribución','Venta / margen','% venta / % margen'],lRows)}<p class="note">En rojo: líneas con más de 5% de la venta y margen 3 puntos debajo del de Softys (${P(D.productos.margen)}). "vs mes pasado" a los mismos días hábiles.</p>
+  const lRows = X.productos.lineas.filter(l=>l.venta>0).map(l=>{ const flojo = l.pesoVenta>0.05 && l.margen < X.productos.margen-0.03; return `<tr class="${flojo?'flag':''}"><td>${esc(l.nombre)}</td><td>${M(l.venta)}</td><td>${pillVs(l.var)}</td><td>${P(l.margen)}</td><td>${M(l.contribucion)}</td><td><div class="pair">${bar(l.pesoVenta)}${bar(l.pesoContribucion,null,'c')}</div></td><td>${P(l.pesoVenta)} / ${P(l.pesoContribucion)}</td></tr>`; });
+  const kRows = X.productos.skus.slice(0,20).map(s=>`<tr><td>${esc(s.nombre)}<div class="dim" style="font-size:11.5px">${esc(s.codigo)} · ${esc(s.linea)}</div></td><td>${M(s.venta)}</td><td>${pillVs(s.var)}</td><td class="${s.margen<X.productos.margen-0.03?'red':''}">${P(s.margen)}</td><td>${P(s.pesoVenta)} / ${P(s.pesoContribucion)}</td></tr>`);
+  B.productos = `<h3>Por línea: peso en la venta (azul) contra peso en el margen (verde)</h3>${table(['Línea','Venta','vs mes pasado','Margen','Contribución','Venta / margen','% venta / % margen'],lRows)}<p class="note">En rojo: líneas con más de 5% de la venta y margen 3 puntos debajo del de ${NOM} (${P(X.productos.margen)}). "vs mes pasado" a los mismos días hábiles.</p>
     <h3 style="margin-top:16px">Los 20 artículos que más venden</h3>${table(['Artículo','Venta','vs mes pasado','Margen','% venta / % margen'],kRows)}`;
 
   // 8 retencion
-  const rRows = D.retencion.meses.map(r=>`<tr><td>${fmes(r.mes)}</td><td>${N(r.clientesMesAnterior)}</td><td>${N(r.retenidos)}</td><td>${P(r.tasaRetencion)}${r.tasaRetencionMesAnteriorMismoDia!=null?`<div class="dim" style="font-size:11.5px">mes pasado a esta altura ${P(r.tasaRetencionMesAnteriorMismoDia)}</div>`:''}</td><td>${N(r.recuperados)}</td><td>${N(r.nuevos)}</td><td>${N(r.compradores)}</td><td>${P(r.pesoNuevos)}</td></tr>`);
-  const svRows = D.retencion.sinVolver.map(c=>`<tr><td>${esc(c.nombre)}<div class="dim" style="font-size:11.5px">${esc(c.vendedor)}</div></td><td>${M(c.ventaMesAnterior)}</td></tr>`);
-  B.retencion = `${table(['Mes','Clientes del mes anterior','Volvieron','Retención','Recuperados','Nuevos','Compradores','Venta de nuevos'],rRows)}<p class="note">Recuperados: no compraron Softys el mes anterior pero sí antes. Nuevos: primera compra de Softys desde que empieza la base (03/08), así que en septiembre parte de los "nuevos" son clientes que compraban antes de agosto.</p>
-    <h3 style="margin-top:14px">Los clientes más grandes de ${fmes(per.mesAnterior)} que todavía no volvieron a comprar Softys</h3>${table(['Cliente','Compró el mes pasado'],svRows)}`;
+  const rRows = X.retencion.meses.map(r=>`<tr><td>${fmes(r.mes)}</td><td>${N(r.clientesMesAnterior)}</td><td>${N(r.retenidos)}</td><td>${P(r.tasaRetencion)}${r.tasaRetencionMesAnteriorMismoDia!=null?`<div class="dim" style="font-size:11.5px">mes pasado a esta altura ${P(r.tasaRetencionMesAnteriorMismoDia)}</div>`:''}</td><td>${N(r.recuperados)}</td><td>${N(r.nuevos)}</td><td>${N(r.compradores)}</td><td>${P(r.pesoNuevos)}</td></tr>`);
+  const svRows = X.retencion.sinVolver.map(c=>`<tr><td>${esc(c.nombre)}<div class="dim" style="font-size:11.5px">${esc(c.vendedor)}</div></td><td>${M(c.ventaMesAnterior)}</td></tr>`);
+  B.retencion = `${table(['Mes','Clientes del mes anterior','Volvieron','Retención','Recuperados','Nuevos','Compradores','Venta de nuevos'],rRows)}<p class="note">Recuperados: no compraron ${NOM} el mes anterior pero sí antes. Nuevos: primera compra de ${NOM} desde que empieza la base (03/08), así que en septiembre parte de los "nuevos" son clientes que compraban antes de agosto.</p>
+    <h3 style="margin-top:14px">Los clientes más grandes de ${fmes(per.mesAnterior)} que todavía no volvieron a comprar ${NOM}</h3>${table(['Cliente','Compró el mes pasado'],svRows)}`;
 
   // 9 devoluciones
   const dRows = S.map(s=>filaSem(s,[M(s.rechazos),M(s.cambios),P(s.devolucionPct)]));
-  const dmRows = D.meses.map(m=>`<tr><td>${fmes(m.mes)}</td><td>${M(m.rechazos)}</td><td>${M(m.cambios)}</td><td>${P(m.devolucionPct)}</td></tr>`);
+  const dmRows = X.meses.map(m=>`<tr><td>${fmes(m.mes)}</td><td>${M(m.rechazos)}</td><td>${M(m.cambios)}</td><td>${P(m.devolucionPct)}</td></tr>`);
   B.devoluciones = `<div class="two"><div><h3>Por semana</h3>${table(['Semana','Rechazos','Cambios','% de lo facturado'],dRows)}</div><div><h3>Por mes</h3>${table(['Mes','Rechazos','Cambios','% de lo facturado'],dmRows)}<h3 style="margin-top:14px">% devuelto por semana</h3>${barras(S, s=>s.devolucionPct*100, s=>fdate(s.desde), null, v=>v.toLocaleString('es-AR',{maximumFractionDigits:1})+'%')}</div></div>`;
 
-  $('#secciones').innerHTML = IND.map(([k,t,q,f,senal],i)=>{ const a=Al[k]||{estado:'n',texto:''}; return `<section id="s-${k}"><h2><span class="num">${i+1}</span>${t}<span class="freq">${f}</span>${pill(a.estado)}</h2><p class="q2">${q}</p>
+  $('#secciones').innerHTML = IND.map(([k,t,q0,f,senal],i)=>{ const a=Al[k]||{estado:'n',texto:''}, q=q0.replace('{P}',NOM); return `<section id="s-${k}"><h2><span class="num">${i+1}</span>${t}<span class="freq">${f}</span>${pill(a.estado)}</h2><p class="q2">${q}</p>
     <div class="alerta ${a.estado}"><b>Señal de alerta: ${senal.toLowerCase()}</b>${esc(a.texto)}</div>${B[k]}</section>`; }).join('');
 }
 
+// solapas: una por proveedor + recomendaciones
+function render(){
+  const alertas = k => Object.values(D.proveedores[k].alertas).filter(a=>a.estado==='r').length;
+  $('#tabs').innerHTML = D.solapas.map(s=>{ const n=alertas(s.clave); return `<button data-t="${s.clave}" class="${CUR===s.clave?'on':''}">${esc(s.nombre)}${n?`<span class="pill r">${n}</span>`:''}</button>`; }).join('')
+    + `<button data-t="rec" class="${CUR==='rec'?'on':''}">Recomendaciones<span class="pill a">${D.recomendaciones.length}</span></button>`;
+  document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{ CUR=b.dataset.t; try{localStorage.setItem('softys-ic-tab',CUR);}catch(e){} render(); window.scrollTo({top:0}); });
+  const esRec = CUR==='rec';
+  $('#vistaProv').style.display = esRec ? 'none' : ''; $('#vistaRec').style.display = esRec ? '' : 'none';
+  document.querySelector('.esc').style.visibility = esRec ? 'hidden' : '';
+  if (esRec) renderRec(); else renderProv();
+}
+let FILTRO = 'todos';
+function renderRec(){
+  const clave = nombre => (D.solapas.find(s=>s.nombre===nombre)||{}).clave;
+  const recs = D.recomendaciones.filter(r=>FILTRO==='todos' || clave(r.proveedor)===FILTRO);
+  const lista = r => {
+    if (!r.lista) return '';
+    const op = D.oportunidades[clave(r.proveedor)][r.lista];
+    const filas = r.lista==='recuperar'
+      ? op.lista.map(c=>`<tr><td>${esc(c.nombre)}<div class="dim" style="font-size:11.5px">${esc(c.codigo)}</div></td><td>${esc(c.vendedor)}</td><td>${M(c.compraMesAnterior)}</td><td>${M(c.compraEmpresaMes)}</td></tr>`)
+      : op.lista.map(c=>`<tr><td>${esc(c.nombre)}<div class="dim" style="font-size:11.5px">${esc(c.codigo)}</div></td><td>${esc(c.vendedor)}</td><td>${M(c.compraEmpresaMes)}</td><td>${esc(c.compraOtros)}</td></tr>`);
+    const head = r.lista==='recuperar' ? ['Cliente','Vendedor','Le compró el mes pasado','Compra a la empresa este mes'] : ['Cliente','Vendedor','Compra a la empresa este mes','Compra estos proveedores'];
+    const pv = op.porVendedor.map(v=>`${esc(v.vendedor)} (${v.clientes})`).join(' · ');
+    return `<details><summary>Ver los ${op.lista.length} clientes más grandes (de ${N(op.clientes)})</summary><p class="note">Vendedores con más casos: ${pv}</p>${table(head, filas)}</details>`;
+  };
+  const chips = [['todos','Todos']].concat(D.solapas.map(s=>[s.clave,s.nombre])).map(([k,n])=>`<button data-f="${k}" class="${FILTRO===k?'on':''}">${esc(n)}</button>`).join('');
+  $('#vistaRec').innerHTML = `<div class="filtros">${chips}</div>
+    <p class="note" style="margin:-4px 0 14px">Ordenadas por prioridad y plata en juego. "Alta": el proveedor está atrasado contra el objetivo, o hay mucha venta del mes pasado por recuperar con clientes que el vendedor ya está visitando.</p>
+    ${recs.map(r=>`<div class="rec ${r.prioridad}"><div class="h"><span class="pill ${r.prioridad==='alta'?'r':'a'}">${r.prioridad}</span><b>${esc(r.titulo)}</b></div><div class="det">${esc(r.detalle)}</div><div class="acc">${esc(r.accion)}</div>${lista(r)}</div>`).join('') || '<p class="dim">Sin recomendaciones para este proveedor.</p>'}`;
+  document.querySelectorAll('.filtros button').forEach(b=>b.onclick=()=>{ FILTRO=b.dataset.f; renderRec(); });
+}
 cargarDatos('./data.json', { personal: true }).then(data=>{
   D = data;
   const g = new Date(D.generadoEn);
   $('#meta').innerHTML = `Actualizado <b>${g.toLocaleDateString('es-AR')} ${g.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</b><br>${fmes(D.periodo.mes)} al ${fdate(D.periodo.corte)} · ${D.periodo.habilesTransc}/${D.periodo.habilesTotal} días hábiles<br><span class="esc"><button data-e="eq">Equilibrio</button><button data-e="ideal">Ideal</button></span>`;
   document.querySelectorAll('.esc button').forEach(b=>b.onclick=()=>{ ESC=b.dataset.e; try{localStorage.setItem('softys-ic-esc',ESC);}catch(e){} render(); });
+  if (CUR !== 'rec' && !D.proveedores[CUR]) CUR = 'softys';
   render();
 });
 </script>
