@@ -136,10 +136,10 @@
 <script src="../gate.js"></script>
 <script>
 let DATA = null, P = null, ART = [];
-let tab = 'dias', filtroProv = '', busca = '', soloPedir = true, soloReciente = true, ocultarViejos = true;
+let tab = 'dias', filtroProv = '', busca = '', soloPedir = true, soloReciente = true, ocultarViejos = true, filtroEstado = '';
 const sorts = {};
 const LS = 'gescom-compras-stock-params';
-const TABS = [['dias','Días de stock'],['cat','Por categoría'],['sin','Sin compra del mes'],['pedido','Sugerido de pedido'],['valor','Stock valorizado'],['lento','Stock alto · venta lenta'],['params','Parámetros']];
+const TABS = [['dias','Días de stock'],['todos','Todos los productos'],['cat','Por categoría'],['sin','Sin compra del mes'],['pedido','Sugerido de pedido'],['valor','Stock valorizado'],['lento','Stock alto · venta lenta'],['params','Parámetros']];
 
 const money = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
 function compact(n){ const a = Math.abs(n), s = n < 0 ? '-' : ''; if (a >= 1e6) return s + '$' + (a/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M'; if (a >= 1e3) return s + '$' + (a/1e3).toLocaleString('es-AR',{maximumFractionDigits:0}) + 'K'; return s + '$' + Math.round(a).toLocaleString('es-AR'); }
@@ -318,6 +318,47 @@ function vistaPedido(el){
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedido-sugerido-' + DATA.fechaCorte + '.csv'; document.body.appendChild(a); a.click(); a.remove();
   });
 }
+// estado de stock de cada producto: primero lo que falta, después lo que sobra
+function estadoStock(x){
+  if (x.vd > 0 && x.s <= 0) return x.reciente ? { t: 'Quiebre', o: 1, c: 'b-urg' } : { t: 'Sin stock ni venta reciente', o: 8, c: 'b-old' };
+  if (!x.reciente || x.dias == null) return { t: 'Sin venta reciente', o: 7, c: 'b-old' };
+  if (x.dias < x.plazo) return { t: 'Urgente', o: 2, c: 'b-urg' };
+  if (x.dias < x.plazo + x.seg) return { t: 'Pedir pronto', o: 3, c: 'b-ped' };
+  if (x.dias > P.muyLento) return { t: 'Venta muy lenta', o: 6, c: 'b-slow' };
+  if (x.dias > P.alto) return { t: 'Stock alto', o: 5, c: 'b-ped' };
+  return { t: 'OK', o: 4, c: 'b-ok' };
+}
+function vistaTodos(el){
+  const base = ART.filter(pasaFiltro);
+  base.forEach(x => { x.est = estadoStock(x); });
+  const porEst = new Map();
+  base.forEach(x => { const g = porEst.get(x.est.t) || { o: x.est.o, n: 0, valor: 0 }; g.n++; g.valor += x.valor; porEst.set(x.est.t, g); });
+  const chips = [...porEst.entries()].sort((a, b) => a[1].o - b[1].o).map(([t, g]) => `<button class="chip ${t === filtroEstado ? 'active' : ''}" data-e="${esc(t)}">${esc(t)} · ${num(g.n)}<b>${compact(g.valor)}</b></button>`).join('');
+  const lista = base.filter(x => !filtroEstado || x.est.t === filtroEstado);
+  const cols = [
+    { k: 'p', l: 'Proveedor' }, { k: 'g', l: 'Categoría' }, { k: 'c', l: 'Código' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
+    { k: 'est', l: 'Estado', sv: r => r.est.o, f: r => `<span class="badge ${r.est.c}">${r.est.t}</span>` },
+    { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB, 1) }, { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) },
+    { k: 'dias', l: 'DÍAS DE STOCK', n: 1, f: r => `<b>${dias1(r.dias)}</b>`, cls: r => clsDias(r.dias, r.plazo) }, { k: 'valor', l: 'Stock a costo', n: 1, f: r => money(r.valor) },
+    { k: 'uv', l: 'Última venta', n: 1, f: r => r.uv ? fechaCorta(r.uv) : 'sin ventas' }, { k: 'uc', l: 'Última compra', n: 1, f: r => r.uc ? fechaCorta(r.uc) : 'sin registro' },
+    { k: 'bultos', l: 'Bultos a pedir', n: 1, sv: r => r.a !== '-' && r.reciente ? r.bultos : 0, f: r => r.a !== '-' && r.reciente && r.bultos > 0 ? `<b>${num(r.bultos)}</b>` : '—' }
+  ];
+  const sumVal = lista.reduce((a, x) => a + x.valor, 0);
+  const tot = lista.length ? `<tr class="total"><td colspan="10">TOTAL (${num(lista.length)} productos)</td><td class="num mono">${money(sumVal)}</td><td></td><td></td><td></td></tr>` : '';
+  const r = tabla('todos', cols, lista, 'est', 1, tot, false);
+  el.innerHTML = filtros({ extra: `<button class="btn" id="bCsvT">Descargar CSV</button>` }) +
+    `<p class="hint">Todos los productos con stock o con venta en la ventana, pedir o no. <b>Quiebre</b>: vendió en los últimos ${P.reciente} días y no tiene stock · <b>Urgente</b>: menos días de stock que el plazo · <b>Pedir pronto</b>: menos que plazo + seguridad · <b>OK</b>: hasta ${P.alto} días · <b>Stock alto</b>: más de ${P.alto} · <b>Venta muy lenta</b>: más de ${P.muyLento} · <b>Sin venta reciente</b>: tiene stock y no vendió en ${P.reciente} días. Tocá un estado para filtrar.</p><div class="chips">${chips}</div>${leyendaDias()}${r.html}`;
+  engancharFiltros(); engancharTabla(el, r.rows, null);
+  el.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filtroEstado = filtroEstado === b.dataset.e ? '' : b.dataset.e; render(); }));
+  document.getElementById('bCsvT').addEventListener('click', () => {
+    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Estado','Stock (u)','Stock (bultos)','Venta diaria (u)','Días de stock','Stock a costo','Última venta','Última compra','Bultos a pedir'];
+    const f = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const dec = (n, d) => n == null ? '' : n.toFixed(d).replace('.', ',');
+    const filas = r.rows.map(x => [x.p, x.g, x.c, x.n, x.a, x.est.t, dec(x.s, 0), dec(x.stockB, 1), dec(x.vd, 2), dec(x.dias, 1), dec(x.valor, 2), fechaCorta(x.uv), fechaCorta(x.uc), x.a !== '-' && x.reciente ? x.bultos : 0].map(f).join(';'));
+    const blob = new Blob(['﻿' + [cab.map(f).join(';')].concat(filas).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stock-todos-' + DATA.fechaCorte + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  });
+}
 function vistaValor(el){
   const rows = agrupar(ART, x => ({ id: x.p, prov: x.p }));
   const total = rows.reduce((a, r) => a + r.valor, 0);
@@ -383,7 +424,7 @@ function render(){
   document.getElementById('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'active' : ''}" role="tab" aria-selected="${k === tab}" data-t="${k}">${l}</button>`).join('');
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.t; render(); }));
   const el = document.getElementById('vista');
-  ({ dias: vistaDias, cat: vistaCat, sin: vistaSin, pedido: vistaPedido, valor: vistaValor, lento: vistaLento, params: vistaParams })[tab](el);
+  ({ dias: vistaDias, todos: vistaTodos, cat: vistaCat, sin: vistaSin, pedido: vistaPedido, valor: vistaValor, lento: vistaLento, params: vistaParams })[tab](el);
 }
 
 cargarDatos('./data.json')
