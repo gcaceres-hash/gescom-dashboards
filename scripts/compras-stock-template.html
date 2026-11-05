@@ -295,14 +295,14 @@ function vistaPedido(el){
   const chips = [...porProv.entries()].sort((a, b) => b[1].imp - a[1].imp).map(([p, g]) => `<button class="chip ${p === filtroProv ? 'active' : ''}" data-p="${esc(p)}">${esc(p)}<b>${compact(g.imp)}</b></button>`).join('');
   const cols = [
     { k: 'p', l: 'Proveedor' }, { k: 'g', l: 'Categoría' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.c)} · ${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
-    { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) }, { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) },
+    { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) }, { k: 'vdB', l: 'Venta diaria (bultos)', n: 1, sv: r => vdB(r) ?? -1, f: r => vdB(r) == null ? '—' : num(vdB(r), 2) }, { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) },
     { k: 'dias', l: 'Días de stock', n: 1, f: r => dias1(r.dias), cls: r => clsDias(r.dias, r.plazo) },
     { k: 'seg', l: 'Seguridad (días)', n: 1, f: r => num(r.seg) }, { k: 'plazo', l: 'Plazo (días)', n: 1, f: r => num(r.plazo) }, { k: 'obj', l: 'Stock objetivo (u)', n: 1, f: r => num(r.obj) },
     { k: 'bultos', l: 'BULTOS A PEDIR', n: 1, f: r => `<b>${num(r.bultos)}</b>` }, { k: 'unidPedir', l: 'Unidades a pedir', n: 1, f: r => num(r.unidPedir) },
     { k: 'k', l: 'Costo unit.', n: 1, f: r => '$' + num(r.k, 2) }, { k: 'importe', l: 'IMPORTE A COSTO', n: 1, f: r => `<b>${money(r.importe)}</b>` }
   ];
   const sumImp = lista.reduce((a, x) => a + x.importe, 0);
-  const tot = lista.length ? `<tr class="total"><td colspan="10">TOTAL (${num(lista.length)} líneas)</td><td class="num mono">${num(lista.reduce((a, x) => a + x.bultos, 0))}</td><td></td><td></td><td class="num mono">${money(sumImp)}</td></tr>` : '';
+  const tot = lista.length ? `<tr class="total"><td colspan="11">TOTAL (${num(lista.length)} líneas)</td><td class="num mono">${num(lista.reduce((a, x) => a + x.bultos, 0))}</td><td></td><td></td><td class="num mono">${money(sumImp)}</td></tr>` : '';
   const r = tabla('pedido', cols, lista, 'importe', -1, tot, false);
   el.innerHTML = filtros({ extra: `<label class="chk"><input type="checkbox" id="cPedir" ${soloPedir ? 'checked' : ''}> solo lo que hay que pedir</label><label class="chk"><input type="checkbox" id="cRec" ${soloReciente ? 'checked' : ''}> solo con venta en los últimos ${P.reciente} días</label><button class="btn" id="bCsv">Descargar CSV</button>` }) +
     `<p class="hint">Objetivo = venta diaria × (seguridad A ${P.segA} / B ${P.segB} / C ${P.segC} días + plazo de reposición). Pedido total sugerido: <b>${money(totalImp)}</b> en ${num(totalN)} líneas. Tocá un proveedor para filtrar.</p><div class="chips">${chips}</div>${leyendaDias()}${r.html}`;
@@ -311,14 +311,16 @@ function vistaPedido(el){
   document.getElementById('cRec').addEventListener('change', e => { soloReciente = e.target.checked; render(); });
   el.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filtroProv = filtroProv === b.dataset.p ? '' : b.dataset.p; render(); }));
   document.getElementById('bCsv').addEventListener('click', () => {
-    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Venta diaria (u)','Stock (u)','Días de stock','Bultos a pedir','Unid. por bulto','Unidades a pedir','Costo unit.','Importe a costo'];
+    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Venta diaria (u)','Venta diaria (bultos)','Stock (u)','Días de stock','Bultos a pedir','Unid. por bulto','Unidades a pedir','Costo unit.','Importe a costo'];
     const f = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-    const filas = r.rows.map(x => [x.p, x.g, x.c, x.n, x.a, x.vd.toFixed(2).replace('.', ','), String(x.s).replace('.', ','), x.dias == null ? '' : x.dias.toFixed(1).replace('.', ','), x.bultos, x.u, x.unidPedir, x.k.toFixed(2).replace('.', ','), x.importe.toFixed(2).replace('.', ',')].map(f).join(';'));
+    const filas = r.rows.map(x => [x.p, x.g, x.c, x.n, x.a, x.vd.toFixed(2).replace('.', ','), vdB(x) == null ? '' : vdB(x).toFixed(2).replace('.', ','), String(x.s).replace('.', ','), x.dias == null ? '' : x.dias.toFixed(1).replace('.', ','), x.bultos, x.u, x.unidPedir, x.k.toFixed(2).replace('.', ','), x.importe.toFixed(2).replace('.', ',')].map(f).join(';'));
     const blob = new Blob(['﻿' + [cab.map(f).join(';')].concat(filas).join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedido-sugerido-' + DATA.fechaCorte + '.csv'; document.body.appendChild(a); a.click(); a.remove();
   });
 }
 // estado de stock de cada producto: primero lo que falta, después lo que sobra
+// venta diaria expresada en bultos (unidades / unidades por bulto)
+function vdB(x){ return x.u > 0 ? x.vd / x.u : null; }
 function estadoStock(x){
   if (x.vd > 0 && x.s <= 0) return x.reciente ? { t: 'Quiebre', o: 1, c: 'b-urg' } : { t: 'Sin stock ni venta reciente', o: 8, c: 'b-old' };
   if (!x.reciente || x.dias == null) return { t: 'Sin venta reciente', o: 7, c: 'b-old' };
@@ -338,23 +340,23 @@ function vistaTodos(el){
   const cols = [
     { k: 'p', l: 'Proveedor' }, { k: 'g', l: 'Categoría' }, { k: 'c', l: 'Código' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
     { k: 'est', l: 'Estado', sv: r => r.est.o, f: r => `<span class="badge ${r.est.c}">${r.est.t}</span>` },
-    { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB, 1) }, { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) },
+    { k: 's', l: 'Stock (u)', n: 1, f: r => num(r.s) }, { k: 'stockB', l: 'Stock (bultos)', n: 1, f: r => num(r.stockB, 1) }, { k: 'vd', l: 'Venta diaria (u)', n: 1, f: r => num(r.vd, 1) }, { k: 'vdB', l: 'Venta diaria (bultos)', n: 1, sv: r => vdB(r) ?? -1, f: r => vdB(r) == null ? '—' : num(vdB(r), 2) },
     { k: 'dias', l: 'DÍAS DE STOCK', n: 1, f: r => `<b>${dias1(r.dias)}</b>`, cls: r => clsDias(r.dias, r.plazo) }, { k: 'valor', l: 'Stock a costo', n: 1, f: r => money(r.valor) },
     { k: 'uv', l: 'Última venta', n: 1, f: r => r.uv ? fechaCorta(r.uv) : 'sin ventas' }, { k: 'uc', l: 'Última compra', n: 1, f: r => r.uc ? fechaCorta(r.uc) : 'sin registro' },
     { k: 'bultos', l: 'Bultos a pedir', n: 1, sv: r => r.a !== '-' && r.reciente ? r.bultos : 0, f: r => r.a !== '-' && r.reciente && r.bultos > 0 ? `<b>${num(r.bultos)}</b>` : '—' }
   ];
   const sumVal = lista.reduce((a, x) => a + x.valor, 0);
-  const tot = lista.length ? `<tr class="total"><td colspan="10">TOTAL (${num(lista.length)} productos)</td><td class="num mono">${money(sumVal)}</td><td></td><td></td><td></td></tr>` : '';
+  const tot = lista.length ? `<tr class="total"><td colspan="11">TOTAL (${num(lista.length)} productos)</td><td class="num mono">${money(sumVal)}</td><td></td><td></td><td></td></tr>` : '';
   const r = tabla('todos', cols, lista, 'est', 1, tot, false);
   el.innerHTML = filtros({ extra: `<button class="btn" id="bCsvT">Descargar CSV</button>` }) +
     `<p class="hint">Todos los productos con stock o con venta en la ventana, pedir o no. <b>Quiebre</b>: vendió en los últimos ${P.reciente} días y no tiene stock · <b>Urgente</b>: menos días de stock que el plazo · <b>Pedir pronto</b>: menos que plazo + seguridad · <b>OK</b>: hasta ${P.alto} días · <b>Stock alto</b>: más de ${P.alto} · <b>Venta muy lenta</b>: más de ${P.muyLento} · <b>Sin venta reciente</b>: tiene stock y no vendió en ${P.reciente} días. Tocá un estado para filtrar.</p><div class="chips">${chips}</div>${leyendaDias()}${r.html}`;
   engancharFiltros(); engancharTabla(el, r.rows, null);
   el.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filtroEstado = filtroEstado === b.dataset.e ? '' : b.dataset.e; render(); }));
   document.getElementById('bCsvT').addEventListener('click', () => {
-    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Estado','Stock (u)','Stock (bultos)','Venta diaria (u)','Días de stock','Stock a costo','Última venta','Última compra','Bultos a pedir'];
+    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Estado','Stock (u)','Stock (bultos)','Venta diaria (u)','Venta diaria (bultos)','Días de stock','Stock a costo','Última venta','Última compra','Bultos a pedir'];
     const f = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
     const dec = (n, d) => n == null ? '' : n.toFixed(d).replace('.', ',');
-    const filas = r.rows.map(x => [x.p, x.g, x.c, x.n, x.a, x.est.t, dec(x.s, 0), dec(x.stockB, 1), dec(x.vd, 2), dec(x.dias, 1), dec(x.valor, 2), fechaCorta(x.uv), fechaCorta(x.uc), x.a !== '-' && x.reciente ? x.bultos : 0].map(f).join(';'));
+    const filas = r.rows.map(x => [x.p, x.g, x.c, x.n, x.a, x.est.t, dec(x.s, 0), dec(x.stockB, 1), dec(x.vd, 2), dec(vdB(x), 2), dec(x.dias, 1), dec(x.valor, 2), fechaCorta(x.uv), fechaCorta(x.uc), x.a !== '-' && x.reciente ? x.bultos : 0].map(f).join(';'));
     const blob = new Blob(['﻿' + [cab.map(f).join(';')].concat(filas).join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stock-todos-' + DATA.fechaCorte + '.csv'; document.body.appendChild(a); a.click(); a.remove();
   });
