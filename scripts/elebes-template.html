@@ -236,7 +236,7 @@
   </div>
 
   <footer>
-    <div><b>Metodología:</b> Venta = Total con IVA del Detalle de ventas de Dux (es lo que Dux compara contra el objetivo de $45M del mes). Margen = Ganancia ÷ Venta sin IVA; la Ganancia la calcula Dux como venta sin IVA − costo total del renglón. Ticket = comprobante distinto; las notas de crédito restan venta y no cuentan como ticket. Proyección = venta a la fecha ÷ días corridos × días del mes (mismo criterio que el inicio de Dux). Descuento = precio de lista × cantidad × % de descuento del renglón, sin IVA (las notas de crédito no suman). Plata que ingresó = cobros que Dux registra en cada venta (efectivo, tarjeta, cheque y cuenta; Mercado Pago entra como cuenta). Sin cobrar = ventas sin ningún cobro registrado; si se cobraron después, figuran en Tesorería → Cobranzas de Dux, no acá.</div>
+    <div><b>Metodología:</b> Venta = Total con IVA del Detalle de ventas de Dux (se compara contra el objetivo con IVA del mes: desde noviembre, el del Excel de objetivos de El Chirlo; antes, el de $45M de Dux). Margen = Ganancia ÷ Venta sin IVA; la Ganancia la calcula Dux como venta sin IVA − costo total del renglón. Ticket = comprobante distinto; las notas de crédito restan venta y no cuentan como ticket. Proyección = venta a la fecha ÷ días corridos × días del mes (mismo criterio que el inicio de Dux). Descuento = precio de lista × cantidad × % de descuento del renglón, sin IVA (las notas de crédito no suman). Plata que ingresó = cobros que Dux registra en cada venta (efectivo, tarjeta, cheque y cuenta; Mercado Pago entra como cuenta). Sin cobrar = ventas sin ningún cobro registrado; si se cobraron después, figuran en Tesorería → Cobranzas de Dux, no acá.</div>
     <div style="margin-top:6px" id="fuenteText"></div>
   </footer>
 </div>
@@ -264,6 +264,8 @@ function margen(o){ return o.ventaSinIva ? o.ganancia / o.ventaSinIva : 0; }
 function nivel(m){ return m < .15 ? 'critical' : m < .25 ? 'serious' : m < .32 ? 'warning' : 'good'; }
 function mgChip(o){ const m = margen(o); return `<span class="mg ${nivel(m)}"><span class="sw"></span>${fmtPct(m)}</span>`; }
 function M(){ return DATA.meses[mesKey]; }
+function OBJ(){ const o = (DATA.objetivos||{})[mesKey]; return (o && o.objetivo) || OBJ(); }
+function EQ(){ const o = (DATA.objetivos||{})[mesKey]; return (o && o.equilibrio) || null; }
 function mesAnterior(){ return MESES.filter(k => k < mesKey).pop() || null; }
 
 // Dia de corte: el ultimo dia con datos si el mes esta en curso, o el ultimo dia del mes si cerro.
@@ -307,7 +309,7 @@ function renderKPIs(){
   const proy = m.cerrado ? t.venta : t.venta / corte * m.diasDelMes;
   const cells = [
     { label: m.cerrado ? 'Venta del mes' : 'Venta a la fecha', value: fmtM(t.venta), foot: fmtMoney(t.venta) + (comp ? '<br>' + comp : '') },
-    { label: m.cerrado ? 'Cierre vs objetivo' : 'Proyección de cierre', value: fmtM(proy), foot: `${fmtPct(proy/DATA.objetivoMes,0)} del objetivo de ${fmtM(DATA.objetivoMes)}` },
+    { label: m.cerrado ? 'Cierre vs objetivo' : 'Proyección de cierre', value: fmtM(proy), foot: `${fmtPct(proy/OBJ(),0)} del objetivo de ${fmtM(OBJ())}` },
     { label: 'Tickets', value: fmtInt(t.tickets), foot: `ticket promedio ${fmtMoney(t.tickets ? t.venta / t.tickets : 0)}<br>${fmtInt(t.tickets / Math.max(1,t.diasConVenta))} tickets por día abierto` },
     { label: 'Margen', value: fmtPct(margen(t)), foot: `ganancia ${fmtM(t.ganancia)} sobre ${fmtM(t.ventaSinIva)} sin IVA` }
   ];
@@ -316,7 +318,7 @@ function renderKPIs(){
 }
 
 function renderGoal(){
-  const m = M(), t = m.totales, obj = DATA.objetivoMes, corte = diaCorte(m);
+  const m = M(), t = m.totales, obj = OBJ(), corte = diaCorte(m);
   const esperado = obj * corte / m.diasDelMes;
   const proy = m.cerrado ? t.venta : t.venta / corte * m.diasDelMes;
   const escala = Math.max(obj, proy, t.venta) * 1.04;
@@ -329,13 +331,14 @@ function renderGoal(){
   const abiertosRest = m.cerrado ? 0 : diasAbiertos(mesKey, corte + 1);
   document.getElementById('goal').innerHTML = `
     <div class="goal-top">
-      <span>Objetivo del mes <b class="mono">${fmtMoney(obj)}</b> · ${m.cerrado ? 'cerró en' : 'llevás'} <b class="mono">${fmtPct(t.venta/obj,0)}</b>${m.cerrado ? '' : ` · al día ${corte} tendrías que llevar <b class="mono">${fmtM(esperado)}</b>`}</span>
+      <span>Objetivo del mes <b class="mono">${fmtMoney(obj)}</b>${EQ() ? ` (equilibrio ${fmtM(EQ())})` : ''} · ${m.cerrado ? 'cerró en' : 'llevás'} <b class="mono">${fmtPct(t.venta/obj,0)}</b>${m.cerrado ? '' : ` · al día ${corte} tendrías que llevar <b class="mono">${fmtM(esperado)}</b>`}</span>
       <span class="chip ${estado[0]}">${estado[1]}</span>
     </div>
     <div class="goal-track" role="img" aria-label="Avance contra el objetivo: ${fmtPct(t.venta/obj,0)}">
       ${m.cerrado ? '' : `<div class="goal-proj" style="width:${pct(proy)}" title="Proyección ${fmtMoney(proy)}"></div>`}
       <div class="goal-fill" style="width:${pct(t.venta)}" title="Venta ${fmtMoney(t.venta)}"></div>
       ${m.cerrado ? '' : `<div class="goal-mark hoy" style="left:${pct(esperado)}" title="Ritmo esperado hoy ${fmtMoney(esperado)}"></div>`}
+      ${EQ() ? `<div class="goal-mark hoy" style="left:${pct(EQ())}" title="Equilibrio (resultado 0) ${fmtMoney(EQ())}"></div>` : ''}
       <div class="goal-mark" style="left:${pct(obj)}" title="Objetivo ${fmtMoney(obj)}"></div>
     </div>
     <div class="goal-legend">
@@ -461,7 +464,7 @@ function renderDiario(){
     const f = new Date(yy, mm-1, d), r = porDia[d];
     items.push({ label: String(d), v: r ? r.venta : 0, r, f, off: f.getDay() === 6, futuro: !m.cerrado && d > corte, alert: r && r.sinCobrar > 0 });
   }
-  const ref = DATA.objetivoMes / diasAbiertos(mesKey);
+  const ref = OBJ() / diasAbiertos(mesKey);
   document.getElementById('diarioNota').textContent = `línea punteada: ${fmtM(ref)} por día abierto (lunes a sábado) para llegar al objetivo · sábados en tono suave · punto rojo: el día cerró con algo sin cobrar`;
   barChart(document.getElementById('chartDiario'), items, {
     ref, refLabel: 'ritmo necesario ' + fmtM(ref), fmtAxis: fmtM,

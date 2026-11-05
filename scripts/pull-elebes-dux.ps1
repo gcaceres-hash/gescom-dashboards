@@ -18,7 +18,9 @@ param(
     [string]$OutPath = (Join-Path $DocsDir "data.json"),
     [string]$TemplatePath = (Join-Path $PSScriptRoot "elebes-template.html"),
     [double]$ObjetivoMes = 45000000,
-    [double]$ObjetivoDia = 2500000
+    [double]$ObjetivoDia = 2500000,
+    # Objetivos por mes (en claro, ignorado por git): { "AAAA-MM": { objetivo, equilibrio, canales } }
+    [string]$ObjetivosPath = (Join-Path $PSScriptRoot "privado/elebes-objetivos/data.json")
 )
 $ErrorActionPreference = "Stop"
 function Write-Log($m) { Write-Host "$(Get-Date -Format 'HH:mm:ss')  $m" }
@@ -220,6 +222,7 @@ $out = [ordered]@{
     fuente = "Dux Software · Detalle de ventas (" + (($archivos | ForEach-Object { $_.Name }) -join ", ") + ")"
     objetivoMes = $ObjetivoMes
     objetivoDia = $ObjetivoDia
+    objetivos = $(if (Test-Path $ObjetivosPath) { Get-Content $ObjetivosPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { @{} })
     mesActual = (Get-Date).ToString("yyyy-MM")
     meses = $salidaMeses
 }
