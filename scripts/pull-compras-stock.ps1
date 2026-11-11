@@ -23,7 +23,10 @@ param(
     [string]$TemplatePath = (Join-Path $PSScriptRoot "compras-stock-template.html"),
     [string]$SuplementoPath = (Join-Path $PSScriptRoot "compras-stock/julio.json"),
     [string]$CategoriasPath = (Join-Path $PSScriptRoot "categorias-articulos.json"),
-    [int]$VentanaDias = 90
+    [int]$VentanaDias = 90,
+    # Rotacion de inventario: periodo movil. El inventario inicial sale de la foto del stock que este mismo tablero
+    # publico hace $RotacionDias dias (historial de git de docs/compras-stock/data.enc.json, descifrado al vuelo).
+    [int]$RotacionDias = 30
 )
 $ErrorActionPreference = "Stop"
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -84,6 +87,32 @@ if (Test-Path $SuplementoPath) {
 $supArt = @{}; if ($sup) { foreach ($p in $sup.articulos.PSObject.Properties) { $supArt[$p.Name] = $p.Value } }
 $pesConv = @{}; if ($sup) { foreach ($c in $sup.pesablesConvertidos) { $pesConv[[string]$c] = $true } }
 
+# --- rotacion de inventario: foto del stock de hace $RotacionDias dias + costo de ventas del periodo ---
+$rot = $null; $foto = @{}; $vr = @{}
+try {
+    $repo = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+    $limite = $hoy.AddDays(-$RotacionDias).ToString("yyyy-MM-dd") + " 23:59"
+    $commit = (git -C $repo log -1 --before="$limite" --format="%H|%cI" -- docs/compras-stock/data.enc.json) | Select-Object -First 1
+    if ($commit) {
+        $h, $cuando = $commit.Split('|')
+        $fotoFecha = ([datetimeoffset]::Parse($cuando, $inv)).ToOffset([timespan]::FromHours(-3)).Date
+        $tmp = Join-Path ([IO.Path]::GetTempPath()) ("cs-foto-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path (Join-Path $tmp "compras-stock") -Force | Out-Null
+        $blob = (git -C $repo show "${h}:docs/compras-stock/data.enc.json") -join "`n"
+        [System.IO.File]::WriteAllText((Join-Path $tmp "compras-stock/data.enc.json"), $blob, $utf8)
+        & (Join-Path $PSScriptRoot "protect-tableros.ps1") -Modo Descifrar -DocsDir $tmp -ConfigPath $ConfigPath -Tableros compras-stock *>&1 | Out-Null
+        $fj = Join-Path $tmp "compras-stock/data.json"
+        if (Test-Path $fj) {
+            foreach ($x in ([System.IO.File]::ReadAllText($fj, $utf8) | ConvertFrom-Json).articulos) { $foto[[string]$x.c] = @([double]$x.s, [double]$x.k) }
+            $fdTxt = $fotoFecha.ToString("yyyy-MM-dd")
+            foreach ($r in (Invoke-PanelSql "SELECT i.articulo AS articulo, SUM(CASE WHEN v.tipo = 'DEV-RE' THEN -1 ELSE 1 END * i.cantidad * i.factor) AS u FROM venta_items i JOIN ventas v ON v.id = i.venta_id WHERE v.fecha > '$fdTxt' AND v.fecha <= '$hastaTxt' AND v.tipo IN ('VEN','DEB','DEV-RE') GROUP BY i.articulo")) { $vr[[string]$r.articulo] = [double]$r.u }
+            $rot = [ordered]@{ desde = $fdTxt; hasta = $hastaTxt; dias = ($ayer - $fotoFecha).Days; productosFoto = $foto.Count }
+            Write-Log "Rotacion: foto del stock del $fdTxt ($($foto.Count) productos), costo de ventas hasta el $hastaTxt ($($rot.dias) dias)"
+        } else { Write-Log "AVISO rotacion: no se pudo descifrar la foto del $($fotoFecha.ToString('yyyy-MM-dd')) (falta la clave?)" }
+        Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    } else { Write-Log "AVISO rotacion: no hay foto del stock de hace $RotacionDias dias en el historial (git con fetch-depth 0?)" }
+} catch { Write-Log "AVISO rotacion: $($_.Exception.Message)"; $rot = $null }
+
 $cat = @{}
 if (Test-Path $CategoriasPath) { foreach ($p in ([System.IO.File]::ReadAllText($CategoriasPath, $utf8) | ConvertFrom-Json).PSObject.Properties) { $cat[$p.Name] = [string]$p.Value } }
 
@@ -102,7 +131,9 @@ foreach ($a in $arts) {
             if ($supArt.ContainsKey($cod)) { $u += [double]$supArt[$cod][0] * $fSup; $n += [double]$supArt[$cod][1] * $fSup }
         }
     }
-    if ($st -le 0 -and $u -eq 0 -and $n -eq 0) { continue }
+    $f0 = if ($foto.ContainsKey($cod)) { $foto[$cod] } else { $null }
+    $vrU = if ($vr.ContainsKey($cod)) { $vr[$cod] } else { 0.0 }
+    if ($st -le 0 -and $u -eq 0 -and $n -eq 0 -and -not ($f0 -and $f0[0] -gt 0) -and $vrU -eq 0) { continue }
     $cb = if ($null -ne $a.costo_bulto) { [double]$a.costo_bulto } else { 0.0 }
     $cx = if ($compras.ContainsKey($cod)) { $compras[$cod] } else { $null }
     $filas.Add([pscustomobject]@{
@@ -114,6 +145,8 @@ foreach ($a in $arts) {
         uv = $(if ($ultVenta.ContainsKey($cod)) { $ultVenta[$cod] } else { "" })
         uc = $(if ($cx) { ([string]$cx.ultima).Substring(0, 10) } else { "" })
         cm = $(if ($cx) { [math]::Round([double]$cx.u_mes, 3) } else { 0 })
+        s0 = $(if ($f0) { [math]::Round($f0[0], 3) } else { 0 }); k0 = $(if ($f0) { [math]::Round($f0[1], 6) } else { [math]::Round($cb / $ubn, 6) })
+        vr = [math]::Round($vrU, 3)
     })
 }
 # clase ABC por proveedor
@@ -129,6 +162,7 @@ $out = [ordered]@{
     fechaCorte = $hoy.ToString("yyyy-MM-dd")
     inicioMes = $inicioMes
     ventana = [ordered]@{ desde = $(if ($fSup -gt 0) { $ini.ToString("yyyy-MM-dd") } else { $desdeTxt }); hasta = $hastaTxt; diasBase = $diasBase; diasJulio = [math]::Round($supDias, 1); usaJulio = ($fSup -gt 0); diasTotal = [math]::Round($diasBase + $supDias, 1) }
+    rotacion = $rot
     params = [ordered]@{ plazo = 7; segA = 7; segB = 5; segC = 2; alto = 60; muyLento = 120; reciente = 30 }
     proveedores = $prov
     articulos = $filas

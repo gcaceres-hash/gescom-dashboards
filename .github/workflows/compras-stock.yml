@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # la rotacion lee la foto del stock de hace 30 dias del historial de git
 
       - name: Escribir panel-config.json desde el secret
         shell: bash

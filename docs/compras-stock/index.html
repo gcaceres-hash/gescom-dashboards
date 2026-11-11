@@ -127,7 +127,7 @@
   <div id="vista"></div>
 
   <footer>
-    <div><b>Cómo se calcula:</b> <b>venta diaria</b> = unidades vendidas en la ventana (facturas y débitos menos rechazos) ÷ días hábiles con operación; <b>días de stock</b> = stock del depósito principal ÷ venta diaria. A nivel proveedor o categoría los días se calculan <b>a costo</b> (valor del stock ÷ venta diaria a costo) para que productos de distinto tamaño sean comparables. <b>Clase ABC</b> por proveedor sobre la venta neta de la ventana: A = hasta el 80%, B = hasta el 95%, C = el resto. <b>Sugerido</b> = venta diaria × (stock de seguridad + plazo de reposición) − stock, redondeado a bultos; seguridad A/B/C y plazos se cambian en <b>Parámetros</b> (se guardan en este navegador). El costo es el del bulto ÷ unidades del bulto, sin impuestos. En los productos que se pesan las unidades son gramos.</div>
+    <div><b>Cómo se calcula:</b> <b>venta diaria</b> = unidades vendidas en la ventana (facturas y débitos menos rechazos) ÷ días hábiles con operación; <b>días de stock</b> = stock del depósito principal ÷ venta diaria. A nivel proveedor o categoría los días se calculan <b>a costo</b> (valor del stock ÷ venta diaria a costo) para que productos de distinto tamaño sean comparables. <b>Clase ABC</b> por proveedor sobre la venta neta de la ventana: A = hasta el 80%, B = hasta el 95%, C = el resto. <b>Sugerido</b> = venta diaria × (stock de seguridad + plazo de reposición) − stock, redondeado a bultos; seguridad A/B/C y plazos se cambian en <b>Parámetros</b> (se guardan en este navegador). El costo es el del bulto ÷ unidades del bulto, sin impuestos. En los productos que se pesan las unidades son gramos. <b>Rotación</b> = costo de ventas de los últimos ~30 días ÷ inventario promedio ((inicial + final) ÷ 2, a costo); el inicial es la foto del stock que publicó este tablero al comienzo del período. <b>Días de inventario</b> = días del período ÷ rotación.</div>
     <div style="margin-top:6px"><b>Límites:</b> el sugerido no descuenta pedidos hechos que todavía no llegaron (no están en la base); los productos de temporada conviene ajustarlos a mano; "sin venta reciente" = no vendió en los últimos días definidos en Parámetros. El historial de compras de la base empieza el 17/5/2026.</div>
     <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom) y el export de ventas de Gescom (categorías). Se actualiza sola todos los días.</div>
   </footer>
@@ -139,7 +139,7 @@ let DATA = null, P = null, ART = [];
 let tab = 'dias', filtroProv = '', busca = '', soloPedir = true, soloReciente = true, ocultarViejos = true, filtroEstado = '';
 const sorts = {};
 const LS = 'gescom-compras-stock-params';
-const TABS = [['dias','Días de stock'],['todos','Todos los productos'],['cat','Por categoría'],['sin','Sin compra del mes'],['pedido','Sugerido de pedido'],['valor','Stock valorizado'],['lento','Stock alto · venta lenta'],['params','Parámetros']];
+const TABS = [['dias','Días de stock'],['todos','Todos los productos'],['cat','Por categoría'],['sin','Sin compra del mes'],['pedido','Sugerido de pedido'],['valor','Stock valorizado'],['rot','Rotación'],['lento','Stock alto · venta lenta'],['params','Parámetros']];
 
 const money = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
 function compact(n){ const a = Math.abs(n), s = n < 0 ? '-' : ''; if (a >= 1e6) return s + '$' + (a/1e6).toLocaleString('es-AR',{maximumFractionDigits:1}) + 'M'; if (a >= 1e3) return s + '$' + (a/1e3).toLocaleString('es-AR',{maximumFractionDigits:0}) + 'K'; return s + '$' + Math.round(a).toLocaleString('es-AR'); }
@@ -175,6 +175,10 @@ function derivar(){
     const x = Object.assign({}, a, { vd, dias, seg, plazo, obj, falta, bultos, unidPedir: bultos * a.u, importe: bultos * a.u * a.k,
       valor: a.s * a.k, vdCosto: vd * a.k, stockB: a.s / a.u, dsv, dsc, reciente: dsv != null && dsv <= P.reciente });
     x.prio = prioridad(x);
+    if (DATA.rotacion) {
+      x.ini = (a.s0 || 0) * (a.k0 || a.k); x.fin = Math.max(0, a.s) * a.k; x.cogs = Math.max(0, a.vr || 0) * a.k;
+      rotDe(x, DATA.rotacion.dias);
+    }
     return x;
   });
 }
@@ -380,6 +384,60 @@ function vistaValor(el){
   el.innerHTML = `<p class="hint">Stock del depósito principal valorizado a precio de costo sin impuestos.</p>${r1.html}<h2 style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:28px 0 12px">Los 30 productos con más stock valorizado</h2>${r2.html}`;
   engancharTabla(el, r1.rows, null);
 }
+// ---------- rotacion de inventario ----------
+// Rotacion = costo de ventas del periodo / inventario promedio ((inicial + final) / 2), todo a costo.
+// Inventario inicial = foto del stock que este tablero publico al inicio del periodo (con el costo de ese dia).
+function rotDe(g, dias){
+  const prom = (g.ini + g.fin) / 2;
+  const rotP = prom > 0 ? g.cogs / prom : null;
+  return Object.assign(g, { prom, rotP, rotA: rotP != null ? rotP * 365 / dias : null, diasInv: rotP > 0 ? dias / rotP : null });
+}
+function estadoRot(d, plazo){
+  if (d == null) return { t: 'Sin venta', o: 4, c: 'b-old' };
+  if (d < plazo) return { t: 'Alta: revisá quiebres', o: 1, c: 'b-urg' };
+  if (d > P.alto) return { t: 'Baja: capital dormido', o: 3, c: 'b-slow' };
+  return { t: 'Normal', o: 2, c: 'b-ok' };
+}
+function vistaRot(el){
+  const R = DATA.rotacion;
+  if (!R) { el.innerHTML = '<p class="hint">Todavía no hay una foto del stock de hace 30 días para calcular la rotación.</p>'; return; }
+  const base = ART.filter(x => x.ini > 0 || x.fin > 0 || x.cogs > 0);
+  const m = new Map();
+  base.forEach(x => { let g = m.get(x.p); if (!g) { g = { prov: x.p, n: 0, ini: 0, fin: 0, cogs: 0 }; m.set(x.p, g); } g.n++; g.ini += x.ini; g.fin += x.fin; g.cogs += x.cogs; });
+  const provs = [...m.values()].map(g => rotDe(g, R.dias));
+  provs.forEach(g => g.est = estadoRot(g.diasInv, plazoDe(g.prov)));
+  const t = rotDe(provs.reduce((a, g) => ({ ini: a.ini + g.ini, fin: a.fin + g.fin, cogs: a.cogs + g.cogs }), { ini: 0, fin: 0, cogs: 0 }), R.dias);
+  const pasos = [
+    ['Inventario promedio', compact(t.prom), `(inicial ${compact(t.ini)} al ${fechaCorta(R.desde)} + final ${compact(t.fin)} hoy) ÷ 2`],
+    ['Costo de ventas', compact(t.cogs), `lo vendido del ${fechaCorta(R.desde)} al ${fechaCorta(R.hasta)} (${R.dias} días), a costo`],
+    ['Rotación', num(t.rotP, 2) + ' veces', `en ${R.dias} días · ${num(t.rotA, 1)} veces por año`],
+    ['Días de inventario', dias1(t.diasInv) + ' días', `${R.dias} ÷ ${num(t.rotP, 2)}: cuánto dura el stock promedio`]
+  ];
+  const cols = [
+    { k: 'prov', l: 'Proveedor', cls: () => 'nom' }, { k: 'ini', l: 'Inventario inicial', n: 1, f: r => compact(r.ini) }, { k: 'fin', l: 'Inventario final', n: 1, f: r => compact(r.fin) },
+    { k: 'prom', l: 'Inventario promedio', n: 1, f: r => compact(r.prom) }, { k: 'cogs', l: 'Costo de ventas', n: 1, f: r => compact(r.cogs) },
+    { k: 'rotP', l: `Rotación (${R.dias} días)`, n: 1, f: r => `<b>${num(r.rotP, 2)}</b>` }, { k: 'rotA', l: 'Rotación anual', n: 1, f: r => num(r.rotA, 1) },
+    { k: 'diasInv', l: 'DÍAS DE INVENTARIO', n: 1, f: r => `<b>${dias1(r.diasInv)}</b>`, cls: r => clsDias(r.diasInv, plazoDe(r.prov)) },
+    { k: 'est', l: 'Lectura', sv: r => r.est.o, f: r => `<span class="badge ${r.est.c}">${r.est.t}</span>` }
+  ];
+  const tot = `<tr class="total"><td>TOTAL</td><td class="num mono">${compact(t.ini)}</td><td class="num mono">${compact(t.fin)}</td><td class="num mono">${compact(t.prom)}</td><td class="num mono">${compact(t.cogs)}</td><td class="num mono">${num(t.rotP, 2)}</td><td class="num mono">${num(t.rotA, 1)}</td><td class="num mono">${dias1(t.diasInv)}</td><td></td></tr>`;
+  const r1 = tabla('rot', cols, provs, 'prom', -1, tot, true);
+  const prods = base.filter(pasaFiltro).map(x => Object.assign(x, { est: estadoRot(x.diasInv, x.plazo) }));
+  const cols2 = [
+    { k: 'p', l: 'Proveedor' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.c)} · ${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
+    { k: 'ini', l: 'Inventario inicial', n: 1, f: r => compact(r.ini) }, { k: 'fin', l: 'Inventario final', n: 1, f: r => compact(r.fin) }, { k: 'cogs', l: 'Costo de ventas', n: 1, f: r => compact(r.cogs) },
+    { k: 'rotP', l: `Rotación (${R.dias} días)`, n: 1, f: r => num(r.rotP, 2) }, { k: 'rotA', l: 'Rotación anual', n: 1, f: r => num(r.rotA, 1) },
+    { k: 'diasInv', l: 'DÍAS DE INVENTARIO', n: 1, f: r => `<b>${dias1(r.diasInv)}</b>`, cls: r => clsDias(r.diasInv, r.plazo) },
+    { k: 'est', l: 'Lectura', sv: r => r.est.o, f: r => `<span class="badge ${r.est.c}">${r.est.t}</span>` }
+  ];
+  const r2 = tabla('rotProd', cols2, prods, 'prom', -1, '', false);
+  el.innerHTML = `<div class="board" style="margin-bottom:18px">${pasos.map(([l, v, f]) => `<div class="cell"><div class="label">${l}</div><div class="value mono">${v}</div><div class="foot">${f}</div></div>`).join('')}</div>
+    <p class="hint">Rotación = costo de ventas ÷ inventario promedio, todo a costo y sin impuestos (no se usa la venta: tiene el margen adentro). El inventario inicial es la foto del stock que publicó este tablero el ${fechaCorta(R.desde)}, con el costo de ese día. <b>Alta</b> (menos días que el plazo de reposición): el dinero vuelve rápido, pero revisá quiebres. <b>Baja</b> (más de ${P.alto} días): capital dormido, revisá obsolescencia y vencimientos. Tocá un proveedor para ver sus productos.</p>
+    ${leyendaDias()}${r1.html}
+    <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:28px 0 12px">Por producto</h2>
+    ${filtros({})}${r2.html}`;
+  engancharFiltros(); engancharTabla(el, r1.rows, row => { filtroProv = row.prov; render(); });
+}
 function vistaLento(el){
   const lista = ART.filter(x => x.s > 0 && (x.v <= 0 || (x.dias != null && x.dias > P.alto)) && pasaFiltro(x));
   const est = x => x.v <= 0 || x.dias == null ? { t: 'Sin venta en la ventana', o: 1, c: 'b-slow' } : x.dias > P.muyLento ? { t: 'Venta muy lenta', o: 2, c: 'b-slow' } : { t: 'Stock alto', o: 3, c: 'b-ped' };
@@ -426,7 +484,7 @@ function render(){
   document.getElementById('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'active' : ''}" role="tab" aria-selected="${k === tab}" data-t="${k}">${l}</button>`).join('');
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.t; render(); }));
   const el = document.getElementById('vista');
-  ({ dias: vistaDias, todos: vistaTodos, cat: vistaCat, sin: vistaSin, pedido: vistaPedido, valor: vistaValor, lento: vistaLento, params: vistaParams })[tab](el);
+  ({ dias: vistaDias, todos: vistaTodos, cat: vistaCat, sin: vistaSin, pedido: vistaPedido, valor: vistaValor, rot: vistaRot, lento: vistaLento, params: vistaParams })[tab](el);
 }
 
 cargarDatos('./data.json')
