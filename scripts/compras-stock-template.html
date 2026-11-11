@@ -422,7 +422,7 @@ function vistaRot(el){
   ];
   const tot = `<tr class="total"><td>TOTAL</td><td class="num mono">${compact(t.ini)}</td><td class="num mono">${compact(t.fin)}</td><td class="num mono">${compact(t.prom)}</td><td class="num mono">${compact(t.cogs)}</td><td class="num mono">${num(t.rotP, 2)}</td><td class="num mono">${num(t.rotA, 1)}</td><td class="num mono">${dias1(t.diasInv)}</td><td></td></tr>`;
   const r1 = tabla('rot', cols, provs, 'prom', -1, tot, true);
-  const prods = base.filter(pasaFiltro).map(x => Object.assign(x, { est: estadoRot(x.diasInv, x.plazo) }));
+  const prods = base.filter(pasaFiltro).map(x => Object.assign(x, { est: x.fin <= 0 && x.cogs > 0 ? { t: 'Sin stock hoy', o: 0, c: 'b-urg' } : estadoRot(x.diasInv, x.plazo) }));
   const cols2 = [
     { k: 'p', l: 'Proveedor' }, { k: 'n', l: 'Producto', cls: () => 'prod', f: r => `<span title="${esc(r.c)} · ${esc(r.n)}">${esc(r.n)}</span>` }, { k: 'a', l: 'Clase' },
     { k: 'ini', l: 'Inventario inicial', n: 1, f: r => compact(r.ini) }, { k: 'fin', l: 'Inventario final', n: 1, f: r => compact(r.fin) }, { k: 'cogs', l: 'Costo de ventas', n: 1, f: r => compact(r.cogs) },
@@ -435,8 +435,16 @@ function vistaRot(el){
     <p class="hint">Rotación = costo de ventas ÷ inventario promedio, todo a costo y sin impuestos (no se usa la venta: tiene el margen adentro). El inventario inicial es la foto del stock que publicó este tablero el ${fechaCorta(R.desde)}, con el costo de ese día. <b>Alta</b> (menos días que el plazo de reposición): el dinero vuelve rápido, pero revisá quiebres. <b>Baja</b> (más de ${P.alto} días): capital dormido, revisá obsolescencia y vencimientos. Tocá un proveedor para ver sus productos.</p>
     ${leyendaDias()}${r1.html}
     <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:28px 0 12px">Por producto</h2>
-    ${filtros({})}${r2.html}`;
+    ${filtros({ extra: `<button class="btn" id="bCsvRot">Descargar CSV</button>` })}${r2.html}`;
   engancharFiltros(); engancharTabla(el, r1.rows, row => { filtroProv = row.prov; render(); });
+  document.getElementById('bCsvRot').addEventListener('click', () => {
+    const cab = ['Proveedor','Categoría','Código','Producto','Clase','Stock inicial (u)','Inventario inicial','Stock final (u)','Inventario final','Inventario promedio','Unidades vendidas','Costo de ventas',`Rotación (${R.dias} días)`,'Rotación anual','Días de inventario','Lectura'];
+    const f = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const dec = (n, d) => n == null || isNaN(n) ? '' : n.toFixed(d).replace('.', ',');
+    const filas = r2.rows.map(x => [x.p, x.g, x.c, x.n, x.a, dec(x.s0 || 0, 0), dec(x.ini, 2), dec(Math.max(0, x.s), 0), dec(x.fin, 2), dec(x.prom, 2), dec(Math.max(0, x.vr || 0), 0), dec(x.cogs, 2), dec(x.rotP, 2), dec(x.rotA, 1), dec(x.diasInv, 1), x.est.t].map(f).join(';'));
+    const blob = new Blob(['﻿' + [cab.map(f).join(';')].concat(filas).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rotacion-' + (filtroProv ? filtroProv.replace(/[^A-Za-z0-9]+/g, '-') + '-' : '') + DATA.fechaCorte + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  });
 }
 function vistaLento(el){
   const lista = ART.filter(x => x.s > 0 && (x.v <= 0 || (x.dias != null && x.dias > P.alto)) && pasaFiltro(x));
