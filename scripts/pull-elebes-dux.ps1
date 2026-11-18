@@ -9,6 +9,7 @@ Este script los lee todos, arma docs/elebes/data.json y copia la plantilla.
 Reglas:
   - Venta = "Total Con Iva" (se compara contra el objetivo con IVA que tiene cargado Dux).
   - Margen = Ganancia / "Total Sin IVA" (la ganancia de Dux ya es venta sin IVA - costo total).
+    En los comprobantes X Dux no separa el IVA: se recalcula sin IVA y ganancia (corregido 18/11/2026).
   - Ticket = comprobante distinto. Las notas de credito restan venta y no cuentan como ticket.
   - Si dos exportes cubren el mismo dia, manda el exporte mas nuevo (por fecha del archivo).
 #>
@@ -78,6 +79,12 @@ function Sumar($tabla, [string]$clave, [double]$venta, [double]$sinIva, [double]
     $e = $tabla[$clave]; $e.venta += $venta; $e.sinIva += $sinIva; $e.gan += $gan; $e.cant += $cant; $e.desc += $desc; $e.cobrado += $cobrado
     return $e
 }
+# Alicuota de IVA de cada producto, tomada de sus comprobantes fiscales (A/B), para corregir los X.
+$tasaIva = @{}
+foreach ($r in $renglones) {
+    $ci = Num $r.'Total Con Iva'; $si = Num $r.'Total Sin IVA'
+    if ($si -ne 0 -and [math]::Abs($ci / $si - 1) -gt 0.01) { $tasaIva[[string]$r.'Código Producto'] = [math]::Round($ci / $si - 1, 3) }
+}
 $meses = @{}
 foreach ($r in $renglones) {
     $fecha = Fecha $r.'Fecha Comp'
@@ -91,6 +98,12 @@ foreach ($r in $renglones) {
     $esNC = $r.Comprobante -match '^NC'
     $signo = 1.0
     $venta = Num $r.'Total Con Iva'; $sinIva = Num $r.'Total Sin IVA'; $costo = Num $r.'Costo Total'; $gan = Num $r.Ganancia; $cant = Num $r.Cantidad
+    # Comprobantes X (no fiscales): Dux informa "Total Sin IVA" = "Total Con Iva" y la ganancia sale contra el
+    # precio con IVA, mientras que el costo es sin IVA. Se saca el IVA con la alicuota del producto (21% si no se conoce).
+    if ($venta -ne 0 -and [math]::Abs($venta - $sinIva) -lt 0.01) {
+        $t = $tasaIva[[string]$r.'Código Producto']; if ($null -eq $t) { $t = 0.21 }
+        $sinIva = $venta / (1 + $t); $gan = $sinIva - $costo
+    }
     if ($esNC -and $venta -gt 0) { $signo = -1.0 }
     $venta *= $signo; $sinIva *= $signo; $costo *= $signo; $gan *= $signo; $cant *= $signo
     # Descuento en $ = precio de lista x cantidad x % desc. (sin IVA; da igual a lista - "Total Sin IVA").
