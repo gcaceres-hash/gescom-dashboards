@@ -1,4 +1,4 @@
-name: Combo Cobertura Softys
+name: Combos Activos
 
 on:
   schedule:
@@ -21,17 +21,17 @@ jobs:
         shell: bash
         run: echo '${{ secrets.PANEL_CONFIG }}' > scripts/panel-config.json
 
-      - name: Correr pull-combo-softys.ps1
+      - name: Correr pull-combos-activos.ps1
         shell: pwsh
-        run: ./scripts/pull-combo-softys.ps1
+        run: ./scripts/pull-combos-activos.ps1
 
-      - name: Publicar cambios (commit + push a docs/combo-softys)
+      - name: Publicar cambios (commit + push a docs/combos)
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/combo-softys
-          git diff --cached --quiet || git commit -m "Actualiza Combo Cobertura Softys"
+          git add docs/combos
+          git diff --cached --quiet || git commit -m "Actualiza Combos Activos"
           for i in 1 2 3 4 5; do
             if git push; then
               break

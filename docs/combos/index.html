@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combos Activos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#070f0e; --surface:#0f1a19; --surface-2:#142120;
+    --ink:#e9f4f2; --ink-2:#9fb9b5; --ink-3:#61807b;
+    --hair:#1f3330; --border:rgba(233,244,242,0.10);
+    --accent:#3fd6c3; --accent-dim:#14544c;
+    --good-ink:#4bd07a; --warning:#fab219; --serious:#ec835a; --critical:#e66767;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding:30px 32px 60px;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-bottom:1px solid var(--hair);padding-bottom:18px;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  header.top h1{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-transform:uppercase;}
+  header.top .sub{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-3);line-height:1.7;}
+  .meta b{color:var(--ink-2);font-weight:600;}
+
+  .board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);margin:16px 0 22px;}
+  .board .cell{background:var(--bg);padding:18px 20px;min-width:0;}
+  .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;}
+  .board .value{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;color:var(--ink);}
+  .board .value.accent{color:var(--accent);}
+  .foot{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.45;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-bottom:26px;}
+  .combo{border:1px solid var(--hair);background:var(--surface);padding:16px 18px;cursor:pointer;min-width:0;}
+  .combo:hover{border-color:var(--accent-dim);}
+  .combo.sel{border-color:var(--accent);}
+  .combo .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .combo .nm{font-weight:700;font-size:14px;color:var(--ink);}
+  .combo .cd{font-family:"IBM Plex Mono",monospace;color:var(--ink-3);font-size:11px;margin-top:2px;}
+  .combo .comp{font-size:11.5px;color:var(--ink-2);margin:10px 0 12px;line-height:1.5;}
+  .combo .nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  .combo .nums div{min-width:0;}
+  .combo .nums b{display:block;font-family:"IBM Plex Mono",monospace;font-size:18px;color:var(--ink);font-weight:600;}
+  .combo .nums span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);}
+  .spark{display:flex;gap:2px;align-items:flex-end;height:34px;margin-top:12px;}
+  .spark i{flex:1;background:var(--accent-dim);min-height:1px;border-radius:1px 1px 0 0;}
+  .spark i.on{background:var(--accent);}
+  .tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:3px;border:1px solid var(--hair);white-space:nowrap;}
+  .tag.ok{color:var(--good-ink);border-color:var(--good-ink);}
+  .tag.warn{color:var(--warning);border-color:var(--warning);}
+  .tag.crit{color:var(--critical);border-color:var(--critical);}
+  .tag.nuevo{color:var(--accent);border-color:var(--accent-dim);}
+  .good{color:var(--good-ink);} .warn{color:var(--warning);} .crit{color:var(--critical);}
+
+  .mode-tabs{display:flex;flex-wrap:wrap;gap:0 6px;margin-bottom:18px;border-bottom:1px solid var(--hair);}
+  .mode-tab{font-family:"IBM Plex Mono",monospace;background:none;border:none;color:var(--ink-3);padding:10px 4px;margin-right:22px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .mode-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+  .ctrl-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .ctrl-group label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);}
+  .search, select.sel{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:4px;padding:8px 12px;font-size:13px;font-family:inherit;max-width:100%;}
+  .search{width:220px;}
+  .hint{font-size:11.5px;color:var(--ink-3);margin:0 0 12px;}
+  .table-wrap{border:1px solid var(--hair);overflow-x:auto;}
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px;}
+  table.t th{text-align:left;color:var(--ink-3);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--hair);white-space:nowrap;}
+  table.t td{padding:9px 12px;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:middle;}
+  table.t .num{text-align:right;font-variant-numeric:tabular-nums;}
+  table.t td.nom{color:var(--ink);font-weight:600;white-space:nowrap;}
+  table.t td.nom .code{color:var(--ink-3);font-weight:400;font-size:11px;margin-left:6px;}
+  table.t tr.total td{background:var(--surface);color:var(--ink);font-weight:600;border-bottom:none;}
+  table.t td.z{color:var(--ink-3);}
+  .empty-note{color:var(--ink-3);font-size:12.5px;font-style:italic;padding:14px;}
+  footer{margin-top:34px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--hair);padding-top:16px;line-height:1.7;}
+  footer b{color:var(--ink-2);}
+  @media (max-width: 900px){ body{padding:22px 16px 50px;} .board{grid-template-columns:repeat(2,minmax(0,1fr));} .meta{text-align:left;} .board .value{font-size:22px;} .cards{grid-template-columns:1fr;} }
+</style>
+<link rel="stylesheet" href="../tema-claro.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="dot"></span><h1>Combos Activos</h1></div>
+      <div class="sub">Cómo vienen todos los combos vigentes en Gescom — Fusión Lago Puelo / Elebes</div>
+    </div>
+    <div class="meta">Combos activos: <b id="nText">—</b><br>Datos al: <b id="fechaText">—</b></div>
+  </header>
+  <div class="board" id="kpis"></div>
+  <div class="label">Tocá un combo para filtrar las solapas de abajo</div>
+  <div class="cards" id="cards"></div>
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab active" data-modo="vend" role="tab">Por vendedor</button>
+    <button class="mode-tab" data-modo="cli" role="tab">Clientes</button>
+  </div>
+  <div class="controls">
+    <div class="ctrl-group"><label for="selCombo">Combo</label><select class="sel" id="selCombo"></select></div>
+    <div class="ctrl-group" id="grpBuscar" style="display:none"><label for="buscar">Cliente o vendedor</label><input class="search" id="buscar" type="text" placeholder="nombre o código..."></div>
+  </div>
+  <div id="vistaVend">
+    <p class="hint" id="hintVend"></p>
+    <div class="table-wrap"><table class="t"><thead id="headVend"></thead><tbody id="bodyVend"></tbody></table></div>
+  </div>
+  <div id="vistaCli" style="display:none">
+    <p class="hint" id="hintCli"></p>
+    <div class="table-wrap"><table class="t"><thead id="headCli"></thead><tbody id="bodyCli"></tbody></table></div>
+  </div>
+  <footer>
+    <div><b>Combo activo</b> = el que figura hoy cargado en Gescom; cuando se da de baja, sale del tablero. <b>Lanzamiento</b> = primera factura con el combo. <b>Combos</b> = cantidad del combo en facturas (VEN/DEB), por el vendedor que cargó el pedido. <b>Venta neta y margen</b> = solo los artículos del combo y solo la cantidad que corresponde al combo dentro de cada factura (sin IVA; las unidades bonificadas suman costo sin venta). <b>Cliente nuevo</b> = no había comprado ninguno de los artículos del combo en los 90 días anteriores al lanzamiento. Se excluyen los códigos 1176, 43, 16 y 37.</div>
+    <div style="margin-top:6px">Fuente: base compartida de Lucas (datos-gescom). Se actualiza sola varias veces por día, o pedile a Claude que la actualice.</div>
+  </footer>
+</div>
+<script>
+let DATA = null, modo = 'vend', comboSel = '', filtro = '';
+const nf = n => Math.round(n || 0).toLocaleString('es-AR');
+const mill = n => '$' + ((n || 0) / 1e6).toLocaleString('es-AR', {maximumFractionDigits: 2, minimumFractionDigits: 2}) + 'M';
+const pesos = n => '$' + nf(n);
+const pc = n => n == null ? '—' : n.toLocaleString('es-AR', {maximumFractionDigits: 1, minimumFractionDigits: 1}) + '%';
+const fecha = s => s ? s.slice(0,10).split('-').reverse().join('/') : '—';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mclass = m => m == null ? '' : m < 0 ? 'crit' : m < 8 ? 'warn' : 'good';
+const pctDesc = d => d >= 1 ? 'sin cargo' : d > 0 ? '-' + Math.round(d * 100) + '%' : '';
+function estado(c){
+  if (!c.ultimaVenta) return '<span class="tag">Sin ventas todavía</span>';
+  if (c.diasSinVender <= 3) return '<span class="tag ok">Vendiendo</span>';
+  if (c.diasSinVender <= 10) return `<span class="tag warn">${c.diasSinVender} días sin vender</span>`;
+  return `<span class="tag crit">${c.diasSinVender} días sin vender</span>`;
+}
+function diasRango(){
+  const out = [], hoy = new Date(DATA.generatedAt); hoy.setHours(0,0,0,0);
+  for (let i = 27; i >= 0; i--) { const d = new Date(hoy); d.setDate(d.getDate() - i); if (d.getDay() === 0) continue; out.push(d.toISOString().slice(0,10)); }
+  return out;
+}
+function render(){
+  const cs = DATA.combos;
+  document.getElementById('nText').textContent = cs.length;
+  document.getElementById('fechaText').textContent = new Date(DATA.generatedAt).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
+  const s = k => cs.reduce((a, c) => a + (c[k] || 0), 0);
+  const neto = s('neto'), costo = cs.reduce((a, c) => a + (c.margen == null ? 0 : c.neto * (1 - c.margen / 100)), 0);
+  const vendiendo = cs.filter(c => c.ultimaVenta && c.diasSinVender <= 3).length;
+  const frenados = cs.filter(c => !c.ultimaVenta || c.diasSinVender > 10);
+  document.getElementById('kpis').innerHTML = `
+    <div class="cell"><div class="label">Combos vendidos</div><div class="value accent">${nf(s('combos'))}</div><div class="foot">en ${nf(s('facturas'))} facturas · ${nf(s('ultimos7'))} en los últimos 7 días</div></div>
+    <div class="cell"><div class="label">Clientes que compraron</div><div class="value">${nf(s('clientes'))}</div><div class="foot">${nf(s('clientesNuevos'))} nuevos en el producto (sumados por combo)</div></div>
+    <div class="cell"><div class="label">Venta neta de los combos</div><div class="value">${mill(neto)}</div><div class="foot">margen ${pc(neto ? (neto - costo) / neto * 100 : null)} sobre los artículos del combo</div></div>
+    <div class="cell"><div class="label">Estado</div><div class="value">${vendiendo} <small style="font-size:14px;color:var(--ink-3)">vendiendo</small></div><div class="foot">${frenados.length ? 'Frenados o sin arrancar: ' + frenados.map(c => esc(c.descripcion.replace(/^COMBO /, ''))).join(', ') : 'Todos con ventas recientes'}</div></div>`;
+  const dr = diasRango();
+  document.getElementById('cards').innerHTML = cs.map(c => {
+    const vals = dr.map(d => (c.dias && c.dias[d]) || 0), mx = Math.max(1, ...vals);
+    return `<div class="combo ${comboSel === c.codigo ? 'sel' : ''}" data-c="${esc(c.codigo)}">
+      <div class="hd"><div><div class="nm">${esc(c.descripcion)}</div><div class="cd">${esc(c.codigo)} · ${esc(c.proveedor)} · desde ${fecha(c.lanzamiento)}</div></div>${estado(c)}</div>
+      <div class="comp">${c.componentes.map(k => `${nf(k.cantidad)} × ${esc(k.nombre)} ${pctDesc(k.descuento) ? `<span class="warn">${pctDesc(k.descuento)}</span>` : ''}`).join('<br>')}</div>
+      <div class="nums">
+        <div><b>${nf(c.combos)}</b><span>Combos</span></div>
+        <div><b>${nf(c.clientes)}</b><span>Clientes</span></div>
+        <div><b>${nf(c.clientesNuevos)}</b><span>Nuevos</span></div>
+        <div><b class="${mclass(c.margen)}">${pc(c.margen)}</b><span>Margen</span></div>
+      </div>
+      <div class="foot">Venta neta ${pesos(c.neto)} · últimos 7 días: ${nf(c.ultimos7)} combos · última venta ${fecha(c.ultimaVenta)}</div>
+      <div class="spark" title="Combos por día, últimas 4 semanas">${vals.map((v, i) => `<i class="${v ? 'on' : ''}" style="height:${v / mx * 100}%" title="${fecha(dr[i])}: ${v}"></i>`).join('')}</div>
+    </div>`;
+  }).join('');
+  const sel = document.getElementById('selCombo');
+  sel.innerHTML = `<option value="">Todos los combos</option>` + cs.map(c => `<option value="${esc(c.codigo)}">${esc(c.codigo)} · ${esc(c.descripcion)}</option>`).join('');
+  sel.value = comboSel;
+  renderVend(); renderCli();
+}
+function combosSel(){ return DATA.combos.filter(c => !comboSel || c.codigo === comboSel); }
+function renderVend(){
+  const cs = combosSel(), m = {};
+  cs.forEach(c => c.vendedores.forEach(v => {
+    const r = m[v.codigo] || (m[v.codigo] = {codigo: v.codigo, nombre: v.nombre, combos: 0, facturas: 0, clientes: 0, nuevos: 0, neto: 0, costo: 0, por: {}});
+    r.combos += v.combos; r.facturas += v.facturas; r.clientes += v.clientes; r.nuevos += v.nuevos; r.neto += v.neto; r.costo += v.margen == null ? 0 : v.neto * (1 - v.margen / 100); r.por[c.codigo] = v.combos;
+  }));
+  const rows = Object.values(m).sort((a, b) => b.combos - a.combos);
+  const multi = !comboSel;
+  const cols = multi ? DATA.combos.filter(c => c.combos > 0) : [];
+  document.getElementById('hintVend').textContent = multi
+    ? 'Combos vendidos por vendedor y por combo. "Clientes" y "Nuevos" se suman por combo (un cliente que llevó dos combos distintos cuenta en los dos).'
+    : 'Combos vendidos por vendedor en ' + cs[0].descripcion + '.';
+  const corto = c => c.descripcion.replace(/^COMBO /, '');
+  document.getElementById('headVend').innerHTML = `<tr><th>Vendedor</th>${cols.map(c => `<th class="num" title="${esc(c.descripcion)}">${esc(corto(c))}</th>`).join('')}<th class="num">Total combos</th><th class="num">Clientes</th><th class="num">Nuevos</th><th class="num">Venta neta</th><th class="num">Margen</th></tr>`;
+  const tot = {combos: 0, clientes: 0, nuevos: 0, neto: 0, costo: 0, por: {}};
+  rows.forEach(r => { tot.combos += r.combos; tot.clientes += r.clientes; tot.nuevos += r.nuevos; tot.neto += r.neto; tot.costo += r.costo; cols.forEach(c => tot.por[c.codigo] = (tot.por[c.codigo] || 0) + (r.por[c.codigo] || 0)); });
+  const fila = (r, total) => `<tr class="${total ? 'total' : ''}">
+      <td class="nom">${esc(total ? 'TOTAL' : r.nombre)}${total ? '' : `<span class="code">${esc(r.codigo)}</span>`}</td>
+      ${cols.map(c => `<td class="num ${r.por[c.codigo] ? '' : 'z'}">${r.por[c.codigo] ? nf(r.por[c.codigo]) : '·'}</td>`).join('')}
+      <td class="num"><b>${nf(r.combos)}</b></td><td class="num">${nf(r.clientes)}</td><td class="num">${nf(r.nuevos)}</td>
+      <td class="num">${pesos(r.neto)}</td><td class="num ${mclass(r.neto ? (r.neto - r.costo) / r.neto * 100 : null)}">${pc(r.neto ? (r.neto - r.costo) / r.neto * 100 : null)}</td></tr>`;
+  document.getElementById('bodyVend').innerHTML = rows.length ? rows.map(r => fila(r)).join('') + fila(tot, true)
+    : `<tr><td colspan="${6 + cols.length}" class="empty-note">Este combo todavía no tiene ventas.</td></tr>`;
+}
+function renderCli(){
+  const cs = combosSel(), q = filtro.trim().toLowerCase();
+  let rows = [];
+  cs.forEach(c => c.clientesDetalle.forEach(k => rows.push(Object.assign({combo: c.codigo, comboNom: c.descripcion}, k, {vendNom: (c.vendedores.find(v => v.codigo === k.vendedor) || {}).nombre || k.vendedor}))));
+  if (q) rows = rows.filter(r => (r.nombre + ' ' + r.codigo + ' ' + r.localidad + ' ' + r.vendNom).toLowerCase().includes(q));
+  rows.sort((a, b) => b.ultima.localeCompare(a.ultima) || b.combos - a.combos);
+  document.getElementById('hintCli').textContent = `${nf(rows.length)} clientes · ${nf(rows.filter(r => r.nuevo).length)} nuevos en el producto (no lo compraban en los 90 días antes del lanzamiento).`;
+  document.getElementById('headCli').innerHTML = `<tr><th>Cliente</th><th>Localidad</th>${comboSel ? '' : '<th>Combo</th>'}<th>Vendedor</th><th class="num">Combos</th><th class="num">Facturas</th><th class="num">Venta neta</th><th>Primera</th><th>Última</th><th></th></tr>`;
+  document.getElementById('bodyCli').innerHTML = rows.length ? rows.slice(0, 600).map(r => `<tr>
+      <td class="nom">${esc(r.nombre)}<span class="code">${esc(r.codigo)}</span></td><td>${esc(r.localidad)}</td>
+      ${comboSel ? '' : `<td>${esc(r.comboNom.replace(/^COMBO /, ''))}</td>`}<td>${esc(r.vendNom)}</td>
+      <td class="num">${nf(r.combos)}</td><td class="num">${nf(r.facturas)}</td><td class="num">${pesos(r.neto)}</td>
+      <td>${fecha(r.primera)}</td><td>${fecha(r.ultima)}</td><td>${r.nuevo ? '<span class="tag nuevo">Nuevo</span>' : ''}</td></tr>`).join('')
+    : `<tr><td colspan="10" class="empty-note">Sin clientes para mostrar.</td></tr>`;
+}
+document.getElementById('cards').addEventListener('click', e => {
+  const el = e.target.closest('.combo'); if (!el) return;
+  comboSel = comboSel === el.dataset.c ? '' : el.dataset.c; render();
+});
+document.getElementById('selCombo').addEventListener('change', e => { comboSel = e.target.value; render(); });
+document.getElementById('buscar').addEventListener('input', e => { filtro = e.target.value; renderCli(); });
+document.querySelectorAll('.mode-tab').forEach(b => b.addEventListener('click', () => {
+  modo = b.dataset.modo;
+  document.querySelectorAll('.mode-tab').forEach(x => x.classList.toggle('active', x === b));
+  document.getElementById('vistaVend').style.display = modo === 'vend' ? '' : 'none';
+  document.getElementById('vistaCli').style.display = modo === 'cli' ? '' : 'none';
+  document.getElementById('grpBuscar').style.display = modo === 'cli' ? '' : 'none';
+}));
+fetch('data.json?t=' + Date.now()).then(r => r.json()).then(d => { DATA = d; render(); })
+  .catch(() => { document.getElementById('cards').innerHTML = '<div class="empty-note">No se pudieron cargar los datos.</div>'; });
+</script>
+</body>
+</html>
