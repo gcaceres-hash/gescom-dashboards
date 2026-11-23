@@ -34,6 +34,7 @@ $PROVEEDORES = @(
     @{ clave = 'georgalos'; codigo = '42';  objetivo = 'GEORGALOS';                  nombre = 'Georgalos'; linea = 'descripcion' }
     @{ clave = 'clorox';    codigo = '247'; objetivo = 'GRUPO AYUDIN ARGENTINA S.A'; nombre = 'Clorox';    linea = 'familia' }
     @{ clave = 'ilolay';    codigo = '2';   objetivo = 'ILOLAY';                     nombre = 'Ilolay';    linea = 'descripcion' }
+    @{ clave = 'moyco';     codigo = '147'; objetivo = 'MOYCO SRL';                  nombre = 'Moyco';     linea = 'descripcion' }   # proveedor nuevo desde el 19/11/2026 (azucar Azucel)
 )
 $EXCL = "'1176','43','043','16','016','37','037'"
 $tmpDir = Join-Path ([IO.Path]::GetTempPath()) "ic-proveedores"; if (-not (Test-Path $tmpDir)) { New-Item -ItemType Directory -Path $tmpDir | Out-Null }
