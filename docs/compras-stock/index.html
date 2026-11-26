@@ -118,7 +118,8 @@
     <div class="meta">
       Stock al: <b id="corteText">—</b><br>
       Venta analizada: <b id="ventanaText">—</b><br>
-      Actualizado: <b id="generadoText">—</b>
+      Actualizado: <b id="generadoText">—</b><br>
+      <button class="btn" id="bXlsx" style="margin-top:8px" disabled>Descargar Excel completo</button>
     </div>
   </header>
 
@@ -495,6 +496,75 @@ function render(){
   ({ dias: vistaDias, todos: vistaTodos, cat: vistaCat, sin: vistaSin, pedido: vistaPedido, valor: vistaValor, rot: vistaRot, lento: vistaLento, params: vistaParams })[tab](el);
 }
 
+// ---------- excel completo (todas las solapas, sin filtros) ----------
+function cargarXLSX(){
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; sc.onload = () => ok(window.XLSX); sc.onerror = () => mal(new Error('no se pudo cargar el generador de Excel')); document.head.appendChild(sc); });
+}
+const r2d = (n, d) => n == null || isNaN(n) || !isFinite(n) ? null : Math.round(n * 10 ** d) / 10 ** d;
+const fx = s => s ? fechaCorta(s) : '';
+function hoja(XLSX, cab, filas, anchos){
+  const ws = XLSX.utils.aoa_to_sheet([cab].concat(filas));
+  ws['!cols'] = cab.map((c, i) => ({ wch: (anchos && anchos[i]) || Math.max(10, Math.min(45, String(c).length + 2)) }));
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: filas.length, c: cab.length - 1 } }) };
+  return ws;
+}
+async function exportarExcel(){
+  const b = document.getElementById('bXlsx'); const txt = b.textContent; b.textContent = 'Armando el Excel…'; b.disabled = true;
+  try {
+    const XLSX = await cargarXLSX();
+    const wb = XLSX.utils.book_new();
+    ART.forEach(x => { x.est = estadoStock(x); });
+    const AN = [30, 26, 12, 44];
+    // 1. Dias de stock por proveedor
+    const provs = agrupar(ART, x => ({ id: x.p, prov: x.p })).sort((a, b) => b.valor - a.valor);
+    const tP = provs.reduce((a, r) => ({ n: a.n + r.n, venta: a.venta + r.venta, vdCosto: a.vdCosto + r.vdCosto, vdU: a.vdU + r.vdU, stockU: a.stockU + r.stockU, stockB: a.stockB + r.stockB, valor: a.valor + r.valor }), { n: 0, venta: 0, vdCosto: 0, vdU: 0, stockU: 0, stockB: 0, valor: 0 });
+    const fP = provs.map(r => [r.prov, r.n, r2d(r.venta, 0), r2d(r.vdCosto, 0), r2d(r.stockU, 0), r2d(r.stockB, 1), r2d(r.valor, 0), r2d(r.dias, 1), r2d(r.diasU, 1), plazoDe(r.prov)]);
+    fP.push(['TOTAL', tP.n, r2d(tP.venta, 0), r2d(tP.vdCosto, 0), r2d(tP.stockU, 0), r2d(tP.stockB, 1), r2d(tP.valor, 0), r2d(tP.vdCosto > 0 ? tP.valor / tP.vdCosto : null, 1), r2d(tP.vdU > 0 ? tP.stockU / tP.vdU : null, 1), '']);
+    XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Productos','Venta de la ventana ($ neto)','Venta diaria a costo','Stock (u)','Stock (bultos)','Stock a costo','Días de stock (a costo)','Días de stock (por unidades)','Plazo de reposición (días)'], fP, [34]), 'Días de stock');
+    // 2. Por categoria
+    const cats = agrupar(ART, x => ({ id: x.p + '|' + x.g, prov: x.p, cat: x.g })).sort((a, b) => a.prov.localeCompare(b.prov, 'es') || b.valor - a.valor);
+    XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Categoría','Productos','Venta de la ventana ($ neto)','Venta diaria a costo','Stock (u)','Stock (bultos)','Stock a costo','Días de stock (a costo)','Días de stock (por unidades)'],
+      cats.map(r => [r.prov, r.cat, r.n, r2d(r.venta, 0), r2d(r.vdCosto, 0), r2d(r.stockU, 0), r2d(r.stockB, 1), r2d(r.valor, 0), r2d(r.dias, 1), r2d(r.diasU, 1)]), [34, 30]), 'Por categoría');
+    // 3. Todos los productos (detalle completo)
+    const todos = ART.slice().sort((a, b) => a.est.o - b.est.o || b.valor - a.valor);
+    XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Categoría','Código','Producto','Clase','Estado','Prioridad de pedido','Stock (u)','Unid. por bulto','Stock (bultos)','Venta de la ventana ($ neto)','Venta diaria (u)','Venta diaria (bultos)','Días de stock','Plazo (días)','Seguridad (días)','Costo unit.','Stock a costo','Última venta','Días sin vender','Última compra','Días sin comprar','Compró este mes','Bultos a pedir','Unidades a pedir','Importe a pedir (costo)'],
+      todos.map(x => { const pide = ['A','B','C'].includes(x.a) && x.reciente; return [x.p, x.g, x.c, x.n, x.a, x.est.t, x.prio.t, r2d(x.s, 0), x.u, r2d(x.stockB, 1), r2d(x.m, 0), r2d(x.vd, 2), r2d(vdB(x), 2), r2d(x.dias, 1), x.plazo, x.seg, r2d(x.k, 2), r2d(x.valor, 0), fx(x.uv), x.dsv, fx(x.uc), x.dsc, x.cm > 0 ? 'Sí' : 'No', pide ? x.bultos : 0, pide ? x.unidPedir : 0, pide ? r2d(x.importe, 0) : 0]; }), AN), 'Todos los productos');
+    // 4. Sugerido de pedido
+    const ped = ART.filter(x => ['A','B','C'].includes(x.a) && x.bultos > 0 && x.reciente).sort((a, b) => a.p.localeCompare(b.p, 'es') || b.importe - a.importe);
+    const fPed = ped.map(x => [x.p, x.g, x.c, x.n, x.a, r2d(x.vd, 2), r2d(vdB(x), 2), r2d(x.s, 0), r2d(x.dias, 1), x.seg, x.plazo, r2d(x.obj, 0), x.bultos, x.u, x.unidPedir, r2d(x.k, 2), r2d(x.importe, 0)]);
+    fPed.push(['TOTAL', '', '', ped.length + ' líneas', '', null, null, null, null, null, null, null, ped.reduce((a, x) => a + x.bultos, 0), null, null, null, r2d(ped.reduce((a, x) => a + x.importe, 0), 0)]);
+    XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Categoría','Código','Producto','Clase','Venta diaria (u)','Venta diaria (bultos)','Stock (u)','Días de stock','Seguridad (días)','Plazo (días)','Stock objetivo (u)','Bultos a pedir','Unid. por bulto','Unidades a pedir','Costo unit.','Importe a costo'], fPed, AN), 'Sugerido de pedido');
+    // 5. Sin compra del mes
+    const sin = ART.filter(x => x.v > 0 && x.cm <= 0).sort((a, b) => a.prio.o - b.prio.o || b.valor - a.valor);
+    XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Categoría','Código','Producto','Clase','Venta diaria (u)','Stock (u)','Días de stock','Última compra','Días sin comprar','Prioridad'],
+      sin.map(x => [x.p, x.g, x.c, x.n, x.a, r2d(x.vd, 2), r2d(x.s, 0), r2d(x.dias, 1), fx(x.uc), x.dsc, x.prio.t]), AN), 'Sin compra del mes');
+    // 6. Stock alto / venta lenta
+    const lento = ART.filter(x => x.s > 0 && (x.v <= 0 || (x.dias != null && x.dias > P.alto))).sort((a, b) => b.valor - a.valor);
+    XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Categoría','Código','Producto','Clase','Stock (u)','Stock (bultos)','Valor a costo','Venta diaria (u)','Días de stock','Última venta','Estado'],
+      lento.map(x => [x.p, x.g, x.c, x.n, x.a, r2d(x.s, 0), r2d(x.stockB, 1), r2d(x.valor, 0), r2d(x.vd, 2), r2d(x.dias, 1), fx(x.uv), x.v <= 0 || x.dias == null ? 'Sin venta en la ventana' : x.dias > P.muyLento ? 'Venta muy lenta' : 'Stock alto']), AN), 'Stock alto - venta lenta');
+    // 7. Rotacion
+    if (DATA.rotacion) {
+      const R = DATA.rotacion;
+      const rp = ART.filter(x => x.ini > 0 || x.fin > 0 || x.cogs > 0).sort((a, b) => a.p.localeCompare(b.p, 'es') || b.prom - a.prom);
+      XLSX.utils.book_append_sheet(wb, hoja(XLSX, ['Proveedor','Categoría','Código','Producto','Clase','Inventario inicial','Inventario final','Inventario promedio','Costo de ventas','Rotación (' + R.dias + ' días)','Rotación anual','Días de inventario'],
+        rp.map(x => [x.p, x.g, x.c, x.n, x.a, r2d(x.ini, 0), r2d(x.fin, 0), r2d(x.prom, 0), r2d(x.cogs, 0), r2d(x.rotP, 2), r2d(x.rotA, 1), r2d(x.diasInv, 1)]), AN), 'Rotación');
+    }
+    // 8. Notas
+    const v = DATA.ventana;
+    const wsN = XLSX.utils.aoa_to_sheet([
+      ['Compras · Stock y Pedidos'], ['Stock al', fechaCorta(DATA.fechaCorte)], ['Venta analizada', fechaCorta(v.desde) + ' – ' + fechaCorta(v.hasta) + ' (' + num(v.diasTotal, 1) + ' días con operación)'],
+      ['Seguridad A / B / C (días)', P.segA + ' / ' + P.segB + ' / ' + P.segC], ['Plazo de reposición por defecto (días)', P.plazo], ['Stock alto: más de (días)', P.alto], ['Venta muy lenta: más de (días)', P.muyLento], ['Venta reciente: últimos (días)', P.reciente],
+      [], ['Importes a costo sin impuestos. Días de stock = stock ÷ venta diaria. Cada hoja trae todos los productos, sin los filtros de la pantalla.']
+    ]);
+    wsN['!cols'] = [{ wch: 40 }, { wch: 50 }];
+    XLSX.utils.book_append_sheet(wb, wsN, 'Notas');
+    XLSX.writeFile(wb, 'compras-stock-' + DATA.fechaCorte + '.xlsx');
+  } catch (e) { alert('No se pudo armar el Excel: ' + e.message); }
+  finally { b.textContent = txt; b.disabled = false; }
+}
+document.getElementById('bXlsx').addEventListener('click', exportarExcel);
+
 cargarDatos('./data.json')
   .then(data => {
     DATA = data;
@@ -504,6 +574,7 @@ cargarDatos('./data.json')
     const v = DATA.ventana;
     document.getElementById('ventanaText').textContent = fechaCorta(v.desde) + ' – ' + fechaCorta(v.hasta) + ' (' + num(v.diasTotal, 1) + ' días con operación)';
     cargarParams(); derivar(); renderKPIs(); render();
+    document.getElementById('bXlsx').disabled = false;
   })
   .catch(err => {
     document.getElementById('kpiRow').innerHTML = `<div class="cell" style="grid-column:1/-1"><div class="label">Error cargando datos</div><div class="value" style="font-size:15px;color:var(--critical)">No se pudo leer los datos (${esc(err.message)}). Si esto persiste, avisale a Claude.</div></div>`;
